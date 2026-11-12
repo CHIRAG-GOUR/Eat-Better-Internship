@@ -267,7 +267,7 @@ function OfficeTower() {
     return t;
   });
   const sign = useTex(() => signTex("BUSINESS PARK", "#2F1C1A", "#FFFFFF", 1024, 200));
-  const glassMat = useMemo(() => new THREE.MeshStandardMaterial({ map: glass, roughness: 0.15, metalness: 0.55 }), [glass]);
+  const glassMat = useMemo(() => new THREE.MeshStandardMaterial({ map: glass, roughness: 0.25, metalness: 0.1 }), [glass]);
   useEffect(() => () => glassMat.dispose(), [glassMat]);
   return (
     <Hoverable label="Office tower: corporate buyers order gift hampers and bulk boxes (Customer Segment)">

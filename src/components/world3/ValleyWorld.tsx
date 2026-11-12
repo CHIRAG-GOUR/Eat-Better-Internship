@@ -95,14 +95,14 @@ const JOURNEY: Record<Chapter3, Key[]> = {
     { pos: [6, 9.5, -60], look: [-20, 4, -60] }, // the canvas (Revenue Streams + Cost Structure lit) and the ledger stacks
     { pos: [1, 6.2, -80], look: [6, 1.5, -96] }, // revenue: website, marketplaces + quick commerce
     { pos: [-1, 5, -112], look: [-9, 2, -130] }, // revenue by category at the market
-    { pos: [1, 6.5, -120], look: [14, 6, -134] }, // revenue: corporate gifting + bulk orders
+    { pos: [-3, 8, -110], look: [12, 4, -132] }, // revenue: corporate gifting + bulk orders
   ],
   "3.4": [
-    { pos: [-2, 14, -50], look: [20, 1, -76] }, // central warehouse (website orders, 3PL)
+    { pos: [-6, 17, -54], look: [18, 1, -80] }, // central warehouse (website orders, 3PL)
     { pos: [-3, 12, -64], look: [-4, 0.5, -94] }, // the highway: 3PL trucks, first dark store
-    { pos: [6, 16, -82], look: [36, 2, -106] }, // marketplace fulfilment centre
+    { pos: [1, 20, -80], look: [38, 2, -108] }, // marketplace fulfilment centre
     { pos: [2, 13, -96], look: [-22, 3, -110] }, // riders reaching homes on the hill
-    { pos: [3, 12, -112], look: [12, 2, -132] }, // corporate bulk freight at the office tower
+    { pos: [-4, 15, -108], look: [10, 2, -132] }, // corporate bulk freight at the office tower
     { pos: [0, 10, -126], look: [-10, 1, -146] }, // a small urban dark store at the edge of town
   ],
 };
