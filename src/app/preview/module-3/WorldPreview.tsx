@@ -10,6 +10,8 @@ import { ValleyDrive, type Chapter3 } from "@/components/world3/ValleyWorld";
 
 const World31 = dynamic(() => import("@/features/chapter-3-1/three/World"), { ssr: false });
 const World32 = dynamic(() => import("@/features/chapter-3-2/three/World"), { ssr: false });
+const World33 = dynamic(() => import("@/features/chapter-3-3/three/World"), { ssr: false });
+const World34 = dynamic(() => import("@/features/chapter-3-4/three/World"), { ssr: false });
 
 const STOPS: { ch: Chapter3; time: string; district: string; what: string; from: string; to: string; sky: string }[] = [
   {
@@ -29,6 +31,24 @@ const STOPS: { ch: Chapter3; time: string; district: string; what: string; from:
     from: "Supplier fields",
     to: "Canvas terrace",
     sky: "from-[#7FA2CC] to-[#FFD8A3]",
+  },
+  {
+    ch: "3.3",
+    time: "Bright noon",
+    district: "Money in the valley",
+    what: "Cost signposts at the facility (ingredients, team and kitchen, packaging, logistics), ledger stacks by the canvas comparing reported revenue with spending, then the revenue streams in town.",
+    from: "Facility costs",
+    to: "Corporate revenue",
+    sky: "from-[#3F8BD3] to-[#E2F0F5]",
+  },
+  {
+    ch: "3.4",
+    time: "Dusk",
+    district: "The distribution network",
+    what: "A higher view at dusk: glowing routes from the central warehouse, 3PL trucks on the highway, a fulfilment centre, small dark stores with riders, homes, and a scheduled bulk-freight truck, each channel signed with its delivery speed.",
+    from: "Central warehouse",
+    to: "Edge-of-town dark store",
+    sky: "from-[#38396E] to-[#F09A6A]",
   },
 ];
 
@@ -65,13 +85,13 @@ export default function WorldPreview() {
 
   return (
     <ValleyDrive.Provider value={drive}>
-      <WorldShell>{ch === "3.1" ? <World31 key="31" /> : <World32 key="32" />}</WorldShell>
+      <WorldShell>{ch === "3.1" ? <World31 key="31" /> : ch === "3.2" ? <World32 key="32" /> : ch === "3.3" ? <World33 key="33" /> : <World34 key="34" />}</WorldShell>
 
       <main className="pointer-events-none relative z-10 flex min-h-dvh flex-col justify-between p-3 sm:p-6">
         <motion.header initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.6 }} className="pointer-events-auto max-w-md rounded-[22px] border border-cocoa bg-cream/95 p-4 shadow-[3px_3px_0_0_#2f1c1a] sm:p-5">
           <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.14em] text-orange">Module 3 · world preview</div>
           <h1 className="mt-1 font-display text-[clamp(1.6rem,4vw,2.2rem)] font-semibold leading-tight text-cocoa">Value Chain Valley</h1>
-          <p className="mt-1 text-[0.98rem] leading-snug text-cocoa-2">A green valley that follows the business model, from the farms that grow the grain to the people who buy the snacks. Pick a chapter, then travel the valley.</p>
+          <p className="mt-1 text-[0.98rem] leading-snug text-cocoa-2">A green valley that follows the business model, from the farms that grow the grain to the people who buy the snacks. Each chapter has its own time of day and route. Pick one, then travel the valley.</p>
           <p className="mt-2 hidden items-center gap-1.5 text-[0.85rem] font-bold text-cocoa-2 sm:flex">
             <MousePointer2 className="size-4 text-orange" /> Hover places in the valley to see what they are.
           </p>
@@ -79,7 +99,7 @@ export default function WorldPreview() {
 
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ease: [0.16, 1, 0.3, 1], duration: 0.6, delay: 0.1 }} className="pointer-events-auto mx-auto w-full max-w-3xl rounded-[24px] border border-cocoa bg-cream/95 p-3 shadow-[3px_3px_0_0_#2f1c1a] sm:p-4">
           <LayoutGroup>
-            <div className="grid grid-cols-2 gap-1.5" role="tablist" aria-label="Chapter">
+            <div className="grid grid-cols-4 gap-1.5" role="tablist" aria-label="Chapter">
               {STOPS.map((s) => {
                 const on = s.ch === ch;
                 return (
@@ -99,7 +119,7 @@ export default function WorldPreview() {
                       <span className={`size-7 shrink-0 rounded-full bg-gradient-to-b ${s.sky} ring-2 ${on ? "ring-cream" : "ring-cocoa/15"}`} />
                       <span className="min-w-0">
                         <span className={`block font-display text-[1rem] font-semibold leading-tight ${on ? "text-cream" : "text-cocoa"}`}>{s.ch}</span>
-                        <span className={`block text-[0.78rem] font-bold leading-tight ${on ? "text-cream/80" : "text-cocoa-2"}`}>{s.time}</span>
+                        <span className={`hidden text-[0.78rem] font-bold leading-tight sm:block ${on ? "text-cream/80" : "text-cocoa-2"}`}>{s.time}</span>
                       </span>
                     </span>
                   </button>

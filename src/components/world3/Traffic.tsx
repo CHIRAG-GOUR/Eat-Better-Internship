@@ -119,17 +119,18 @@ export function Pickup({ spin, color = "#F4F1EA" }: { spin?: React.RefObject<num
 
 /* ── moving traffic ───────────────────────────────────────────── */
 
-type V = { kind: "truck" | "pickup"; dir: 1 | -1; speed: number; offset: number; cab?: string; cargo?: string; label?: string; color?: string };
+export type V = { kind: "truck" | "pickup"; dir: 1 | -1; speed: number; offset: number; cab?: string; cargo?: string; label?: string; color?: string };
 const ROAD = { from: 34, to: -158 };
 
 const TRAFFIC: V[] = [
   { kind: "truck", dir: -1, speed: 6.5, offset: 0, cab: "#E8A33C", cargo: "#2E5E8A", label: "FARM  TO  KITCHEN" },
-  { kind: "pickup", dir: 1, speed: 7.5, offset: 70, color: "#F4F1EA" },
-  { kind: "truck", dir: 1, speed: 6, offset: 140, cab: "#C0392B", cargo: "#3D6B4A", label: "COLD  CHAIN  LOGISTICS" },
-  { kind: "pickup", dir: -1, speed: 7, offset: 110, color: "#7FB3D5" },
+  { kind: "pickup", dir: 1, speed: 6.5, offset: 70, color: "#F4F1EA" },
+  { kind: "truck", dir: 1, speed: 6.5, offset: 160, cab: "#C0392B", cargo: "#3D6B4A", label: "COLD  CHAIN  LOGISTICS" },
+  { kind: "pickup", dir: -1, speed: 6.5, offset: 96, color: "#7FB3D5" },
 ];
 
-function RoadVehicle({ v, reduced }: { v: V; reduced: boolean }) {
+/** A truck or pickup looping along the valley road (dir -1 = away from the start, +1 = towards it). Use speed 6.5 to stay in step with the base traffic. */
+export function RoadVehicle({ v, reduced }: { v: V; reduced: boolean }) {
   const g = useRef<THREE.Group>(null);
   const spin = useRef(0);
   const len = ROAD.from - ROAD.to;

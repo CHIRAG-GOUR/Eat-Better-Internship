@@ -30,7 +30,7 @@ const BLOCKS: Block[] = [
   { id: "CO", lines: ["COST STRUCTURE"], x: 0, y: UP, w: CW / 2, h: 1 - UP },
   { id: "RS", lines: ["REVENUE STREAMS"], x: CW / 2, y: UP, w: CW / 2, h: 1 - UP },
 ];
-export const LIT: Record<"3.1" | "3.2", string[]> = { "3.1": ["CS", "VP", "CH", "CR"], "3.2": ["KP", "KA", "KR"] };
+export const LIT: Record<"3.1" | "3.2" | "3.3" | "3.4", string[]> = { "3.1": ["CS", "VP", "CH", "CR"], "3.2": ["KP", "KA", "KR"], "3.3": ["RS", "CO"], "3.4": ["CH", "KA", "KP"] };
 
 function draw(lit: string[], emissive: boolean) {
   return canvasTexture(
@@ -76,7 +76,7 @@ function draw(lit: string[], emissive: boolean) {
   );
 }
 
-export function BmcTerrace({ chapter }: { chapter: "3.1" | "3.2" }) {
+export function BmcTerrace({ chapter }: { chapter: "3.1" | "3.2" | "3.3" | "3.4" }) {
   const { map, glow } = useMemo(() => ({ map: draw(LIT[chapter], false), glow: draw(LIT[chapter], true) }), [chapter]);
   const material = useMemo(() => new THREE.MeshStandardMaterial({ map, emissiveMap: glow, emissive: new THREE.Color("#FFB070"), emissiveIntensity: 0.35, roughness: 0.9 }), [map, glow]);
   useEffect(

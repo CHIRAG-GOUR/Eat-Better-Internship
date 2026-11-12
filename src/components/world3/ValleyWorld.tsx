@@ -26,10 +26,12 @@ import { BmcTerrace } from "./BmcTerrace";
  *
  * 3.1 (bright late morning) travels from the canvas terrace through dispatch into the customer town.
  * 3.2 (early golden morning) travels fields → bridge → facility → warehouse and ends on the canvas.
+ * 3.3 (bright noon) reads the place as money: costs at the facility, the ledger stacks by the canvas, revenue in town.
+ * 3.4 (dusk) flies higher over the distribution network: warehouse → highway → fulfilment centre → dark stores → homes.
  * Layout lives in ./kit.ts (road along x = 0, valley along -z). Wrap the chapter's World in <WorldShell>.
  */
 
-export type Chapter3 = "3.1" | "3.2";
+export type Chapter3 = "3.1" | "3.2" | "3.3" | "3.4";
 export type ValleyKit = {
   /** phone-size viewport: use fewer/smaller props */
   compact: boolean;
@@ -38,6 +40,8 @@ export type ValleyKit = {
   chapter: Chapter3;
   /** ground height of the valley at (x, z) — put props on the ground with it */
   ground: (x: number, z: number) => number;
+  /** 0 = daylight … 1 = night (3.4 is dusk): use for emissive lights */
+  night: number;
 };
 
 /**
@@ -46,13 +50,17 @@ export type ValleyKit = {
  */
 export const ValleyDrive = createContext<React.RefObject<number> | null>(null);
 
-type Look = { top: string; horizon: string; low: string; fog: string; fogNear: number; fogFar: number; sun: string; sunI: number; sunDir: [number, number, number]; hemiSky: string; hemiGround: string; hemi: number; amb: number; cloud: string; hillNear: string; hillFar: string; exposure: number };
+type Look = { top: string; horizon: string; low: string; fog: string; fogNear: number; fogFar: number; sun: string; sunI: number; sunDir: [number, number, number]; hemiSky: string; hemiGround: string; hemi: number; amb: number; cloud: string; hillNear: string; hillFar: string; exposure: number; night?: number };
 
 const LOOK: Record<Chapter3, Look> = {
   // bright late morning
   "3.1": { top: "#5B9FDA", horizon: "#D9ECF2", low: "#E4EEE6", fog: "#D6E7EA", fogNear: 45, fogFar: 175, sun: "#FFF3DE", sunI: 2.7, sunDir: [0.45, 0.85, 0.28], hemiSky: "#CFE6F7", hemiGround: "#7C6C4A", hemi: 0.95, amb: 0.18, cloud: "#FFFFFF", hillNear: "#9FB9A6", hillFar: "#BCD3D6", exposure: 1.0 },
   // early golden morning
   "3.2": { top: "#7FA2CC", horizon: "#FFD8A3", low: "#F6E1C2", fog: "#F0D9BA", fogNear: 35, fogFar: 150, sun: "#FFC37A", sunI: 2.6, sunDir: [0.62, 0.36, 0.7], hemiSky: "#F6D7B0", hemiGround: "#5E4F3A", hemi: 0.8, amb: 0.2, cloud: "#FFE9D2", hillNear: "#C7B79A", hillFar: "#E3CDAF", exposure: 1.02 },
+  // bright noon
+  "3.3": { top: "#3F8BD3", horizon: "#E2F0F5", low: "#EEF3EA", fog: "#DDEBEE", fogNear: 55, fogFar: 190, sun: "#FFFFFF", sunI: 2.9, sunDir: [0.22, 0.95, 0.18], hemiSky: "#D8ECFA", hemiGround: "#80704D", hemi: 1.0, amb: 0.2, cloud: "#FFFFFF", hillNear: "#A3C0AF", hillFar: "#C4DADE", exposure: 0.98 },
+  // dusk, lights coming on
+  "3.4": { top: "#38396E", horizon: "#F09A6A", low: "#E7B08E", fog: "#C8968E", fogNear: 30, fogFar: 150, sun: "#FF9F62", sunI: 1.5, sunDir: [-0.55, 0.22, -0.8], hemiSky: "#A497CC", hemiGround: "#4A3A36", hemi: 0.75, amb: 0.3, cloud: "#F4B092", hillNear: "#8E7891", hillFar: "#B78E96", exposure: 1.08, night: 0.8 },
 };
 
 type Key = { pos: [number, number, number]; look: [number, number, number] };
@@ -61,7 +69,7 @@ type Key = { pos: [number, number, number]; look: [number, number, number] };
 const JOURNEY: Record<Chapter3, Key[]> = {
   "3.1": [
     { pos: [7, 9, -60], look: [-26, 4.5, -66] }, // the canvas terrace: people-side blocks lit
-    { pos: [4, 6.5, -68], look: [14, 1.5, -78] }, // dispatch: scooters leave the warehouse
+    { pos: [-1.5, 7.5, -64], look: [16, 2, -80] }, // dispatch: scooters leave the warehouse
     { pos: [1, 6.2, -80], look: [6, 1.5, -96] }, // into town: quick-commerce dark store
     { pos: [-1, 6.5, -92], look: [-24, 4.5, -106] }, // hillside homes: families
     { pos: [1, 5.5, -100], look: [14, 3.5, -112] }, // college + co-working: students, young pros
@@ -76,9 +84,26 @@ const JOURNEY: Record<Chapter3, Key[]> = {
     { pos: [0.5, 6.5, -16], look: [2, 0.2, -34] }, // the road to the river bridge
     { pos: [-0.5, 8, -28], look: [20, 3, -50] }, // the facility: solar roof, glass kitchen
     { pos: [3.5, 4.2, -38], look: [22, 2.2, -50] }, // inside the glass: kettles + lab
-    { pos: [2, 4.4, -50], look: [12, 2, -57] }, // packing line + loading dock
+    { pos: [-1.5, 5.5, -47], look: [12, 2, -58] }, // packing line + loading dock
     { pos: [3, 5.5, -62], look: [14, 2, -76] }, // warehouse + dispatch
     { pos: [7, 9, -62], look: [-26, 4.5, -66] }, // the canvas terrace: partner-side blocks lit
+  ],
+  "3.3": [
+    { pos: [-1, 7, -36], look: [22, 2.5, -50] }, // costs: ingredients, production, team + kitchen
+    { pos: [-1.5, 5.5, -46], look: [12, 2, -58] }, // costs: packaging (packing line)
+    { pos: [-1.5, 7.5, -62], look: [16, 2, -78] }, // costs: logistics + delivery
+    { pos: [6, 9.5, -60], look: [-20, 4, -60] }, // the canvas (Revenue Streams + Cost Structure lit) and the ledger stacks
+    { pos: [1, 6.2, -80], look: [6, 1.5, -96] }, // revenue: website, marketplaces + quick commerce
+    { pos: [-1, 5, -112], look: [-9, 2, -130] }, // revenue by category at the market
+    { pos: [1, 6.5, -120], look: [14, 6, -134] }, // revenue: corporate gifting + bulk orders
+  ],
+  "3.4": [
+    { pos: [-2, 14, -50], look: [20, 1, -76] }, // central warehouse (website orders, 3PL)
+    { pos: [-3, 12, -64], look: [-4, 0.5, -94] }, // the highway: 3PL trucks, first dark store
+    { pos: [6, 16, -82], look: [36, 2, -106] }, // marketplace fulfilment centre
+    { pos: [2, 13, -96], look: [-22, 3, -110] }, // riders reaching homes on the hill
+    { pos: [3, 12, -112], look: [12, 2, -132] }, // corporate bulk freight at the office tower
+    { pos: [0, 10, -126], look: [-10, 1, -146] }, // a small urban dark store at the edge of town
   ],
 };
 
@@ -202,7 +227,7 @@ function ValleyScene({ chapter, travel, compact, reduced, scenes, drive }: { cha
       <Traffic compact={compact} reduced={reduced} />
       <BmcTerrace chapter={chapter} />
       <Town compact={compact} reduced={reduced} />
-      {scenes?.({ compact, reduced, chapter, ground: groundHeight })}
+      {scenes?.({ compact, reduced, chapter, ground: groundHeight, night: look.night ?? 0 })}
     </>
   );
 }

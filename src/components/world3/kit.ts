@@ -93,6 +93,8 @@ export function blocked(x: number, z: number) {
   if (x > 2 && x < 46 && z < -40 && z > -90) return true; // facility + warehouse
   if (x < -16 && x > -42 && z < -44 && z > -88) return true; // BMC terrace
   if (x > -48 && x < 32 && z < -86 && z > -158) return true; // town
+  if (x > 26 && x < 54 && z < -92 && z > -124) return true; // 3.4 fulfilment centre lot
+  if (x > -17 && x < -5 && z < -44 && z > -60) return true; // 3.3 ledger plaza
   return false;
 }
 
