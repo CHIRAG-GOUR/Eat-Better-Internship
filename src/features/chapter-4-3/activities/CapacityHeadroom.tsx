@@ -333,29 +333,29 @@ export default function CapacityHeadroom({ onDone }: { onDone: (summary: string)
         tip: "Capacity needed = demand ÷ what one unit can do, always rounded up.",
       }}
     >
+      <div className="mb-3 flex flex-wrap items-center gap-2 text-[0.85rem] font-bold">
+        <span className="rounded-full bg-cocoa px-3 py-1 text-cream">Practice numbers</span>
+        <span className="rounded-full bg-cream px-3 py-1 text-cocoa">Free floor {free} of {COLS * ROWS - FIXED_TILES} tiles</span>
+        {step === 2 && (
+          <>
+            {(["line", "pack", "qc"] as Kind[]).map((k) => (
+              <button key={k} data-kind={k} onClick={() => setSel(sel === k ? null : k)} className={`rounded-full border-2 px-3 py-1 text-[0.82rem] font-bold ${sel === k ? "border-cocoa bg-haldi text-cocoa" : "border-cocoa/20 bg-white text-cocoa"}`}>
+                {NAME[k]} ({FOOT[k][0]}×{FOOT[k][1]}) · placed {cnt(k)}
+              </button>
+            ))}
+            <button onClick={() => setRot((r) => !r)} className="rounded-full border-2 border-cocoa/20 bg-white px-3 py-1 text-[0.82rem] font-bold text-cocoa">
+              Rotate: {rot ? "upright" : "flat"}
+            </button>
+          </>
+        )}
+      </div>
       <Stage3D
         label="A 3D floor plan of a 50,000 square foot factory with a tray of production lines, packing stations and quality-check stations"
         height="clamp(400px, 64vh, 580px)"
         camera={{ position: [0, 9, 8], fov: 42 }}
         overlay={
           <>
-            <div className="absolute left-2 top-2 flex flex-col gap-1.5 text-[0.82rem] font-bold">
-              <span className="rounded-full bg-cocoa px-3 py-1 text-cream">Practice numbers</span>
-              <span className="rounded-full bg-white/95 px-3 py-1 text-cocoa shadow">Free floor {free} of {COLS * ROWS - FIXED_TILES} tiles</span>
-            </div>
             <Labels store={store} items={FIXED.map((f) => ({ key: f.n, node: <span className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-white/90 px-1 py-0.5 text-[10px] font-bold text-cocoa">{f.n}</span> }))} />
-            {step === 2 && (
-              <div className="absolute inset-x-2 bottom-2 flex flex-wrap items-center justify-center gap-1.5">
-                {(["line", "pack", "qc"] as Kind[]).map((k) => (
-                  <button key={k} data-kind={k} onClick={() => setSel(sel === k ? null : k)} className={`rounded-full border-2 px-3 py-1 text-[0.82rem] font-bold shadow ${sel === k ? "border-cocoa bg-haldi text-cocoa" : "border-cocoa/20 bg-white text-cocoa"}`}>
-                    {NAME[k]} ({FOOT[k][0]}×{FOOT[k][1]}) · placed {cnt(k)}
-                  </button>
-                ))}
-                <button onClick={() => setRot((r) => !r)} className="rounded-full border-2 border-cocoa/20 bg-white px-3 py-1 text-[0.82rem] font-bold text-cocoa shadow">
-                  Rotate: {rot ? "upright" : "flat"}
-                </button>
-              </div>
-            )}
           </>
         }
       >

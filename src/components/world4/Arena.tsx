@@ -179,19 +179,6 @@ function lvlTex(l: Lvl) {
 }
 
 function KMatrix({ reduced }: { reduced: boolean }) {
-  const tiles = useRef<THREE.Group>(null);
-  useFrame(({ clock }) => {
-    if (reduced || !tiles.current) return;
-    // a slow scan of light moves across the rows
-    const t = clock.elapsedTime * 0.6;
-    tiles.current.children.forEach((c, i) => {
-      const row = Math.floor(i / 4);
-      const m = (c as THREE.Group).children[0] as THREE.Mesh;
-      const base = (m.userData.ei as number) ?? 1;
-      const wave = Math.max(0, Math.sin(t - row * 0.7)) ** 6;
-      (m.material as THREE.MeshStandardMaterial).emissiveIntensity = base + wave * 0.6;
-    });
-  });
   const mats = useMemo(
     () =>
       PARAMS.flatMap((p) =>
@@ -204,12 +191,23 @@ function KMatrix({ reduced }: { reduced: boolean }) {
     [],
   );
   useEffect(() => () => mats.forEach((m) => m.dispose()), [mats]);
+  useFrame(({ clock }) => {
+    if (reduced) return;
+    // a slow scan of light moves across the rows (materials are animated directly — tiles sit inside hover wrappers)
+    const t = clock.elapsedTime * 0.6;
+    PARAMS.forEach((p, i) =>
+      p.v.forEach((l, j) => {
+        const wave = Math.max(0, Math.sin(t - i * 0.7)) ** 6;
+        mats[i * 4 + j].emissiveIntensity = LVL[l].ei + wave * 0.6;
+      }),
+    );
+  });
   return (
     <group>
       {/* slate base with a lit grid */}
       <Box s={[11.6, 0.12, 13.2]} p={[0, 0.06, 0]} c="#272B35" rough={0.4} metal={0.3} recv />
       <Box s={[11.8, 0.04, 13.4]} p={[0, 0.02, 0]} c="#FED300" e="#FED300" ei={1.2} />
-      <group ref={tiles}>
+      <group>
         {PARAMS.map((p, i) =>
           p.v.map((l, j) => {
             const h = LVL[l].h;
