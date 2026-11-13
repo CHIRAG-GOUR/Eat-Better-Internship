@@ -12,6 +12,7 @@ import { GlossaryText } from "@/components/chapter/Glossary";
 import { VideoBlock } from "@/components/chapter/VideoBlock";
 import { createActivityStore } from "@/lib/activities";
 import { detectWebGL, useClientValue } from "@/lib/useClient";
+
 import { EVOLUTION, EXHIBITIONS, LEADERS, LEADERS_NOTE, NATIONAL, STORY, TAKEAWAY, THINK, TIMELINE, VIDEOS } from "./content";
 
 export const useActivities13 = createActivityStore(["stall", "roles", "valuation", "reflect"] as const);
@@ -20,6 +21,10 @@ const StallDay = dynamic(() => import("./three/StallDay"), {
   ssr: false,
   loading: () => <div className="h-[380px] animate-pulse rounded-[24px] bg-[#F6D7B8] sm:h-[480px] lg:h-[580px]" />,
 });
+
+const gameLoading = () => <div className="h-[420px] animate-pulse rounded-[24px] bg-[#F6D7B8]" />;
+const ValuationGame = dynamic(() => import("./games/ValuationGame"), { ssr: false, loading: gameLoading });
+const InterviewGame = dynamic(() => import("./games/InterviewGame"), { ssr: false, loading: gameLoading });
 
 const sectionCls = "relative scroll-mt-6 px-3 py-6 sm:px-6 sm:py-10";
 
@@ -330,104 +335,9 @@ const TL_IMG = [
   "/chapter-1-3/frames/warehouse.webp",
 ];
 
-const GUESSES = [
-  { id: "a", text: "Rs 50 lakh", right: false },
-  { id: "b", text: "Rs 10 crore", right: false },
-  { id: "c", text: "Rs 100 crore", right: true },
-  { id: "d", text: "Rs 1,000 crore", right: false },
-];
-
-function fmtLakh(lakh: number) {
-  if (lakh >= 100) {
-    const cr = lakh / 100;
-    return `Rs ${cr.toLocaleString("en-IN", { maximumFractionDigits: cr < 10 ? 2 : 1 })} crore`;
-  }
-  return `Rs ${lakh.toLocaleString("en-IN", { maximumFractionDigits: 1 })} lakh`;
-}
-
 function Valuation() {
-  const [guess, setGuess] = useState<string | null>(null);
-  const [amount, setAmount] = useState(50);
-  const [equity, setEquity] = useState(0.5);
   const complete = useActivities13((s) => s.complete);
-  const g = GUESSES.find((x) => x.id === guess);
-  useEffect(() => {
-    if (g?.right) complete("valuation");
-  }, [g, complete]);
-  const value = (amount * 100) / equity;
-  const isAsk = amount === 50 && equity === 0.5;
-
-  return (
-    <div className="rounded-[22px] bg-cream p-4 sm:p-6">
-      <ActivityLabel done={!!g?.right}>Activity · What was the company worth?</ActivityLabel>
-      <p className="mt-2 text-[1.08rem] leading-relaxed text-cocoa">
-        <GlossaryText>The founders asked for Rs 50 lakh in return for 0.5% equity. If 0.5% of the company is worth Rs 50 lakh, what is the whole company worth? Guess first.</GlossaryText>
-      </p>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {GUESSES.map((x) => {
-          const on = guess === x.id;
-          return (
-            <motion.button
-              key={x.id}
-              onClick={() => setGuess(x.id)}
-              aria-pressed={on}
-              animate={on && !x.right ? { x: [0, -6, 6, -3, 3, 0] } : { x: 0 }}
-              className={`rounded-2xl border-2 px-3 py-3 font-display text-[1.1rem] font-semibold transition-colors ${on ? (x.right ? "border-success bg-success/10 text-cocoa" : "border-error bg-error/10 text-cocoa") : "border-cocoa/20 bg-white text-cocoa hover:border-cocoa"}`}
-            >
-              {x.text}
-            </motion.button>
-          );
-        })}
-      </div>
-      <div className="mt-2 min-h-[1.6em] text-[1rem]">
-        {g && !g.right && <span className="font-bold text-error">Not quite. 0.5% is half of 1%. How many 0.5% slices make 100%?</span>}
-        {g?.right && <span className="font-bold text-success">Yes! 100% ÷ 0.5% = 200 slices. 200 × Rs 50 lakh = Rs 100 crore.</span>}
-      </div>
-
-      <AnimatePresence>
-        {g?.right && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="overflow-hidden">
-            <div className="mt-4 rounded-2xl border border-cocoa/15 bg-white p-4 sm:p-5">
-              <div className="font-display text-[1.2rem] font-semibold text-cocoa">Try your own deal</div>
-              <p className="text-[0.95rem] text-cocoa-2">Move the sliders. Valuation = money asked ÷ share offered. (General explanation; these are not real offers.)</p>
-              <div className="mt-4 grid gap-4">
-                <label className="block">
-                  <span className="flex justify-between text-[0.98rem] font-bold text-cocoa">
-                    Money asked <span className="tabular-nums text-orange">{fmtLakh(amount)}</span>
-                  </span>
-                  <input type="range" min={10} max={200} step={5} value={amount} onChange={(e) => setAmount(+e.target.value)} className="mt-2 w-full accent-[#ff5c00]" />
-                </label>
-                <label className="block">
-                  <span className="flex justify-between text-[0.98rem] font-bold text-cocoa">
-                    Share offered <span className="tabular-nums text-orange">{equity}%</span>
-                  </span>
-                  <input type="range" min={0.25} max={10} step={0.25} value={equity} onChange={(e) => setEquity(+e.target.value)} className="mt-2 w-full accent-[#ff5c00]" />
-                </label>
-                <div className="flex items-center justify-between gap-3 rounded-2xl bg-cocoa px-5 py-3 text-cream">
-                  <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-haldi">Company value</div>
-                  <motion.div key={value} initial={{ scale: 0.9, opacity: 0.4 }} animate={{ scale: 1, opacity: 1 }} className="font-display text-[1.6rem] font-semibold tabular-nums">
-                    {fmtLakh(value)}
-                  </motion.div>
-                </div>
-              </div>
-              {!isAsk && (
-                <button onClick={() => (setAmount(50), setEquity(0.5))} className="eb-btn eb-btn-secondary mt-4 !py-1.5 !text-[0.9rem] !normal-case">
-                  Back to the founders&apos; ask
-                </button>
-              )}
-              <div className="mt-4 rounded-2xl bg-peach/70 p-4 text-[1.02rem] leading-relaxed text-cocoa">
-                <strong>Equity or royalty?</strong>{" "}
-                <GlossaryText>
-                  With equity, an investor owns a share of the company. With a royalty, the investor gets a small share of sales until their money has been paid back. The founders chose Namita Thapar’s offer, which included a 1% royalty until her investment was recouped.
-                </GlossaryText>{" "}
-                <span className="text-cocoa-2">(general explanation)</span>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  return <ValuationGame onWin={() => complete("valuation")} />;
 }
 
 export function Timeline() {
@@ -563,43 +473,10 @@ export function Think() {
           })}
         </div>
 
-        <div className="mt-6 rounded-[22px] bg-peach/70 p-5 sm:p-6">
+        <div className="mt-6">
           <ActivityLabel done={miniOk}>Mini activity · Interview the founders (optional)</ActivityLabel>
-          <p className="mt-2 max-w-4xl text-[1.08rem] leading-relaxed text-cocoa">{THINK.mini}</p>
-          <ol className="mt-4 space-y-2.5">
-            {s.qs.map((q, i) => (
-              <li key={i} className="flex items-center gap-2.5">
-                <button
-                  onClick={() => set({ best: s.best === i ? null : i })}
-                  disabled={q.trim().length < 5}
-                  aria-pressed={s.best === i}
-                  aria-label={`Mark question ${i + 1} as my best question`}
-                  title="Mark as my best question"
-                  className={`grid size-10 shrink-0 place-items-center rounded-full border-2 transition-colors disabled:opacity-35 ${s.best === i ? "border-cocoa bg-haldi text-cocoa" : "border-cocoa/25 bg-white text-cocoa-2 hover:border-cocoa"}`}
-                >
-                  <Star className="size-5" fill={s.best === i ? "currentColor" : "none"} />
-                </button>
-                <input
-                  value={q}
-                  onChange={(e) => set({ qs: s.qs.map((x, j) => (j === i ? e.target.value : x)) })}
-                  aria-label={`Interview question ${i + 1}`}
-                  placeholder={`Question ${i + 1}…`}
-                  className="w-full rounded-2xl border border-line-strong bg-white px-4 py-2.5 text-[1.05rem] text-cocoa outline-none focus:border-orange"
-                />
-              </li>
-            ))}
-          </ol>
-          <p className="mt-2 text-[0.95rem] text-cocoa-2">{filledQs < 5 ? `${filledQs}/5 questions written.` : "Tap the star next to your best question."}</p>
-          {s.best !== null && (
-            <textarea
-              value={s.why}
-              onChange={(e) => set({ why: e.target.value })}
-              rows={3}
-              aria-label="Why your best question would teach you the most"
-              placeholder="This question would teach me the most because…"
-              className="mt-3 w-full rounded-2xl border border-line-strong bg-white px-4 py-3 text-[1.05rem] leading-relaxed text-cocoa outline-none focus:border-orange"
-            />
-          )}
+          <p className="mb-3 mt-2 max-w-4xl text-[1.08rem] leading-relaxed text-cocoa">{THINK.mini}</p>
+          <InterviewGame qs={s.qs} best={s.best} why={s.why} onChange={(p) => set(p)} />
         </div>
 
         <div className="mt-6 rounded-[22px] bg-cocoa p-5 text-cream sm:p-6">
