@@ -337,7 +337,7 @@ export function Signals() {
         </SectionIntro>
 
         <div className="mt-6 grid gap-5 lg:grid-cols-[1fr_300px]">
-          <div className="rounded-[22px] bg-cream p-4">
+          <div className="min-w-0 rounded-[22px] bg-cream p-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <ActivityLabel done={left.length === 0}>Activity · Signal sorter</ActivityLabel>
               <span className="text-[0.98rem] font-bold text-cocoa-2">{left.length ? `${left.length} signals left` : "All sorted!"}</span>
