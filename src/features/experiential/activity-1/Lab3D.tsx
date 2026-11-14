@@ -25,7 +25,7 @@ const VIEWS: Record<Focus, { pos: [number, number, number]; look: [number, numbe
   bowl: { pos: [-1.6, 3.1, 2.6], look: [-1.6, 1.0, -1.8] },
   sourcing: { pos: [0.6, 2.6, 2.2], look: [1.3, 0.7, -3.4] },
   quality: { pos: [3.9, 2.9, 0.4], look: [4.6, 1.0, -3.6] },
-  prepping: { pos: [6.4, 2.2, 0.8], look: [7.4, 1.4, -3.4] },
+  prepping: { pos: [6.9, 1.75, 0.2], look: [7.4, 1.35, -2.6] },
   cooking: { pos: [7.4, 2.5, 2.8], look: [9.6, 1.3, -1.2] },
   batch: { pos: [6.6, 2.5, 4.4], look: [9.6, 1.0, 2.6] },
   packaging: { pos: [3.4, 2.3, 6.4], look: [6.6, 1.1, 5.6] },

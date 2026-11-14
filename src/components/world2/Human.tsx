@@ -97,7 +97,8 @@ function makeGeos() {
     strap: new THREE.BoxGeometry(0.035, 0.62, 0.012),
     bag: new THREE.BoxGeometry(0.2, 0.17, 0.08),
     hood: new THREE.SphereGeometry(0.11, 14, 10),
-    hairnet: new THREE.SphereGeometry(0.123, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
+    hairnet: new THREE.SphereGeometry(0.121, 28, 14, 0, Math.PI * 2, 0, Math.PI * 0.36),
+    hairnetBack: new THREE.SphereGeometry(0.12, 24, 14, Math.PI, Math.PI, 0, Math.PI * 0.62),
     netBand: new THREE.TorusGeometry(0.113, 0.006, 6, 40),
     mask: new THREE.SphereGeometry(0.112, 24, 12, Math.PI * 0.5 - 0.95, 1.9, Math.PI * 0.5, Math.PI * 0.3),
     loop: new THREE.TorusGeometry(0.05, 0.003, 4, 20, Math.PI),
@@ -230,8 +231,9 @@ export function Human({ look, mode = "walk", speed = 1, phase = 0, lean }: { loo
         )}
         {L.hairnet && (
           <>
-            <mesh geometry={g.hairnet} material={mat("#F4F8FB", 0.95, 0, 0.93)} position={[0, 0.014, -0.012]} scale={[0.98, 1.06, 1.08]} castShadow />
-            <mesh geometry={g.netBand} material={mat("#DDE7EE", 0.9)} position={[0, 0.0, -0.012]} rotation={[Math.PI / 2 + 0.18, 0, 0]} scale={[0.98, 1.06, 1]} />
+            {/* covers the hair only (crown + back), leaving the forehead and face clear */}
+            <mesh geometry={g.hairnet} material={mat("#F4F8FB", 0.95, 0, 0.95)} position={[0, 0.016, -0.012]} scale={[0.97, 1.05, 1.05]} castShadow />
+            <mesh geometry={g.hairnetBack} material={mat("#F4F8FB", 0.95, 0, 0.95)} position={[0, 0.006, -0.014]} scale={[0.97, 1.05, 1.05]} />
           </>
         )}
         {L.mask && (
