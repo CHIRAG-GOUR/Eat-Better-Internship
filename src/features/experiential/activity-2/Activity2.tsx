@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
-import { Check, Download, FileText, Image as ImageIcon, Maximize, Minimize, MonitorPlay, RotateCcw, Upload } from "lucide-react";
+import { Check, Download, FileText, Image as ImageIcon, Maximize, Minimize, MonitorPlay, RotateCcw } from "lucide-react";
 import { useStudio } from "./store";
 import { AUD, CAT, LAUNCH_BUDGET, rupees } from "./data";
 import { CTA } from "./ads";
@@ -13,7 +13,7 @@ import { buildKit, launchResults, missingForKit, runAd, shrink } from "./report"
 import type { Focus } from "./Studio3D";
 import { AdsPanel, BrandPanel, CanvasView, DiscoverPanel, Kicker, LaunchPanel, PackagingPanel, PostPanel, secondary, type BrandTab } from "./Panels";
 import { downloadDataUrl } from "../shared/pdf";
-import { ProjectReady, useStudent } from "../shared/ProjectReady";
+import { ProjectReadyPopup as ProjectReady, useStudent } from "../shared/ProjectReadyPopup";
 
 const Studio3D = dynamic(() => import("./Studio3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Setting up the studio…</div> });
 
@@ -21,34 +21,6 @@ const STAGES = ["Discover", "The brand", "Packaging", "Instagram post", "Ads lab
 
 const fileName = (s: string) => (s.trim() || "student").replace(/[^\w-]+/g, "-");
 
-/** Numbered submission steps shown under the downloads. */
-function SubmitSteps({ made }: { made: Record<string, boolean> }) {
-  const steps: [string, string, boolean | null][] = [
-    ["Download your PDF", "“Brand Identity & Marketing Campaign Kit” (button above).", made.pdf ?? false],
-    ["Download your packaging mockup PNG", "Your pack design, rendered from your choices.", made.pack ?? false],
-    ["Download your Instagram creative PNG", "Your 1080 × 1080 post.", made.post ?? false],
-    ["Open the next chapter on the SkilliZee LMS portal", "Go to the submission chapter that follows Experiential Activity 2.", null],
-    ["Upload all three files there and submit", "The PDF and both PNGs. This page does not upload or submit anything for you.", null],
-  ];
-  return (
-    <div className="mt-4 rounded-[22px] border-2 border-orange/40 bg-white p-5">
-      <div className="flex items-center gap-2 font-display text-[1.3rem] font-semibold">
-        <Upload className="size-5 text-orange" /> How to submit your project
-      </div>
-      <ol className="mt-3 grid gap-2">
-        {steps.map(([t, d, done], i) => (
-          <li key={t} className="flex items-start gap-3 rounded-2xl bg-cream px-3 py-2.5">
-            <span className={`grid size-7 shrink-0 place-items-center rounded-full text-[0.9rem] font-extrabold ${done ? "bg-success text-white" : "bg-cocoa text-cream"}`}>{done ? <Check className="size-4" strokeWidth={3} /> : i + 1}</span>
-            <span className="min-w-0">
-              <span className="block font-bold">{t}</span>
-              <span className="block text-[0.9rem] text-cocoa-2">{d}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    </div>
-  );
-}
 
 export default function Activity2() {
   const s = useStudio();
@@ -64,7 +36,6 @@ export default function Activity2() {
   const [sel, setSel] = useState<string | null>(null);
   const [packView, setPackView] = useState<"desk" | "photo">("desk");
   const [assets, setAssets] = useState<Assets | null>(null);
-  const [made, setMade] = useState<Record<string, boolean>>({});
   useEffect(() => {
     const c = document.createElement("canvas");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability check
@@ -147,7 +118,6 @@ export default function Activity2() {
         const a = await need();
         const [mockupPng, postPng] = await Promise.all([shrink(mockupUrl(a), 900), shrink(postUrl(a), 820)]);
         await buildKit({ ...s, student, mockupPng, postPng });
-        setMade((m) => ({ ...m, pdf: true }));
       },
     },
     {
@@ -157,7 +127,6 @@ export default function Activity2() {
       run: async () => {
         const a = await need();
         downloadDataUrl(mockupUrl(a), `EatBetter-SkilliZee-Packaging-Mockup-${fileName(student.name)}.png`);
-        setMade((m) => ({ ...m, pack: true }));
       },
     },
     {
@@ -167,7 +136,6 @@ export default function Activity2() {
       run: async () => {
         const a = await need();
         downloadDataUrl(postUrl(a), `EatBetter-SkilliZee-Instagram-Creative-${fileName(student.name)}.png`);
-        setMade((m) => ({ ...m, post: true }));
       },
     },
   ];
@@ -204,7 +172,7 @@ export default function Activity2() {
             <div className="text-[0.72rem] font-extrabold uppercase tracking-[0.14em] text-orange">Experiential Activity 2 · Module 2</div>
             <div className="truncate font-display text-[1.15rem] font-semibold leading-tight">Eat Better Brand Studio</div>
           </div>
-          <button onClick={() => (s.restart(), setTab("products"), setSel(null), setPackView("desk"), setMade({}))} className={`${secondary} !px-3 !py-1.5 text-[0.85rem]`}>
+          <button onClick={() => (s.restart(), setTab("products"), setSel(null), setPackView("desk"))} className={`${secondary} !px-3 !py-1.5 text-[0.85rem]`}>
             <RotateCcw className="size-4" /> Restart
           </button>
           <button onClick={toggleFull} aria-label={full ? "Exit fullscreen" : "Fullscreen"} className={`${secondary} !px-2.5 !py-1.5`}>
@@ -303,10 +271,10 @@ export default function Activity2() {
                   setReflection={s.setReflection}
                   reflectionPrompt="What did you learn about building a brand and marketing it honestly?"
                   downloads={downloads}
-                  submitWhat="Upload all three files: the PDF campaign kit, the packaging mockup PNG and the Instagram creative PNG."
+                  submitWhat="Submit all three: the PDF campaign kit, the packaging mockup PNG and the Instagram creative PNG."
+                  activity="Experiential Activity 2 · Eat Better Brand Studio"
                 />
               </div>
-              <SubmitSteps made={made} />
               <p className="mt-3 flex items-center gap-2 text-[0.82rem] text-cocoa-2">
                 <Download className="size-4" /> Files download to this device. Student details stay on this device.
               </p>
