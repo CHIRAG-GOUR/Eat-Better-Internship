@@ -21,7 +21,7 @@ export type Focus = "overview" | "shelf" | "bowl" | "sourcing" | "quality" | "pr
 
 const VIEWS: Record<Focus, { pos: [number, number, number]; look: [number, number, number] }> = {
   overview: { pos: [0, 6.8, 11.5], look: [0, 1, -1.5] },
-  shelf: { pos: [-6.2, 2.4, 1.9], look: [-6.2, 1.75, -5.6] },
+  shelf: { pos: [-6.2, 2.45, 0.9], look: [-6.2, 2.3, -6.2] },
   bowl: { pos: [-1.6, 3.1, 2.6], look: [-1.6, 1.0, -1.8] },
   sourcing: { pos: [0.6, 2.6, 2.2], look: [1.3, 0.7, -3.4] },
   quality: { pos: [3.9, 2.9, 0.4], look: [4.6, 1.0, -3.6] },
@@ -132,98 +132,176 @@ function Room() {
 /* ── ingredient wall ────────────────────────────────────────── */
 
 /** Jar label: the ingredient's SVG icon + name drawn on a canvas (icon loaded from inline SVG markup). */
-function useJarLabel(id: string, flagged: boolean) {
+const svgUrl = (id: string, size: number) => `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderToStaticMarkup(<IngredientIcon id={id} size={size} />).replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'))}`;
+
+/** Canvas texture redrawn once the ingredient's SVG icon has loaded. */
+function useIconCanvas(key: string, w: number, h: number, id: string, draw: (g: CanvasRenderingContext2D, img?: HTMLImageElement) => void) {
   const tex = useMemo(() => {
     const c = document.createElement("canvas");
-    c.width = 256;
-    c.height = 160;
+    c.width = w;
+    c.height = h;
     const g = c.getContext("2d")!;
     const t = new THREE.CanvasTexture(c);
     t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 8;
     const paint = (img?: HTMLImageElement) => {
-      g.fillStyle = flagged ? "#FDECEA" : "#FFFFFF";
-      g.fillRect(0, 0, 256, 160);
-      g.strokeStyle = flagged ? "#C62828" : "#FF5C00";
-      g.lineWidth = 8;
-      g.strokeRect(4, 4, 248, 152);
-      if (img) g.drawImage(img, 88, 10, 80, 80);
-      g.fillStyle = "#2F1C1A";
-      g.textAlign = "center";
-      g.font = "700 30px Fredoka, Figtree, sans-serif";
-      g.fillText(ING[id].name.split(" (")[0], 128, 124, 236);
+      g.clearRect(0, 0, w, h);
+      draw(g, img);
       t.needsUpdate = true;
     };
     paint();
     const img = new Image();
     img.onload = () => paint(img);
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderToStaticMarkup(<IngredientIcon id={id} size={80} />).replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'))}`;
+    img.src = svgUrl(id, 128);
     return t;
-  }, [id, flagged]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   useEffect(() => () => tex.dispose(), [tex]);
   return tex;
 }
 
-function Jar({ id, position, picked, inspected, onPick }: { id: string; position: [number, number, number]; picked: boolean; inspected: boolean; onPick?: (id: string) => void }) {
+/** Round sticker on the jar: the ingredient's icon, big. */
+function useJarSticker(id: string, flagged: boolean) {
+  return useIconCanvas(`s-${id}-${flagged}`, 160, 160, id, (g, img) => {
+    g.fillStyle = flagged ? "#FDECEA" : "#FFFFFF";
+    g.beginPath();
+    g.arc(80, 80, 76, 0, Math.PI * 2);
+    g.fill();
+    g.lineWidth = 8;
+    g.strokeStyle = flagged ? "#C62828" : "#FF5C00";
+    g.stroke();
+    if (img) g.drawImage(img, 24, 24, 112, 112);
+  });
+}
+
+/** Shelf-edge name tag under each jar: big, high-contrast name so it reads from the camera. */
+function useShelfTag(id: string, state: "idle" | "seen" | "flag" | "selected") {
+  return useIconCanvas(`t-${id}-${state}`, 512, 160, id, (g, img) => {
+    const bg = state === "selected" ? "#FF5C00" : state === "flag" ? "#C62828" : "#FFFFFF";
+    const fg = state === "selected" || state === "flag" ? "#FFFFFF" : "#2F1C1A";
+    g.fillStyle = bg;
+    g.fillRect(0, 0, 512, 160);
+    g.lineWidth = 10;
+    g.strokeStyle = state === "seen" ? "#2E9E5B" : state === "idle" ? "#2F1C1A" : bg;
+    g.strokeRect(5, 5, 502, 150);
+    if (img) {
+      g.fillStyle = "#FFFFFF";
+      g.beginPath();
+      g.arc(82, 80, 58, 0, Math.PI * 2);
+      g.fill();
+      g.drawImage(img, 34, 32, 96, 96);
+    }
+    const name = ING[id].name.split(" (")[0];
+    g.fillStyle = fg;
+    g.textBaseline = "middle";
+    const fit = (txt: string) => {
+      let size = 58;
+      g.font = `800 ${size}px Figtree, "Segoe UI", Arial, sans-serif`;
+      while (g.measureText(txt).width > 336 && size > 34) {
+        size -= 2;
+        g.font = `800 ${size}px Figtree, "Segoe UI", Arial, sans-serif`;
+      }
+      return size;
+    };
+    const one = fit(name);
+    const words = name.split(" ");
+    // two big lines read better than one tiny line
+    if (one < 50 && words.length > 1) {
+      const half = Math.ceil(words.length / 2);
+      const l1 = words.slice(0, half).join(" ");
+      const l2 = words.slice(half).join(" ");
+      fit(l1.length > l2.length ? l1 : l2);
+      g.fillText(l1, 156, 54, 340);
+      g.fillText(l2, 156, 108, 340);
+    } else g.fillText(name, 156, 82, 340);
+  });
+}
+
+function Jar({ id, position, picked, inspected, selected, onPick }: { id: string; position: [number, number, number]; picked: boolean; inspected: boolean; selected: boolean; onPick?: (id: string) => void }) {
   const ing = ING[id];
   const g = useRef<THREE.Group>(null);
-  const label = useJarLabel(id, !!ing.breaks && inspected);
+  const flagged = !!ing.breaks && inspected;
+  const sticker = useJarSticker(id, flagged);
+  const tag = useShelfTag(id, selected ? "selected" : flagged ? "flag" : inspected ? "seen" : "idle");
   useFrame((_, dt) => {
-    if (g.current) g.current.position.y = THREE.MathUtils.damp(g.current.position.y, position[1] + (picked ? 0.1 : 0), 8, dt);
+    if (g.current) g.current.position.y = THREE.MathUtils.damp(g.current.position.y, picked || selected ? 0.08 : 0, 8, dt);
   });
+  const pick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    onPick?.(id);
+  };
   return (
-    <group ref={g} position={position} onClick={(e) => (e.stopPropagation(), onPick?.(id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
-      {/* contents first, then the glass so the pieces read through it */}
-      <group position={[0, 0.02, 0]}>
-        <IngredientPieces id={id} radius={0.11} height={0.22} seed={id.length * 13} />
-      </group>
-      <mesh position={[0, 0.2, 0]}>
-        <cylinderGeometry args={[0.16, 0.16, 0.4, 24, 1, true]} />
-        <meshPhysicalMaterial color="#FFFFFF" roughness={0.04} transmission={0.85} thickness={0.05} transparent opacity={0.35} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[0, 0.005, 0]}>
-        <cylinderGeometry args={[0.16, 0.16, 0.01, 24]} />
-        <meshStandardMaterial color="#DDE3E8" roughness={0.2} />
-      </mesh>
-      <mesh position={[0, 0.425, 0]} castShadow>
-        <cylinderGeometry args={[0.168, 0.168, 0.05, 24]} />
-        <meshStandardMaterial color={ing.breaks ? "#B71C1C" : "#FF5C00"} roughness={0.4} />
-      </mesh>
-      <mesh position={[0, 0.26, 0.162]}>
-        <planeGeometry args={[0.26, 0.16]} />
-        <meshBasicMaterial map={label} toneMapped={false} />
-      </mesh>
-      {inspected && (
-        <mesh position={[0.13, 0.48, 0]}>
-          <sphereGeometry args={[0.035, 12, 8]} />
-          <meshBasicMaterial color={ing.breaks ? "#E53935" : "#2E9E5B"} toneMapped={false} />
+    <group position={position}>
+      <group ref={g} onClick={pick} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+        <group position={[0, 0.02, 0]}>
+          <IngredientPieces id={id} radius={0.13} height={0.26} seed={id.length * 13} />
+        </group>
+        <mesh position={[0, 0.24, 0]}>
+          <cylinderGeometry args={[0.19, 0.19, 0.48, 24, 1, true]} />
+          <meshPhysicalMaterial color="#FFFFFF" roughness={0.04} transmission={0.85} thickness={0.05} transparent opacity={0.3} side={THREE.DoubleSide} />
         </mesh>
-      )}
+        <mesh position={[0, 0.005, 0]}>
+          <cylinderGeometry args={[0.19, 0.19, 0.01, 24]} />
+          <meshStandardMaterial color="#DDE3E8" roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.06, 24]} />
+          <meshStandardMaterial color={ing.breaks ? "#B71C1C" : selected ? "#2F1C1A" : "#FF5C00"} roughness={0.4} />
+        </mesh>
+        <mesh position={[0, 0.3, 0.193]}>
+          <circleGeometry args={[0.1, 32]} />
+          <meshBasicMaterial map={sticker} toneMapped={false} />
+        </mesh>
+      </group>
+      {/* shelf-edge name tag (clickable too) */}
+      <mesh position={[0, -0.13, 0.28]} onClick={pick} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+        <planeGeometry args={[0.6, 0.1875]} />
+        <meshBasicMaterial map={tag} toneMapped={false} />
+      </mesh>
     </group>
   );
 }
 
-function IngredientWall({ picked, inspected, onPick }: { picked: string[]; inspected: string[]; onPick?: (id: string) => void }) {
-  const PER = 9;
+const PER_ROW = 7;
+const COL_W = 0.66;
+const ROW_H = 0.78;
+const ROWS = Math.ceil(INGREDIENTS.length / PER_ROW);
+const WALL_TOP = 0.5 + (ROWS - 1) * ROW_H + 0.75;
+
+function IngredientWall({ picked, inspected, selected, onPick }: { picked: string[]; inspected: string[]; selected?: string | null; onPick?: (id: string) => void }) {
+  const width = PER_ROW * COL_W + 0.3;
   return (
     <group position={[-6.2, 0, -6.2]}>
-      {[0.5, 1.2, 1.9, 2.6].map((y) => (
-        <mesh key={y} position={[0, y - 0.03, 0]} castShadow receiveShadow>
-          <boxGeometry args={[5.3, 0.06, 0.6]} />
-          <meshStandardMaterial color="#B98157" roughness={0.6} />
-        </mesh>
+      {/* back panel */}
+      <mesh position={[0, WALL_TOP / 2, -0.32]} receiveShadow>
+        <boxGeometry args={[width + 0.1, WALL_TOP, 0.04]} />
+        <meshStandardMaterial color="#F6E9DA" roughness={0.9} />
+      </mesh>
+      {Array.from({ length: ROWS }, (_, r) => 0.5 + r * ROW_H).map((y) => (
+        <group key={y}>
+          <mesh position={[0, y - 0.03, -0.02]} castShadow receiveShadow>
+            <boxGeometry args={[width, 0.06, 0.62]} />
+            <meshStandardMaterial color="#B98157" roughness={0.6} />
+          </mesh>
+          {/* tag rail */}
+          <mesh position={[0, y - 0.13, 0.265]}>
+            <boxGeometry args={[width, 0.2, 0.02]} />
+            <meshStandardMaterial color="#2F1C1A" roughness={0.6} />
+          </mesh>
+        </group>
       ))}
-      {[-2.65, 2.65].map((x) => (
-        <mesh key={x} position={[x, 1.6, 0]}>
-          <boxGeometry args={[0.08, 3.2, 0.6]} />
+      {[-width / 2, width / 2].map((x) => (
+        <mesh key={x} position={[x, WALL_TOP / 2, -0.02]}>
+          <boxGeometry args={[0.08, WALL_TOP, 0.64]} />
           <meshStandardMaterial color="#8C5A3A" />
         </mesh>
       ))}
       {INGREDIENTS.map((ing, i) => {
-        const row = Math.floor(i / PER);
-        const col = i % PER;
-        return <Jar key={ing.id} id={ing.id} position={[-2.32 + col * 0.58, 0.5 + row * 0.7, 0.05]} picked={picked.includes(ing.id)} inspected={inspected.includes(ing.id)} onPick={onPick} />;
+        const row = ROWS - 1 - Math.floor(i / PER_ROW); // first ingredients on the top row, read left to right
+        const col = i % PER_ROW;
+        return <Jar key={ing.id} id={ing.id} position={[-((PER_ROW - 1) * COL_W) / 2 + col * COL_W, 0.5 + row * ROW_H, 0]} picked={picked.includes(ing.id)} inspected={inspected.includes(ing.id)} selected={selected === ing.id} onPick={onPick} />;
       })}
-      <Sign lines={["INGREDIENT WALL"]} position={[0, 3.45, 0.1]} w={2.6} h={0.4} />
+      <Sign lines={["INGREDIENT WALL"]} position={[0, WALL_TOP + 0.3, 0]} w={2.6} h={0.4} />
     </group>
   );
 }
@@ -604,7 +682,7 @@ function Rig({ focus, interactive }: { focus: Focus; interactive: boolean }) {
     const v = VIEWS[focus];
     const portrait = size.width < size.height;
     const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(portrait ? 1.35 : 1.15); // step back a little
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(portrait ? (focus === "shelf" ? 1.9 : 1.35) : focus === "shelf" ? 1 : 1.15); // step back a little
     // wide screens: the panel covers the right side, so slide the camera right and the station sits left of centre
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
     const shift = portrait || focus === "overview" ? 0 : dir.length() * 0.28;
@@ -623,6 +701,7 @@ export type LabProps = {
   parts: { id: string; pct: number }[];
   inspected: string[];
   onJar?: (id: string) => void;
+  selected?: string | null;
   lots: Lot[];
   lotDecisions: Record<string, "accept" | "reject">;
   onLot?: (id: string) => void;
@@ -650,7 +729,7 @@ export default function Lab3D(p: LabProps) {
       <directionalLight position={[6, 9, 6]} intensity={1.6} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-14} shadow-camera-right={14} shadow-camera-top={10} shadow-camera-bottom={-10} />
       <Rig focus={p.focus} interactive={p.interactive} />
       <Room />
-      <IngredientWall picked={p.picked} inspected={p.inspected} onPick={p.onJar} />
+      <IngredientWall picked={p.picked} inspected={p.inspected} selected={p.selected} onPick={p.onJar} />
       <MixingBowl parts={p.parts} />
       <Crates lots={p.lots} decided={p.lotDecisions} mainId={p.mainId} onPick={p.onLot} />
       <SortTray items={p.tray} removed={p.removed} mainId={p.mainId} onPick={p.onTray} />

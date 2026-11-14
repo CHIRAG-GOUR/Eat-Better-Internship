@@ -111,6 +111,12 @@ export default function Activity1() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- wait for the saved attempt to load from this device
     setHydrated(true);
   }, []);
+  useEffect(() => {
+    if (!hydrated) return;
+    const st = useLab.getState().stage;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- point the camera at the restored stage once
+    setFocus(st === 1 ? "shelf" : st === 2 ? "bowl" : st === 3 ? "sourcing" : st === 4 ? "label" : "overview");
+  }, [hydrated]);
   const [student, setStudent] = useStudent();
   const [focus, setFocus] = useState<Focus>("overview");
   const [fb, setFb] = useState<Fb>(null);
@@ -402,6 +408,7 @@ export default function Activity1() {
               picked={pickedIds}
               parts={p.parts}
               inspected={s.inspected}
+              selected={stage === 1 ? sel : null}
               onJar={(id) => {
                 if (stage === 1) (s.inspect(id), setSel(id));
                 if (stage === 2) toggleIng(id);
