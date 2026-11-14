@@ -5,7 +5,10 @@ import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { CameraControls, RoundedBox } from "@react-three/drei";
 import { Human, type HumanLook } from "@/components/world2/Human";
+import { renderToStaticMarkup } from "react-dom/server";
 import { INGREDIENTS, ING } from "./data";
+import { IngredientIcon } from "./IngredientIcon";
+import { ForeignItem, IngredientPieces, OnePiece } from "./Pieces3D";
 
 /**
  * The 3D Product Innovation Lab: an ingredient wall (13 jars), a formulation bench with a mixing bowl, and six
@@ -18,9 +21,9 @@ export type Focus = "overview" | "shelf" | "bowl" | "sourcing" | "quality" | "pr
 
 const VIEWS: Record<Focus, { pos: [number, number, number]; look: [number, number, number] }> = {
   overview: { pos: [0, 6.8, 11.5], look: [0, 1, -1.5] },
-  shelf: { pos: [-6.2, 2.3, 1.6], look: [-6.2, 1.6, -5.6] },
+  shelf: { pos: [-6.2, 2.4, 1.9], look: [-6.2, 1.75, -5.6] },
   bowl: { pos: [-1.6, 3.1, 2.6], look: [-1.6, 1.0, -1.8] },
-  sourcing: { pos: [1.2, 2.6, 2.4], look: [2.4, 0.9, -3.4] },
+  sourcing: { pos: [0.6, 2.6, 2.2], look: [1.3, 0.7, -3.4] },
   quality: { pos: [3.9, 2.9, 0.4], look: [4.6, 1.0, -3.6] },
   prepping: { pos: [6.4, 2.2, 0.8], look: [7.4, 1.4, -3.4] },
   cooking: { pos: [7.4, 2.5, 2.8], look: [9.6, 1.3, -1.2] },
@@ -128,35 +131,70 @@ function Room() {
 
 /* ── ingredient wall ────────────────────────────────────────── */
 
+/** Jar label: the ingredient's SVG icon + name drawn on a canvas (icon loaded from inline SVG markup). */
+function useJarLabel(id: string, flagged: boolean) {
+  const tex = useMemo(() => {
+    const c = document.createElement("canvas");
+    c.width = 256;
+    c.height = 160;
+    const g = c.getContext("2d")!;
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    const paint = (img?: HTMLImageElement) => {
+      g.fillStyle = flagged ? "#FDECEA" : "#FFFFFF";
+      g.fillRect(0, 0, 256, 160);
+      g.strokeStyle = flagged ? "#C62828" : "#FF5C00";
+      g.lineWidth = 8;
+      g.strokeRect(4, 4, 248, 152);
+      if (img) g.drawImage(img, 88, 10, 80, 80);
+      g.fillStyle = "#2F1C1A";
+      g.textAlign = "center";
+      g.font = "700 30px Fredoka, Figtree, sans-serif";
+      g.fillText(ING[id].name.split(" (")[0], 128, 124, 236);
+      t.needsUpdate = true;
+    };
+    paint();
+    const img = new Image();
+    img.onload = () => paint(img);
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderToStaticMarkup(<IngredientIcon id={id} size={80} />).replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"'))}`;
+    return t;
+  }, [id, flagged]);
+  useEffect(() => () => tex.dispose(), [tex]);
+  return tex;
+}
+
 function Jar({ id, position, picked, inspected, onPick }: { id: string; position: [number, number, number]; picked: boolean; inspected: boolean; onPick?: (id: string) => void }) {
   const ing = ING[id];
   const g = useRef<THREE.Group>(null);
-  const tex = useMemo(() => textTex([ing.name.split(" (")[0].split(" & ")[0], ing.breaks ? "check promise" : ""], { w: 384, h: 192, bg: ing.breaks && inspected ? "#FDECEA" : "#FFFFFF", fg: "#2F1C1A", size: 52 }), [ing, inspected]);
-  useEffect(() => () => tex.dispose(), [tex]);
+  const label = useJarLabel(id, !!ing.breaks && inspected);
   useFrame((_, dt) => {
-    if (g.current) g.current.position.y = THREE.MathUtils.damp(g.current.position.y, position[1] + (picked ? 0.12 : 0), 8, dt);
+    if (g.current) g.current.position.y = THREE.MathUtils.damp(g.current.position.y, position[1] + (picked ? 0.1 : 0), 8, dt);
   });
   return (
     <group ref={g} position={position} onClick={(e) => (e.stopPropagation(), onPick?.(id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
-      <mesh castShadow position={[0, 0.26, 0]}>
-        <cylinderGeometry args={[0.2, 0.2, 0.5, 20]} />
-        <meshPhysicalMaterial color="#FFFFFF" roughness={0.05} transmission={0.6} thickness={0.2} transparent opacity={0.55} />
-      </mesh>
+      {/* contents first, then the glass so the pieces read through it */}
+      <group position={[0, 0.02, 0]}>
+        <IngredientPieces id={id} radius={0.11} height={0.22} seed={id.length * 13} />
+      </group>
       <mesh position={[0, 0.2, 0]}>
-        <cylinderGeometry args={[0.18, 0.18, 0.36, 16]} />
-        <meshStandardMaterial color={ing.color} roughness={0.8} />
+        <cylinderGeometry args={[0.16, 0.16, 0.4, 24, 1, true]} />
+        <meshPhysicalMaterial color="#FFFFFF" roughness={0.04} transmission={0.85} thickness={0.05} transparent opacity={0.35} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, 0.54, 0]}>
-        <cylinderGeometry args={[0.21, 0.21, 0.07, 20]} />
-        <meshStandardMaterial color={ing.breaks ? "#C62828" : "#FF5C00"} />
+      <mesh position={[0, 0.005, 0]}>
+        <cylinderGeometry args={[0.16, 0.16, 0.01, 24]} />
+        <meshStandardMaterial color="#DDE3E8" roughness={0.2} />
       </mesh>
-      <mesh position={[0, 0.22, 0.205]}>
-        <planeGeometry args={[0.36, 0.18]} />
-        <meshBasicMaterial map={tex} toneMapped={false} />
+      <mesh position={[0, 0.425, 0]} castShadow>
+        <cylinderGeometry args={[0.168, 0.168, 0.05, 24]} />
+        <meshStandardMaterial color={ing.breaks ? "#B71C1C" : "#FF5C00"} roughness={0.4} />
+      </mesh>
+      <mesh position={[0, 0.26, 0.162]}>
+        <planeGeometry args={[0.26, 0.16]} />
+        <meshBasicMaterial map={label} toneMapped={false} />
       </mesh>
       {inspected && (
-        <mesh position={[0, 0.66, 0]}>
-          <sphereGeometry args={[0.05, 12, 8]} />
+        <mesh position={[0.13, 0.48, 0]}>
+          <sphereGeometry args={[0.035, 12, 8]} />
           <meshBasicMaterial color={ing.breaks ? "#E53935" : "#2E9E5B"} toneMapped={false} />
         </mesh>
       )}
@@ -165,28 +203,27 @@ function Jar({ id, position, picked, inspected, onPick }: { id: string; position
 }
 
 function IngredientWall({ picked, inspected, onPick }: { picked: string[]; inspected: string[]; onPick?: (id: string) => void }) {
+  const PER = 9;
   return (
     <group position={[-6.2, 0, -6.2]}>
-      {[0.55, 1.35, 2.15].map((y) => (
-        <group key={y}>
-          <mesh position={[0, y, 0]} castShadow receiveShadow>
-            <boxGeometry args={[5.4, 0.06, 0.7]} />
-            <meshStandardMaterial color="#B98157" roughness={0.6} />
-          </mesh>
-        </group>
+      {[0.5, 1.2, 1.9, 2.6].map((y) => (
+        <mesh key={y} position={[0, y - 0.03, 0]} castShadow receiveShadow>
+          <boxGeometry args={[5.3, 0.06, 0.6]} />
+          <meshStandardMaterial color="#B98157" roughness={0.6} />
+        </mesh>
       ))}
-      {[-2.7, 2.7].map((x) => (
-        <mesh key={x} position={[x, 1.3, 0]}>
-          <boxGeometry args={[0.08, 2.6, 0.7]} />
+      {[-2.65, 2.65].map((x) => (
+        <mesh key={x} position={[x, 1.6, 0]}>
+          <boxGeometry args={[0.08, 3.2, 0.6]} />
           <meshStandardMaterial color="#8C5A3A" />
         </mesh>
       ))}
       {INGREDIENTS.map((ing, i) => {
-        const row = Math.floor(i / 5);
-        const col = i % 5;
-        return <Jar key={ing.id} id={ing.id} position={[-2.1 + col * 1.05, 0.58 + row * 0.8, 0.05]} picked={picked.includes(ing.id)} inspected={inspected.includes(ing.id)} onPick={onPick} />;
+        const row = Math.floor(i / PER);
+        const col = i % PER;
+        return <Jar key={ing.id} id={ing.id} position={[-2.32 + col * 0.58, 0.5 + row * 0.7, 0.05]} picked={picked.includes(ing.id)} inspected={inspected.includes(ing.id)} onPick={onPick} />;
       })}
-      <Sign lines={["INGREDIENT WALL"]} position={[0, 3.0, 0.1]} w={2.6} h={0.4} />
+      <Sign lines={["INGREDIENT WALL"]} position={[0, 3.45, 0.1]} w={2.6} h={0.4} />
     </group>
   );
 }
@@ -196,30 +233,25 @@ function IngredientWall({ picked, inspected, onPick }: { picked: string[]; inspe
 function MixingBowl({ parts }: { parts: { id: string; pct: number }[] }) {
   const spin = useRef<THREE.Group>(null);
   useFrame((_, dt) => {
-    if (spin.current) spin.current.rotation.y += dt * 0.6;
+    if (spin.current) spin.current.rotation.y += dt * 0.4;
   });
-  const total = parts.reduce((a, p) => a + p.pct, 0) || 1;
   return (
     <group position={[-1.6, 0, -1.8]}>
       <Bench position={[0, 0, 0]} w={2.8} />
-      <mesh position={[0, 1.18, 0]} castShadow>
-        <sphereGeometry args={[0.55, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <sphereGeometry args={[0.55, 40, 20, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
         <meshStandardMaterial color="#D9DEE5" metalness={0.9} roughness={0.15} side={THREE.DoubleSide} />
       </mesh>
-      <group ref={spin} position={[0, 1.02, 0]}>
-        {parts.flatMap((p, k) => {
-          const n = Math.max(2, Math.round((p.pct / total) * 26));
-          return Array.from({ length: n }, (_, j) => {
-            const a = (j / n) * Math.PI * 2 + k * 1.3;
-            const r = 0.12 + ((j * 7 + k * 3) % 5) * 0.06;
-            return (
-              <mesh key={`${p.id}-${j}`} position={[Math.cos(a) * r, 0.08 + (k % 3) * 0.04, Math.sin(a) * r]}>
-                <sphereGeometry args={[0.055, 8, 6]} />
-                <meshStandardMaterial color={ING[p.id]?.color ?? "#999"} roughness={0.7} />
-              </mesh>
-            );
-          });
-        })}
+      <mesh position={[0, 1.2, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <torusGeometry args={[0.55, 0.02, 8, 48]} />
+        <meshStandardMaterial color="#C9D0D8" metalness={0.9} roughness={0.2} />
+      </mesh>
+      <group ref={spin} position={[0, 0.82, 0]}>
+        {parts.map((p, k) => (
+          <group key={p.id} rotation={[0, k * 1.3, 0]}>
+            <IngredientPieces id={p.id} radius={0.32} height={0.04 + (p.pct / 100) * 0.22} seed={k * 17 + 3} />
+          </group>
+        ))}
       </group>
       <Sign lines={["FORMULATION"]} position={[0, 2.2, -0.5]} w={1.8} h={0.36} />
     </group>
@@ -230,26 +262,90 @@ function MixingBowl({ parts }: { parts: { id: string; pct: number }[] }) {
 
 export type Lot = { id: string; fault: string | null };
 
-function Crates({ lots, decided, onPick }: { lots: Lot[]; decided: Record<string, "accept" | "reject">; onPick?: (id: string) => void }) {
+/** A slatted wooden produce crate (front = +z) holding the lot, with a stencilled lot board. */
+function Crate({ lot, decided, mainId, onPick, x }: { lot: Lot; decided?: "accept" | "reject"; mainId: string; onPick?: (id: string) => void; x: number }) {
+  const wood = decided === "reject" ? "#8E3B32" : decided === "accept" ? "#6E8B4E" : "#B98A57";
+  const W = 0.9;
+  const D = 0.62;
+  const H = 0.42;
   return (
-    <group position={[2.4, 0, -3.4]}>
-      {lots.map((l, i) => {
-        const d = decided[l.id];
-        return (
-          <group key={l.id} position={[-1.1 + i * 1.1, 0, 0]} onClick={(e) => (e.stopPropagation(), onPick?.(l.id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
-            <RoundedBox args={[0.9, 0.6, 0.7]} radius={0.04} position={[0, 0.3, 0]} castShadow>
-              <meshStandardMaterial color={d === "reject" ? "#B71C1C" : d === "accept" ? "#2E7D32" : "#A1784F"} roughness={0.8} />
-            </RoundedBox>
-            {Array.from({ length: 9 }, (_, j) => (
-              <mesh key={j} position={[-0.28 + (j % 3) * 0.28, 0.64, -0.2 + Math.floor(j / 3) * 0.2]}>
-                <sphereGeometry args={[0.1, 8, 6]} />
-                <meshStandardMaterial color={l.fault === "mould" && j % 3 === 1 ? "#7E8C5A" : "#6B3A1E"} roughness={0.7} />
-              </mesh>
-            ))}
-            <Sign lines={[`LOT ${l.id}`]} position={[0, 0.3, 0.36]} w={0.6} h={0.22} bg="#FFF5EE" fg="#2F1C1A" />
-          </group>
-        );
-      })}
+    <group position={[x, 0.08, 0]} onClick={(e) => (e.stopPropagation(), onPick?.(lot.id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+      {/* pallet base */}
+      {[-0.3, 0, 0.3].map((z) => (
+        <mesh key={z} position={[0, -0.04, z]} receiveShadow>
+          <boxGeometry args={[W + 0.1, 0.08, 0.12]} />
+          <meshStandardMaterial color="#8C6A43" roughness={0.9} />
+        </mesh>
+      ))}
+      {/* corner posts */}
+      {[
+        [-1, -1],
+        [1, -1],
+        [-1, 1],
+        [1, 1],
+      ].map(([sx, sz], i) => (
+        <mesh key={i} position={[(sx * (W - 0.05)) / 2, H / 2, (sz * (D - 0.05)) / 2]} castShadow>
+          <boxGeometry args={[0.05, H, 0.05]} />
+          <meshStandardMaterial color={wood} roughness={0.85} />
+        </mesh>
+      ))}
+      {/* slats with gaps on all four sides + base */}
+      {[0.06, 0.2, 0.34].map((y) => (
+        <group key={y}>
+          {[-1, 1].map((s) => (
+            <mesh key={`x${s}`} position={[0, y, (s * (D - 0.02)) / 2]} castShadow>
+              <boxGeometry args={[W, 0.08, 0.02]} />
+              <meshStandardMaterial color={wood} roughness={0.85} />
+            </mesh>
+          ))}
+          {[-1, 1].map((s) => (
+            <mesh key={`z${s}`} position={[(s * (W - 0.02)) / 2, y, 0]} castShadow>
+              <boxGeometry args={[0.02, 0.08, D]} />
+              <meshStandardMaterial color={wood} roughness={0.85} />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      <mesh position={[0, 0.02, 0]}>
+        <boxGeometry args={[W - 0.04, 0.02, D - 0.04]} />
+        <meshStandardMaterial color={wood} roughness={0.9} />
+      </mesh>
+      {/* the produce, heaped */}
+      <group position={[0, 0.03, 0]}>
+        <IngredientPieces id={mainId} radius={0.3} height={0.32} seed={lot.id.charCodeAt(0) * 5} />
+        <group position={[0.15, 0.04, 0.05]}>
+          <IngredientPieces id={mainId} radius={0.2} height={0.3} seed={lot.id.charCodeAt(0) * 7} />
+        </group>
+      </group>
+      {/* visible mould on a bad lot: grey-green fuzzy patches */}
+      {lot.fault === "mould" &&
+        [
+          [-0.12, 0.33, 0.05],
+          [0.1, 0.36, -0.08],
+          [0.02, 0.38, 0.12],
+          [-0.2, 0.3, -0.12],
+        ].map((pp, i) => (
+          <mesh key={i} position={pp as [number, number, number]} scale={[0.07, 0.025, 0.06]}>
+            <sphereGeometry args={[1, 10, 6]} />
+            <meshStandardMaterial color="#9AA48A" roughness={1} />
+          </mesh>
+        ))}
+      {/* stencilled lot board */}
+      <mesh position={[0, 0.2, D / 2 + 0.012]}>
+        <planeGeometry args={[0.42, 0.16]} />
+        <meshStandardMaterial color="#F3E6CF" roughness={0.9} />
+      </mesh>
+      <Sign lines={[`LOT ${lot.id}`]} position={[0, 0.2, D / 2 + 0.015]} w={0.38} h={0.13} bg="#F3E6CF" fg="#2F1C1A" />
+    </group>
+  );
+}
+
+function Crates({ lots, decided, mainId, onPick }: { lots: Lot[]; decided: Record<string, "accept" | "reject">; mainId: string; onPick?: (id: string) => void }) {
+  return (
+    <group position={[1.3, 0, -3.4]}>
+      {lots.map((l, i) => (
+        <Crate key={l.id} lot={l} decided={decided[l.id]} mainId={mainId} onPick={onPick} x={-1.05 + i * 1.05} />
+      ))}
       <Sign lines={["1 · SOURCING"]} position={[0, 1.7, -0.5]} w={1.8} h={0.36} />
     </group>
   );
@@ -257,29 +353,26 @@ function Crates({ lots, decided, onPick }: { lots: Lot[]; decided: Record<string
 
 export type TrayItem = { id: number; kind: "good" | "stone" | "shell" | "twig" | "plastic"; x: number; z: number };
 
-function SortTray({ items, removed, onPick }: { items: TrayItem[]; removed: number[]; onPick?: (id: number) => void }) {
+function SortTray({ items, removed, mainId, onPick }: { items: TrayItem[]; removed: number[]; mainId: string; onPick?: (id: number) => void }) {
   return (
     <group position={[4.6, 0, -3.6]}>
       <Bench position={[0, 0, 0]} w={2.2} d={1.2} />
-      <mesh position={[0, 0.98, 0]} receiveShadow>
-        <boxGeometry args={[1.6, 0.04, 0.9]} />
+      <mesh position={[0, 0.975, 0]} receiveShadow>
+        <boxGeometry args={[1.6, 0.03, 0.9]} />
         <meshStandardMaterial color="#C0C7CF" metalness={0.8} roughness={0.25} />
       </mesh>
+      {[-0.81, 0.81].map((x) => (
+        <mesh key={x} position={[x, 1.0, 0]}>
+          <boxGeometry args={[0.02, 0.05, 0.92]} />
+          <meshStandardMaterial color="#AEB6BF" metalness={0.8} roughness={0.25} />
+        </mesh>
+      ))}
       {items
         .filter((it) => !removed.includes(it.id))
         .map((it) => (
-          <mesh
-            key={it.id}
-            position={[it.x, 1.03, it.z]}
-            onClick={(e) => (e.stopPropagation(), onPick?.(it.id))}
-            onPointerOver={hover(true)}
-            onPointerOut={hover(false)}
-            castShadow
-            scale={it.kind === "twig" ? [0.22, 0.03, 0.04] : it.kind === "plastic" ? [0.1, 0.012, 0.08] : it.kind === "shell" ? [0.07, 0.03, 0.05] : it.kind === "stone" ? [0.06, 0.045, 0.055] : [0.075, 0.05, 0.045]}
-          >
-            {it.kind === "twig" || it.kind === "plastic" ? <boxGeometry args={[1, 1, 1]} /> : <sphereGeometry args={[1, 10, 8]} />}
-            <meshStandardMaterial color={it.kind === "good" ? "#C68A4B" : it.kind === "stone" ? "#7D7A74" : it.kind === "shell" ? "#8A5A35" : it.kind === "twig" ? "#5B3A22" : "#4FC3F7"} roughness={it.kind === "plastic" ? 0.2 : 0.8} />
-          </mesh>
+          <group key={it.id} position={[it.x, 0.995, it.z]} rotation={[0, it.id * 1.7, 0]} scale={1.6} onClick={(e) => (e.stopPropagation(), onPick?.(it.id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+            {it.kind === "good" ? <OnePiece id={mainId} /> : <ForeignItem kind={it.kind} />}
+          </group>
         ))}
       <Sign lines={["2 · QUALITY CHECK"]} position={[0, 2.0, -0.6]} w={2} h={0.36} />
     </group>
@@ -289,47 +382,92 @@ function SortTray({ items, removed, onPick }: { items: TrayItem[]; removed: numb
 const WORKER: HumanLook = { skin: "#A86F45", hair: "#1A110C", hairStyle: "bun", outfit: "shirt", top: "#F4F1EC", bottom: "#3B4A5C", accent: "#FFFFFF", slim: true, height: 0.95 };
 
 function PrepStation({ ppe, onPick }: { ppe: string[]; onPick?: (id: string) => void }) {
-  const items: { id: string; color: string; p: [number, number, number]; s: [number, number, number] }[] = [
-    { id: "hairnet", color: "#E3F2FD", p: [-0.6, 1.0, 0], s: [0.22, 0.08, 0.22] },
-    { id: "mask", color: "#90CAF9", p: [-0.2, 0.98, 0], s: [0.2, 0.05, 0.12] },
-    { id: "gloves", color: "#1E88E5", p: [0.2, 0.98, 0], s: [0.2, 0.05, 0.16] },
-    { id: "apron", color: "#FF5C00", p: [0.62, 0.98, 0], s: [0.26, 0.04, 0.3] },
+  const items: { id: string; node: React.ReactNode; x: number }[] = [
+    {
+      id: "hairnet",
+      x: -0.6,
+      node: (
+        <mesh scale={[0.11, 0.05, 0.11]}>
+          <sphereGeometry args={[1, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#F4F8FB" roughness={0.95} />
+        </mesh>
+      ),
+    },
+    {
+      id: "mask",
+      x: -0.2,
+      node: (
+        <group>
+          <mesh scale={[0.17, 0.012, 0.1]}>
+            <boxGeometry args={[1, 1, 1]} />
+            <meshStandardMaterial color="#90CAF9" roughness={0.9} />
+          </mesh>
+          {[-0.03, 0, 0.03].map((z) => (
+            <mesh key={z} position={[0, 0.007, z]} scale={[0.17, 0.002, 0.004]}>
+              <boxGeometry args={[1, 1, 1]} />
+              <meshStandardMaterial color="#64B5F6" />
+            </mesh>
+          ))}
+        </group>
+      ),
+    },
+    {
+      id: "gloves",
+      x: 0.2,
+      node: (
+        <group>
+          {[-0.04, 0.04].map((x) => (
+            <mesh key={x} position={[x, 0, 0]} scale={[0.045, 0.015, 0.1]}>
+              <sphereGeometry args={[1, 10, 8]} />
+              <meshStandardMaterial color="#1E88E5" roughness={0.4} />
+            </mesh>
+          ))}
+        </group>
+      ),
+    },
+    {
+      id: "apron",
+      x: 0.62,
+      node: (
+        <mesh scale={[0.24, 0.03, 0.28]}>
+          <boxGeometry args={[1, 1, 1]} />
+          <meshStandardMaterial color="#FF5C00" roughness={0.8} />
+        </mesh>
+      ),
+    },
   ];
   return (
     <group position={[7.4, 0, -3.4]}>
       <Bench position={[-0.8, 0, 0]} w={2.2} d={0.9} />
       {items.map((it) =>
         ppe.includes(it.id) ? null : (
-          <mesh key={it.id} position={[it.p[0] - 0.8, it.p[1], it.p[2]]} scale={it.s} onClick={(e) => (e.stopPropagation(), onPick?.(it.id))} onPointerOver={hover(true)} onPointerOut={hover(false)} castShadow>
-            <boxGeometry args={[1, 1, 1]} />
-            <meshStandardMaterial color={it.color} roughness={0.6} />
-          </mesh>
+          <group key={it.id} position={[it.x - 0.8, 0.99, 0]} onClick={(e) => (e.stopPropagation(), onPick?.(it.id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+            {it.node}
+          </group>
         ),
       )}
-      {/* sink */}
-      <mesh position={[1.2, 0.85, 0]} castShadow onClick={(e) => (e.stopPropagation(), onPick?.("wash"))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
-        <boxGeometry args={[0.9, 0.2, 0.6]} />
-        <meshStandardMaterial color="#B0BEC5" metalness={0.8} roughness={0.2} />
-      </mesh>
-      <mesh position={[1.2, 0.42, 0]}>
-        <boxGeometry args={[0.8, 0.84, 0.5]} />
-        <meshStandardMaterial color="#CFD8DC" />
-      </mesh>
-      {/* the worker who gets kitted out */}
-      <group position={[0.1, 0, 1.0]} rotation={[0, Math.PI, 0]}>
-        <Human look={{ ...WORKER, top: ppe.includes("apron") ? "#FF5C00" : WORKER.top }} mode="stand" />
-        {ppe.includes("hairnet") && (
-          <mesh position={[0, 1.66, 0]}>
-            <sphereGeometry args={[0.125, 16, 10, 0, Math.PI * 2, 0, Math.PI / 1.9]} />
-            <meshStandardMaterial color="#EEF6FB" transparent opacity={0.9} roughness={0.9} />
-          </mesh>
-        )}
-        {ppe.includes("mask") && (
-          <mesh position={[0, 1.555, 0.09]} scale={[1, 0.7, 0.5]}>
-            <sphereGeometry args={[0.07, 12, 8]} />
-            <meshStandardMaterial color="#90CAF9" />
-          </mesh>
-        )}
+      {/* hand-wash sink with tap */}
+      <group position={[1.2, 0, 0]} onClick={(e) => (e.stopPropagation(), onPick?.("wash"))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+        <mesh position={[0, 0.45, 0]}>
+          <boxGeometry args={[0.8, 0.9, 0.55]} />
+          <meshStandardMaterial color="#CFD8DC" roughness={0.5} />
+        </mesh>
+        <mesh position={[0, 0.9, 0]}>
+          <boxGeometry args={[0.86, 0.06, 0.6]} />
+          <meshStandardMaterial color="#B0BEC5" metalness={0.8} roughness={0.2} />
+        </mesh>
+        <mesh position={[0, 0.885, 0.02]}>
+          <boxGeometry args={[0.6, 0.05, 0.4]} />
+          <meshStandardMaterial color="#78909C" metalness={0.7} roughness={0.3} />
+        </mesh>
+        <mesh position={[0, 1.1, -0.22]} rotation={[0.4, 0, 0]}>
+          <cylinderGeometry args={[0.02, 0.02, 0.4, 10]} />
+          <meshStandardMaterial color="#CFD8DC" metalness={0.9} roughness={0.15} />
+        </mesh>
+      </group>
+      {/* the team member, kitted out as the student equips each item */}
+      <group position={[0.1, 0, 1.0]} rotation={[0, -0.35, 0]}>
+        <Human look={{ ...WORKER, top: ppe.includes("apron") ? "#FF5C00" : WORKER.top, hairnet: ppe.includes("hairnet"), mask: ppe.includes("mask") ? "#90CAF9" : undefined, gloves: ppe.includes("gloves") ? "#1E88E5" : undefined }} mode="stand" />
       </group>
       <Sign lines={["3 · PREPPING"]} position={[0, 2.4, -0.5]} w={1.8} h={0.36} />
     </group>
@@ -367,7 +505,7 @@ function Roaster({ heat, doneness }: { heat: number; doneness: number }) {
   );
 }
 
-function BatchBench({ count, statuses, onPick }: { count: number; statuses: Record<number, "release" | "hold" | undefined>; onPick?: (i: number) => void }) {
+function BatchBench({ count, statuses, mainId, onPick }: { count: number; statuses: Record<number, "release" | "hold" | undefined>; mainId: string; onPick?: (i: number) => void }) {
   return (
     <group position={[9.6, 0, 2.6]} rotation={[0, -Math.PI / 2, 0]}>
       <Bench position={[0, 0, 0]} w={3} />
@@ -379,10 +517,9 @@ function BatchBench({ count, statuses, onPick }: { count: number; statuses: Reco
               <cylinderGeometry args={[0.26, 0.18, 0.14, 20]} />
               <meshStandardMaterial color={st === "release" ? "#A5D6A7" : st === "hold" ? "#EF9A9A" : "#FFFFFF"} roughness={0.3} />
             </mesh>
-            <mesh position={[0, 1.08, 0]}>
-              <sphereGeometry args={[0.16, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
-              <meshStandardMaterial color="#B97A45" roughness={0.8} />
-            </mesh>
+            <group position={[0, 1.04, 0]}>
+              <IngredientPieces id={mainId} radius={0.14} height={0.08} seed={i * 11 + 5} />
+            </group>
             <Sign lines={[`BATCH ${i + 1}`]} position={[0, 0.7, 0.56]} w={0.6} h={0.2} bg="#FFF5EE" fg="#2F1C1A" />
           </group>
         );
@@ -481,6 +618,7 @@ function Rig({ focus, interactive }: { focus: Focus; interactive: boolean }) {
 export type LabProps = {
   focus: Focus;
   interactive: boolean;
+  mainId: string;
   picked: string[];
   parts: { id: string; pct: number }[];
   inspected: string[];
@@ -514,11 +652,11 @@ export default function Lab3D(p: LabProps) {
       <Room />
       <IngredientWall picked={p.picked} inspected={p.inspected} onPick={p.onJar} />
       <MixingBowl parts={p.parts} />
-      <Crates lots={p.lots} decided={p.lotDecisions} onPick={p.onLot} />
-      <SortTray items={p.tray} removed={p.removed} onPick={p.onTray} />
+      <Crates lots={p.lots} decided={p.lotDecisions} mainId={p.mainId} onPick={p.onLot} />
+      <SortTray items={p.tray} removed={p.removed} mainId={p.mainId} onPick={p.onTray} />
       <PrepStation ppe={p.ppe} onPick={p.onPrep} />
       <Roaster heat={p.heat} doneness={p.doneness} />
-      <BatchBench count={p.batches} statuses={p.batchStatus} onPick={p.onBatch} />
+      <BatchBench count={p.batches} statuses={p.batchStatus} mainId={p.mainId} onPick={p.onBatch} />
       <PackStation chosen={p.pack} onPick={p.onPack} labelUrl={p.labelUrl} />
     </Canvas>
   );

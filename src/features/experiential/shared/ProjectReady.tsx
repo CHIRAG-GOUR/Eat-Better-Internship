@@ -45,6 +45,7 @@ export function ProjectReady({
   reflectionPrompt,
   downloads,
   submitWhat,
+  files,
 }: {
   student: Student;
   setStudent: (s: Student) => void;
@@ -53,6 +54,8 @@ export function ProjectReady({
   reflectionPrompt: string;
   downloads: Download[];
   submitWhat: string;
+  /** exact file names the student will upload, shown as a checklist */
+  files?: string[];
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [made, setMade] = useState<Record<string, boolean>>({});
@@ -132,12 +135,33 @@ export function ProjectReady({
         )}
         {Object.keys(made).length > 0 && <p className="mt-3 text-[0.92rem] text-cream/90">File created. Check your downloads folder.</p>}
         {err && <p className="mt-3 text-[0.92rem] text-[#ffb4a8]">{err}</p>}
-        <div className="mt-4 rounded-2xl border border-cream/20 p-4">
-          <div className="flex items-center gap-2 font-bold text-haldi">
-            <Upload className="size-4" /> What to submit
+        <div className="mt-4 rounded-2xl border-2 border-haldi/70 bg-cream/5 p-4">
+          <div className="flex items-center gap-2 font-display text-[1.15rem] font-semibold text-haldi">
+            <Upload className="size-5" /> Submit it on the SkilliZee portal
           </div>
           <p className="mt-1 text-[0.95rem] leading-snug text-cream/90">{submitWhat}</p>
-          <p className="mt-2 text-[0.88rem] text-cream/70">Upload the downloaded files yourself in the next submission chapter on the SkilliZee portal. This page does not submit anything for you.</p>
+          <ol className="mt-3 grid gap-2 text-[0.95rem] leading-snug text-cream">
+            {[
+              `Download ${downloads.length > 1 ? "every file above" : "the file above"} and keep ${downloads.length > 1 ? "them" : "it"} on your device.`,
+              "Open your SkilliZee learning portal and go to the next chapter: the submission chapter for this activity.",
+              `Upload ${downloads.length > 1 ? `all ${downloads.length} files` : "the file"} there and press submit.`,
+            ].map((t, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="grid size-6 shrink-0 place-items-center rounded-full bg-haldi text-[0.8rem] font-extrabold text-cocoa">{i + 1}</span>
+                <span>{t}</span>
+              </li>
+            ))}
+          </ol>
+          {files && files.length > 0 && (
+            <ul className="mt-3 grid gap-1 rounded-xl bg-black/20 p-3 text-[0.82rem] text-cream/85">
+              {files.map((f) => (
+                <li key={f} className="flex items-center gap-2 break-all">
+                  <FileText className="size-3.5 shrink-0 text-haldi" /> {f}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-[0.85rem] text-cream/70">This page does not submit anything for you. Your work is only submitted when you upload it on the portal.</p>
         </div>
       </motion.div>
     </div>

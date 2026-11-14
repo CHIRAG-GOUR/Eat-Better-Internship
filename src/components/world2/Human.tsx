@@ -28,6 +28,10 @@ export type HumanLook = {
   bag?: { kind: "backpack" | "sling" | "shoulder"; color: string };
   /** open-face helmet colour (riders) */
   helmet?: string;
+  /** food-safety kit (Experiential Activity 1): hairnet over the hair, surgical mask, coloured gloves */
+  hairnet?: boolean;
+  mask?: string;
+  gloves?: string;
   /** body scale, 1 ≈ 1.7 m */
   height?: number;
   /** slimmer, narrower shoulders */
@@ -93,6 +97,10 @@ function makeGeos() {
     strap: new THREE.BoxGeometry(0.035, 0.62, 0.012),
     bag: new THREE.BoxGeometry(0.2, 0.17, 0.08),
     hood: new THREE.SphereGeometry(0.11, 14, 10),
+    hairnet: new THREE.SphereGeometry(0.123, 28, 16, 0, Math.PI * 2, 0, Math.PI * 0.6),
+    netBand: new THREE.TorusGeometry(0.113, 0.006, 6, 40),
+    mask: new THREE.SphereGeometry(0.112, 24, 12, Math.PI * 0.5 - 0.95, 1.9, Math.PI * 0.5, Math.PI * 0.3),
+    loop: new THREE.TorusGeometry(0.05, 0.003, 4, 20, Math.PI),
   };
 }
 const geos = () => (G ??= makeGeos());
@@ -218,7 +226,21 @@ export function Human({ look, mode = "walk", speed = 1, phase = 0, lean }: { loo
             <mesh geometry={g.visor} material={mat("#1E2A33", 0.1, 0.6, 0.55)} position={[0, 0.012, 0.0]} rotation={[0, -Math.PI / 2, 0]} />
           </>
         ) : (
-          <Hair look={L} hair={hair} />
+          <Hair look={L.hairnet ? { ...L, hairStyle: "short" } : L} hair={hair} />
+        )}
+        {L.hairnet && (
+          <>
+            <mesh geometry={g.hairnet} material={mat("#F4F8FB", 0.95, 0, 0.93)} position={[0, 0.014, -0.012]} scale={[0.98, 1.06, 1.08]} castShadow />
+            <mesh geometry={g.netBand} material={mat("#DDE7EE", 0.9)} position={[0, 0.0, -0.012]} rotation={[Math.PI / 2 + 0.18, 0, 0]} scale={[0.98, 1.06, 1]} />
+          </>
+        )}
+        {L.mask && (
+          <>
+            <mesh geometry={g.mask} material={mat(L.mask, 0.85)} position={[0, -0.032, 0.006]} scale={[0.86, 0.9, 0.97]} />
+            {[-1, 1].map((x) => (
+              <mesh key={x} geometry={g.loop} material={mat("#E8EEF2", 0.9)} position={[x * 0.088, -0.012, -0.004]} rotation={[0, Math.PI / 2, Math.PI / 2]} />
+            ))}
+          </>
         )}
       </>
     ),
@@ -289,7 +311,7 @@ export function Human({ look, mode = "walk", speed = 1, phase = 0, lean }: { loo
               <mesh geometry={g.upper} material={L.outfit === "saree" ? accent : top} position={[0, -0.15, 0]} castShadow />
               <group ref={el as React.RefObject<THREE.Group>} position={[0, -0.3, 0]}>
                 <mesh geometry={g.fore} material={longSleeve ? top : skin} position={[0, -0.13, 0]} castShadow />
-                <mesh geometry={g.hand} material={skin} position={[0, -0.28, 0.008]} scale={[0.036, 0.062, 0.026]} />
+                <mesh geometry={g.hand} material={L.gloves ? mat(L.gloves, 0.45) : skin} position={[0, -0.28, 0.008]} scale={L.gloves ? [0.04, 0.066, 0.03] : [0.036, 0.062, 0.026]} />
               </group>
             </group>
           ))}

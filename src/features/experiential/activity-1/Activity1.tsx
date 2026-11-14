@@ -5,7 +5,8 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Check, ChevronRight, Download, FlaskConical, Info, Maximize, Minimize, PackageCheck, RotateCcw, ShieldCheck, Star, TriangleAlert, X } from "lucide-react";
-import { CATEGORIES, CHECKPOINTS, CONSUMERS, FLAVOURS, ING, INGREDIENTS, rng, type CheckpointId } from "./data";
+import { CATEGORIES, CHECKPOINTS, CONSUMERS, FLAVOURS, ING, INGREDIENTS, REFERENCE, rng, type CheckpointId } from "./data";
+import { IngredientIcon } from "./IngredientIcon";
 import { useLab } from "./store";
 import { drawLabel } from "./label";
 import type { Focus, Lot, PackOption, TrayItem } from "./Lab3D";
@@ -16,7 +17,7 @@ const Lab3D = dynamic(() => import("./Lab3D"), { ssr: false, loading: () => <div
 
 const STAGES = ["Discover", "Ingredients", "Build", "Quality line", "Label", "Project"];
 const ALLERGENS = ["Tree nuts", "Peanut", "Milk", "Gluten (wheat)", "Soy", "Sesame"];
-const allergenOf = (id: string) => (ING[id]?.allergen?.startsWith("Tree nuts") ? "Tree nuts" : ING[id]?.allergen === "Peanut" ? "Peanut" : null);
+const allergenOf = (id: string) => ING[id]?.allergen ?? null;
 
 type Fb = { tone: "good" | "bad" | "info"; text: string } | null;
 
@@ -181,7 +182,11 @@ export default function Activity1() {
     const need = cat.check(p.parts.map((x) => x.id));
     if (need) blocking.push(need);
   }
-  if (cat && flav && cat.taste !== flav.taste) blocking.push(`A ${flav.taste} flavour on a ${cat.taste} ${cat.name.toLowerCase()} will confuse the customer. Pick a ${cat.taste} flavour.`);
+  if (cat && flav && cat.taste !== "any" && cat.taste !== flav.taste) blocking.push(`A ${flav.taste} flavour on a ${cat.taste} ${cat.name.toLowerCase()} will confuse the customer. Pick a ${cat.taste} flavour.`);
+  if (flav) {
+    const missing = flav.needs.filter((n) => !p.parts.some((x) => x.id === n));
+    if (missing.length) blocking.push(`A “${flav.name}” snack must contain ${missing.map((m) => ING[m].name.toLowerCase()).join(" and ")}. What the pack says must be in the pack.`);
+  }
   if (p.parts.length && total !== 100) blocking.push(`Your proportions add up to ${total}%. A recipe must add up to exactly 100%.`);
   if (p.parts.length && ["flavour"].includes(ING[main]?.group)) blocking.push("A flavouring can't be the main ingredient. Raise your base, nut or sweetener.");
   const advice: string[] = [];
@@ -190,6 +195,7 @@ export default function Activity1() {
   const highCost = p.parts.filter((x) => ING[x.id].cost === "High").reduce((a, x) => a + x.pct, 0);
   if (highCost >= 50) advice.push(`About ${highCost}% of your recipe is high-cost ingredients, so expect a premium price tier.`);
   if (p.parts.some((x) => ING[x.id].protein === "High")) advice.push("Protein-rich ingredients support a protein message, but only claim what lab testing proves.");
+  const ref = p.category && p.flavour ? REFERENCE[`${p.category}:${p.flavour}`] : undefined;
   const buildReady = !!cat && p.parts.length >= 3 && !blocking.length && !!flav && !!p.consumer && p.name.trim().length >= 3 && p.concept.trim().split(/\s+/).length >= 8;
 
   const toggleIng = (id: string) => {
@@ -324,6 +330,7 @@ export default function Activity1() {
       { kind: "bullets", items: ["Explain what each ingredient does in a snack and why a brand chooses it.", "Build a formulation that keeps Eat Better's brand promises (no palm oil, no refined sugar, roasted not fried).", "Run the six quality checkpoints and justify accept / reject / hold decisions.", "Create a label that declares ingredients in order, allergens, net quantity, storage and the FSSAI section."] },
       { kind: "h", text: "My product concept (student-created)" },
       { kind: "kv", rows: [["Product name", p.name], ["Category", cat?.name ?? "-"], ["Flavour", flav?.name ?? "-"], ["Target consumer", CONSUMERS.find((c) => c.id === p.consumer)?.name ?? "-"], ["Concept", p.concept]] },
+      ...(ref ? ([{ kind: "h", text: "Reference: a real Eat Better product" }, { kind: "p", text: `I compared my recipe with ${ref.product} (official product photos from eatbetterco.com).` }] as ReportBlock[]) : []),
       { kind: "h", text: "Selected ingredients and formulation" },
       { kind: "table", head: ["Ingredient", "Share (simulated)", "Role", "Allergen"], rows: [...p.parts].sort((a, b) => b.pct - a.pct).map((x) => [ING[x.id].name, `${x.pct}%`, ING[x.id].role, ING[x.id].allergen ?? "-"]), widths: [42, 28, 74, 30] },
       { kind: "p", muted: true, text: "Proportions are a student simulation, not an Eat Better Co formulation." },
@@ -334,7 +341,7 @@ export default function Activity1() {
       { kind: "h", text: "Packaging and label design" },
       { kind: "image", dataUrl: finalLabel, w: 95, h: 126.7, caption: "My back-of-pack label (student concept, simulated)" },
       { kind: "h", text: "Compliance considerations" },
-      { kind: "bullets", items: ["Ingredients are listed in descending order of weight, with percentages.", `Allergens declared: ${s.label.allergens.length ? s.label.allergens.join(", ") : "none"}.`, `Net quantity: ${s.label.netQty} g. Storage: ${s.label.storage}. Best before: ${s.label.bestBefore}.`, "Vegetarian symbol shown; nutrition values are placeholders until laboratory analysis.", "A real pack must carry the FSSAI logo and licence number. This student label has none: it is a learning simulation, not regulatory approval or an official Eat Better product."] },
+      { kind: "bullets", items: ["Ingredients are listed in descending order of weight, with percentages.", `Allergens declared: ${s.label.allergens.length ? s.label.allergens.join(", ") : "none"}.`, `Net quantity: ${s.label.netQty} g. Storage: ${s.label.storage.trim().replace(/\.$/, "")}. Best before: ${s.label.bestBefore.trim().replace(/\.$/, "")}.`, "Vegetarian symbol shown; nutrition values are placeholders until laboratory analysis.", "A real pack must carry the FSSAI logo and licence number. This student label has none: it is a learning simulation, not regulatory approval or an official Eat Better product."] },
       { kind: "h", text: "Final quality assessment (simulation)" },
       { kind: "callout", tone: "good", text: `Quality score ${score}/100: ${checkMistakes} mistake(s) across the six checkpoints, each corrected before the batch could move on. Status: approved for simulated packaging only.` },
       { kind: "h", text: "My reflection: What did I learn?" },
@@ -391,6 +398,7 @@ export default function Activity1() {
             <Lab3D
               focus={focus}
               interactive={stage > 0}
+              mainId={main}
               picked={pickedIds}
               parts={p.parts}
               inspected={s.inspected}
@@ -465,10 +473,13 @@ export default function Activity1() {
             <div>
               <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.14em] text-orange">Learn & explore · ingredient intelligence</div>
               <h2 className="mt-1 font-display text-[1.5rem] font-semibold">What does each ingredient do?</h2>
-              <p className="mt-1 text-[0.98rem] text-cocoa-2">Tap jars on the wall (or below). Inspect at least 8, including all three that break a brand promise, to unlock the formulation bench.</p>
+              <p className="mt-1 text-[0.98rem] text-cocoa-2">Tap jars on the wall (or below). Inspect at least 10 of the {INGREDIENTS.length}, including all three that break a brand promise, to unlock the formulation bench.</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {INGREDIENTS.map((i) => (
-                  <button key={i.id} onClick={() => (s.inspect(i.id), setSel(i.id))} className={`rounded-full border px-3 py-1 text-[0.85rem] font-bold ${sel === i.id ? "border-orange bg-orange text-white" : s.inspected.includes(i.id) ? (i.breaks ? "border-error/40 bg-error/10 text-error" : "border-success/40 bg-success/10 text-success") : "border-cocoa/15 bg-white text-cocoa"}`}>
+                  <button key={i.id} onClick={() => (s.inspect(i.id), setSel(i.id))} className={`flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-3 text-[0.85rem] font-bold ${sel === i.id ? "border-orange bg-orange text-white" : s.inspected.includes(i.id) ? (i.breaks ? "border-error/40 bg-error/10 text-error" : "border-success/40 bg-success/10 text-success") : "border-cocoa/15 bg-white text-cocoa"}`}>
+                    <span className="grid size-7 place-items-center rounded-full bg-white">
+                      <IngredientIcon id={i.id} size={24} />
+                    </span>
                     {i.name}
                   </button>
                 ))}
@@ -476,7 +487,9 @@ export default function Activity1() {
               {sel && (
                 <motion.div key={sel} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className={`mt-4 rounded-2xl border-2 p-4 ${ING[sel].breaks ? "border-error/40 bg-error/5" : "border-cocoa/10 bg-cream"}`}>
                   <div className="flex items-center gap-3">
-                    <span className="size-10 rounded-full border border-cocoa/20" style={{ background: ING[sel].color }} />
+                    <span className="grid size-16 shrink-0 place-items-center rounded-2xl bg-white ring-1 ring-cocoa/10">
+                      <IngredientIcon id={sel} size={52} title={ING[sel].name} />
+                    </span>
                     <div>
                       <div className="font-display text-[1.25rem] font-semibold">{ING[sel].name}</div>
                       <div className="text-[0.9rem] text-cocoa-2">{ING[sel].role}</div>
@@ -502,9 +515,9 @@ export default function Activity1() {
               )}
               <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-[0.92rem] font-bold text-cocoa-2">
-                  Inspected {s.inspected.length}/13 · promise-breakers found {s.inspected.filter((i) => ING[i].breaks).length}/3
+                  Inspected {s.inspected.length}/{INGREDIENTS.length} · promise-breakers found {s.inspected.filter((i) => ING[i].breaks).length}/3
                 </span>
-                <button disabled={s.inspected.length < 8 || s.inspected.filter((i) => ING[i].breaks).length < 3} onClick={() => go(2)} className={primary}>
+                <button disabled={s.inspected.length < 10 || s.inspected.filter((i) => ING[i].breaks).length < 3} onClick={() => go(2)} className={primary}>
                   To the formulation bench <ArrowRight className="size-4" />
                 </button>
               </div>
@@ -531,7 +544,10 @@ export default function Activity1() {
               <div className="mt-4 text-[0.85rem] font-extrabold uppercase tracking-[0.1em] text-cocoa-2">2 · Ingredients (tap jars or chips, at least 3)</div>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {INGREDIENTS.map((i) => (
-                  <button key={i.id} onClick={() => toggleIng(i.id)} aria-pressed={pickedIds.includes(i.id)} className={`rounded-full border px-3 py-1 text-[0.85rem] font-bold ${pickedIds.includes(i.id) ? (i.breaks ? "border-error bg-error text-white" : "border-orange bg-orange text-white") : "border-cocoa/15 bg-white"}`}>
+                  <button key={i.id} onClick={() => toggleIng(i.id)} aria-pressed={pickedIds.includes(i.id)} className={`flex items-center gap-1.5 rounded-full border py-0.5 pl-1 pr-3 text-[0.85rem] font-bold ${pickedIds.includes(i.id) ? (i.breaks ? "border-error bg-error text-white" : "border-orange bg-orange text-white") : "border-cocoa/15 bg-white"}`}>
+                    <span className="grid size-7 place-items-center rounded-full bg-white">
+                      <IngredientIcon id={i.id} size={24} />
+                    </span>
                     {i.name}
                   </button>
                 ))}
@@ -548,7 +564,10 @@ export default function Activity1() {
                   <div className="mt-2 grid gap-2">
                     {p.parts.map((x) => (
                       <label key={x.id} className="grid grid-cols-[minmax(0,9rem)_1fr_3rem] items-center gap-2 text-[0.9rem]">
-                        <span className="truncate font-bold">{ING[x.id].name}</span>
+                        <span className="flex min-w-0 items-center gap-1.5 font-bold">
+                          <IngredientIcon id={x.id} size={22} />
+                          <span className="truncate">{ING[x.id].name}</span>
+                        </span>
                         <input type="range" min={0} max={90} step={5} value={x.pct} onChange={(e) => s.setProduct({ parts: p.parts.map((y) => (y.id === x.id ? { ...y, pct: +e.target.value } : y)) })} className="accent-orange" aria-label={`${ING[x.id].name} share`} />
                         <span className="text-right tabular-nums">{x.pct}%</span>
                       </label>
@@ -565,7 +584,7 @@ export default function Activity1() {
                     <option value="">Choose…</option>
                     {FLAVOURS.map((f) => (
                       <option key={f.id} value={f.id}>
-                        {f.name} ({f.taste})
+                        {f.name} ({f.taste}: needs {f.needs.map((n) => ING[n].name.split(" (")[0].toLowerCase()).join(" + ")})
                       </option>
                     ))}
                   </select>
@@ -590,6 +609,22 @@ export default function Activity1() {
                   <textarea value={p.concept} onChange={(e) => s.setProduct({ concept: e.target.value })} rows={2} className="rounded-xl border border-cocoa/20 px-3 py-2 font-normal" />
                 </label>
               </div>
+
+              {ref && (
+                <div className="mt-4 rounded-2xl bg-cream p-3">
+                  <div className="text-[0.85rem] font-extrabold uppercase tracking-[0.1em] text-cocoa-2">Compare with a real Eat Better product</div>
+                  <div className="mt-1 font-display text-[1.05rem] font-semibold">{ref.product}</div>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                    <div className="relative aspect-square overflow-hidden rounded-xl">
+                      <Image src={ref.texture} alt={ref.product} fill sizes="200px" className="object-cover" />
+                    </div>
+                    <div className="relative aspect-square overflow-hidden rounded-xl">
+                      <Image src={ref.ingredients} alt={`${ref.product}: ingredients`} fill sizes="200px" className="object-cover" />
+                    </div>
+                  </div>
+                  <p className="mt-1.5 text-[0.82rem] text-cocoa-2">Official product photos from eatbetterco.com. See what is in it, then decide what goes in yours.</p>
+                </div>
+              )}
 
               <div className="mt-4 rounded-2xl border border-cocoa/10 p-3">
                 <div className="flex items-center gap-2 font-display text-[1.05rem] font-semibold">
@@ -937,9 +972,10 @@ export default function Activity1() {
                     // eslint-disable-next-line @next/next/no-img-element -- generated data URL preview
                     <img src={labelUrl} alt="Preview of your label" className="w-full rounded-xl border border-cocoa/15 shadow" />
                   )}
-                  <button disabled={!labelUrl} onClick={() => labelUrl && downloadDataUrl(labelUrl, `EatBetter-SkilliZee-Label-${(p.name || "snack").replace(/\s+/g, "-")}.png`)} className={`${secondary} mt-2 w-full !text-[0.85rem]`}>
+                  <button disabled={!labelUrl || !labelOk} title={labelOk ? undefined : "Complete every label check first"} onClick={() => labelUrl && labelOk && downloadDataUrl(labelUrl, `EatBetter-SkilliZee-Label-${(p.name || "snack").replace(/\s+/g, "-")}.png`)} className={`${secondary} mt-2 w-full !text-[0.85rem]`}>
                     <Download className="size-4" /> Label PNG
                   </button>
+                  {!labelOk && <p className="mt-1 text-center text-[0.78rem] text-cocoa-2">Unlocks when every check is green.</p>}
                 </div>
               </div>
               <div className="mt-4 flex justify-between gap-2">
@@ -986,6 +1022,7 @@ export default function Activity1() {
                   setReflection={s.setReflection}
                   reflectionPrompt="What did I learn about building and quality-checking a snack?"
                   submitWhat="Your Product Innovation & Quality Report (PDF) and your product label (PNG)."
+                  files={[`EatBetter-SkilliZee-Product-Innovation-Report-${(student.name || "student").replace(/\s+/g, "-")}.pdf`, `EatBetter-SkilliZee-Label-${(p.name || "snack").replace(/\s+/g, "-")}.png`]}
                   downloads={[
                     { label: "Download Report (PDF)", sub: "Product Innovation & Quality Report", kind: "pdf", run: report },
                     { label: "Download Label (PNG)", sub: "Your back-of-pack label", kind: "png", run: () => downloadDataUrl(drawLabel({ ...p, parts: [...p.parts].sort((a, b) => b.pct - a.pct) }, s.label, student.name), `EatBetter-SkilliZee-Label-${(p.name || "snack").replace(/\s+/g, "-")}.png`) },
