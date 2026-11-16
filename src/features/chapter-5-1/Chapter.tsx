@@ -11,30 +11,24 @@ import { CHAPTER } from "./content";
 import { GLOSSARY_5_1 } from "./glossary";
 import {
   GTMFramework,
-  RecommendedTools,
-  RubricSection,
-  TaskAOverview,
-  TrackSelector,
-  WrapUp,
+  RecommendedToolsAndRubric,
+  TaskABriefAndTracks,
 } from "./sections";
 
 const World = dynamic(() => import("./three/World"), { ssr: false, loading: () => null });
 
 const SECTIONS: ProgressSection[] = [
   { id: "intro", label: "Introduction" },
-  { id: "task-a-overview", label: "Task A Overview" },
-  { id: "track-selector", label: "5 Project Tracks" },
-  { id: "gtm-framework", label: "6-Pillar Blueprint" },
-  { id: "recommended-tools", label: "Execution Tools" },
-  { id: "rubric", label: "Grading Rubric" },
-  { id: "wrap-up", label: "Wrap-up" },
+  { id: "task-a-tracks", label: "Brief & 5 Tracks" },
+  { id: "gtm-blueprint", label: "6-Pillar Blueprint" },
+  { id: "tools-and-rubric", label: "Tools & Rubric" },
 ];
 
 export default function Chapter() {
   return (
     <GlossaryProvider entries={GLOSSARY_5_1}>
       <a
-        href="#task-a-overview"
+        href="#task-a-tracks"
         className="sr-only z-50 rounded-lg bg-cocoa px-4 py-2 text-cream focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
       >
         Skip to chapter content
@@ -53,12 +47,9 @@ export default function Chapter() {
           subtitle={CHAPTER.subtitle}
           objective={CHAPTER.objective}
         />
-        <TaskAOverview />
-        <TrackSelector />
+        <TaskABriefAndTracks />
         <GTMFramework />
-        <RecommendedTools />
-        <RubricSection />
-        <WrapUp />
+        <RecommendedToolsAndRubric />
       </main>
     </GlossaryProvider>
   );

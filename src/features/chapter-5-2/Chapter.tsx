@@ -10,27 +10,25 @@ import { WorldShell } from "@/components/world/WorldShell";
 import { CHAPTER } from "./content";
 import { GLOSSARY_5_2 } from "./glossary";
 import {
-  RecommendedStorefrontTools,
-  StorefrontBlueprint,
-  SubmissionChecklist,
-  TaskBOverview,
+  RecommendedStorefrontToolsAndChecklist,
+  StorefrontPillars,
+  TaskBStorefrontHub,
 } from "./sections";
 
 const World = dynamic(() => import("./three/World"), { ssr: false, loading: () => null });
 
 const SECTIONS: ProgressSection[] = [
   { id: "intro", label: "Introduction" },
-  { id: "task-b-overview", label: "Storefront Mission" },
-  { id: "storefront-blueprint", label: "4 Storefront Pillars" },
-  { id: "recommended-tools", label: "Storefront Tools" },
-  { id: "submission-checklist", label: "Checklist & Graduation" },
+  { id: "storefront-hub", label: "Storefront Types" },
+  { id: "storefront-pillars", label: "4 Storefront Pillars" },
+  { id: "tools-and-checklist", label: "Tools & Graduation" },
 ];
 
 export default function Chapter() {
   return (
     <GlossaryProvider entries={GLOSSARY_5_2}>
       <a
-        href="#task-b-overview"
+        href="#storefront-hub"
         className="sr-only z-50 rounded-lg bg-cocoa px-4 py-2 text-cream focus:not-sr-only focus:fixed focus:left-3 focus:top-3"
       >
         Skip to chapter content
@@ -49,10 +47,9 @@ export default function Chapter() {
           subtitle={CHAPTER.subtitle}
           objective={CHAPTER.objective}
         />
-        <TaskBOverview />
-        <StorefrontBlueprint />
-        <RecommendedStorefrontTools />
-        <SubmissionChecklist />
+        <TaskBStorefrontHub />
+        <StorefrontPillars />
+        <RecommendedStorefrontToolsAndChecklist />
       </main>
     </GlossaryProvider>
   );
