@@ -34,7 +34,7 @@ export const STOREFRONT_ARCHETYPES: StorefrontArchetype[] = [
     tagline: "A dedicated, conversion-focused product page for a hero snack variant.",
     badge: "Hero Innovation",
     idealFor: "Interns who designed a specific healthy snack or sweet variant in Task A.",
-    heroImg: `${LIB}/products/hero-chana.webp`,
+    heroImg: "/chapter-5-2/storefront-product-launch.jpg",
     description:
       "A high-impact direct-to-consumer product detail page (PDP) that sells the problem-solution story: ditching fake 'diet' snacks for 100% wholesome Jaipur-made clean indulgence.",
     keySections: [
@@ -52,7 +52,7 @@ export const STOREFRONT_ARCHETYPES: StorefrontArchetype[] = [
     tagline: "A premium luxury storefront for Diwali, Rakhi, and corporate hampers.",
     badge: "High AOV Track",
     idealFor: "Interns who developed the Festive Gifting Hamper in Task A.",
-    heroImg: `${LIB}/site/home-banner-hampers-sold-out.webp`,
+    heroImg: "/chapter-5-2/storefront-gifting-boutique.jpg",
     description:
       "An elegant digital boutique highlighting festive craftsmanship, gold-embossed packaging, personalized gift notes, and corporate bulk ordering inquiry workflows.",
     keySections: [
@@ -70,7 +70,7 @@ export const STOREFRONT_ARCHETYPES: StorefrontArchetype[] = [
     tagline: "A multi-product category showcase connecting sweet and savory lines.",
     badge: "Catalog Expansion",
     idealFor: "Interns launching a full product family or city-specific regional catalog.",
-    heroImg: `${LIB}/site/home-banner-shark-tank-laddoo.webp`,
+    heroImg: "/chapter-5-2/storefront-category-collection.jpg",
     description:
       "A rich e-commerce catalog layout with smart category filters (Guilt-Free Sweets, Savory Crunch, Protein Seeds, Festive Hampers), quick-view modals, and cart cross-sells.",
     keySections: [

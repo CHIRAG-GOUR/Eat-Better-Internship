@@ -78,55 +78,86 @@ export function TaskBOverview() {
           </div>
         </div>
 
-        {/* Archetype Selector Tabs */}
+        {/* Archetype Selector Cards with Generated Images */}
         <div className="mt-8">
           <div className="flex items-center justify-between">
             <h3 className="font-display text-[1.25rem] font-bold text-cocoa">
               Select Your Storefront Type
             </h3>
             <span className="text-[0.82rem] font-bold text-orange">
-              3 Archetypes Available
+              3 Archetypes Available · Click to inspect blueprint
             </span>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            {STOREFRONT_ARCHETYPES.map((arch) => (
-              <button
-                key={arch.id}
-                onClick={() => setActiveArchetypeId(arch.id)}
-                className={`rounded-xl px-4 py-2.5 text-[0.88rem] font-bold transition-all ${
-                  arch.id === activeArchetypeId
-                    ? "bg-cocoa text-cream shadow-[2px_2px_0_0_#ff5c00]"
-                    : "bg-white text-cocoa border border-cocoa/20 hover:bg-peach/30"
-                }`}
-              >
-                {arch.title}
-              </button>
-            ))}
+          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+            {STOREFRONT_ARCHETYPES.map((arch) => {
+              const isSelected = arch.id === activeArchetypeId;
+              return (
+                <button
+                  key={arch.id}
+                  onClick={() => setActiveArchetypeId(arch.id)}
+                  className={`group flex flex-col overflow-hidden rounded-[20px] border-2 text-left transition-all ${
+                    isSelected
+                      ? "border-orange bg-cream shadow-[4px_4px_0_0_#ff5c00] scale-[1.01]"
+                      : "border-cocoa/20 bg-white hover:border-cocoa/50 hover:bg-peach/20"
+                  }`}
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden bg-cocoa/5">
+                    <Image
+                      src={arch.heroImg}
+                      alt={arch.title}
+                      fill
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                    />
+                    <div className="absolute left-2.5 top-2.5 rounded-full bg-cocoa/85 px-2.5 py-0.5 text-[0.7rem] font-bold text-cream backdrop-blur-xs">
+                      {arch.badge}
+                    </div>
+                  </div>
+                  <div className="p-3.5 flex flex-col justify-between flex-1">
+                    <div>
+                      <h4 className="font-display text-[1rem] font-bold leading-tight text-cocoa">
+                        {arch.title}
+                      </h4>
+                      <p className="mt-1 text-[0.8rem] text-cocoa-2 line-clamp-2 leading-snug">
+                        {arch.tagline}
+                      </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between text-[0.76rem] font-bold">
+                      <span className={isSelected ? "text-orange" : "text-cocoa/60"}>
+                        {isSelected ? "Active Blueprint" : "Click to Explore"}
+                      </span>
+                      <ArrowRight className={`size-3.5 transition-transform ${isSelected ? "text-orange translate-x-1" : "text-cocoa/40"}`} />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
           {/* Active Archetype Showcase */}
-          <div className="mt-4 overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
+          <div className="mt-6 overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
             <div className="grid grid-cols-1 lg:grid-cols-12">
-              <div className="relative min-h-[220px] bg-cocoa/5 lg:col-span-5">
+              <div className="relative min-h-[280px] lg:min-h-[420px] bg-cocoa/5 lg:col-span-6">
                 <Image
                   src={activeArchetype.heroImg}
                   alt={activeArchetype.title}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, 40vw"
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
                 />
-                <div className="absolute left-3 top-3 rounded-full bg-cocoa/85 px-3 py-1 text-[0.75rem] font-bold text-cream backdrop-blur-sm">
-                  {activeArchetype.badge}
+                <div className="absolute left-3 top-3 rounded-full bg-cocoa/90 px-3 py-1 text-[0.76rem] font-bold text-cream backdrop-blur-sm">
+                  {activeArchetype.badge} · Full Storefront Preview
                 </div>
               </div>
 
-              <div className="flex flex-col justify-between p-6 lg:col-span-7">
+              <div className="flex flex-col justify-between p-6 lg:col-span-6">
                 <div>
                   <span className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
                     Recommended For: {activeArchetype.idealFor}
                   </span>
-                  <h4 className="mt-1 font-display text-[1.35rem] font-bold text-cocoa">
+                  <h4 className="mt-1 font-display text-[1.4rem] font-bold text-cocoa">
                     {activeArchetype.title}
                   </h4>
                   <p className="mt-2 text-[0.92rem] leading-relaxed text-cocoa-2">
@@ -148,7 +179,7 @@ export function TaskBOverview() {
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-xl border border-orange/20 bg-orange/5 p-3 text-[0.84rem] font-bold text-cocoa flex items-center gap-2">
+                <div className="mt-5 rounded-xl border border-orange/20 bg-orange/5 p-3.5 text-[0.84rem] font-bold text-cocoa flex items-center gap-2">
                   <Sparkles className="size-4 text-orange shrink-0" />
                   <span><strong>Conversion Booster:</strong> {activeArchetype.conversionFeature}</span>
                 </div>
