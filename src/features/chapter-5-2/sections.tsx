@@ -17,6 +17,7 @@ import {
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
 import { GlossaryText } from "@/components/chapter/Glossary";
+import { ToolIcon } from "@/components/ui/ToolIcon";
 import {
   FOUR_BEATS,
   PITCH_FORMATS,
@@ -422,15 +423,18 @@ export function RecommendedVideoTools() {
                 {cat.tools.map((t) => (
                   <div
                     key={t.name}
-                    className="flex flex-col justify-between rounded-2xl border border-cocoa/15 bg-white p-4 shadow-sm"
+                    className="flex flex-col justify-between rounded-2xl border border-cocoa/15 bg-white p-4 shadow-sm hover:border-cocoa/40 transition-colors"
                   >
                     <div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-display text-[1.05rem] font-bold text-cocoa">
-                          {t.name}
-                        </span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <ToolIcon id={t.id} className="size-7 shrink-0 rounded-lg" />
+                          <span className="truncate font-display text-[1.02rem] font-bold text-cocoa">
+                            {t.name}
+                          </span>
+                        </div>
                         {t.badge && (
-                          <span className="rounded bg-haldi/40 px-2 py-0.5 text-[0.7rem] font-bold text-cocoa">
+                          <span className="shrink-0 rounded bg-haldi/40 px-2 py-0.5 text-[0.7rem] font-bold text-cocoa">
                             {t.badge}
                           </span>
                         )}

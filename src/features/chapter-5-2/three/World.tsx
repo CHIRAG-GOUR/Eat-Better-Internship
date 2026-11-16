@@ -191,7 +191,7 @@ function PressPack({ x, z, rot, kit }: { x: number; z: number; rot: number; kit:
 export default function World() {
   return (
     <BoulevardWorld
-      chapter="2.4"
+      chapter="2.1"
       scenes={(kit) => (
         <>
           <Sign x={5.6} z={-6} text="CAPSTONE PITCH & MEDIA" rot={-0.6} kit={kit} />

@@ -252,6 +252,7 @@ export interface ToolCategory {
   badge: string;
   description: string;
   tools: {
+    id: string;
     name: string;
     description: string;
     highlight: string;
@@ -266,23 +267,27 @@ export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
     description: "Build a polished, 10 to 15-slide executive presentation deck to showcase your strategy.",
     tools: [
       {
+        id: "google-slides",
         name: "Google Slides",
         description: "Free, web-based, collaborative slide deck tool with seamless PDF export and cloud sharing.",
         highlight: "Best for collaborative work and simple sharing with evaluators.",
         badge: "Most Popular",
       },
       {
+        id: "canva",
         name: "Canva",
         description: "Thousands of modern pitch deck templates, product mockups, typography, and graphic elements.",
         highlight: "Best for high visual impact, beautiful packaging visuals, and campaign mockups.",
         badge: "Design Favorite",
       },
       {
+        id: "gamma",
         name: "Gamma.app / Pitch.com",
         description: "AI-accelerated deck builders that generate clean, modern layouts and executive tables in minutes.",
         highlight: "Best for ultra-fast formatting and sleek interactive web presentations.",
       },
       {
+        id: "powerpoint",
         name: "Microsoft PowerPoint",
         description: "The classic corporate presentation standard with robust chart and animation capabilities.",
         highlight: "Best for traditional desktop offline editing.",
@@ -295,12 +300,14 @@ export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
     description: "Construct your Bill of Materials (BOM), pricing calculator, and 6-month sales forecast tables.",
     tools: [
       {
+        id: "google-sheets",
         name: "Google Sheets",
         description: "Cloud spreadsheet with dynamic formulas for gross margin, contribution per unit, and AOV charts.",
         highlight: "Create your unit economics model and embed live charts into your deck.",
         badge: "Essential",
       },
       {
+        id: "excel",
         name: "Microsoft Excel",
         description: "Powerful financial workbook software for deep P&L modeling and scenario planning.",
         highlight: "Ideal for detailed margin sensitivity tables across channels.",
@@ -313,12 +320,14 @@ export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
     description: "If submitting an executive whitepaper or written proposal instead of or alongside a slide deck.",
     tools: [
       {
+        id: "notion",
         name: "Notion",
         description: "All-in-one modular workspace with database tables, toggle sections, and clean public web links.",
         highlight: "Best for building a comprehensive interactive product wiki or strategy document.",
         badge: "Modern Standard",
       },
       {
+        id: "google-docs",
         name: "Google Docs",
         description: "Standard formal business proposal editor with real-time commenting and PDF download.",
         highlight: "Clean format for standard written internship report submissions.",
@@ -331,16 +340,19 @@ export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
     description: "Bring your product packaging, social media ads, and festive hampers to life visually.",
     tools: [
       {
+        id: "canva",
         name: "Canva Pro / Free",
         description: "Drag-and-drop packaging box mockups, Instagram reel covers, and promotional banners.",
         highlight: "Instant 3D mockup generator for pouches, jars, and gift boxes.",
       },
       {
+        id: "figma",
         name: "Figma",
         description: "Professional UI and visual design canvas for custom packaging layouts and digital ad sets.",
         highlight: "Complete layout freedom for precision graphic assets.",
       },
       {
+        id: "adobe-express",
         name: "Adobe Express",
         description: "Quick asset creation, background removal, and branded campaign templates.",
         highlight: "High quality image editing and typography.",
@@ -353,13 +365,15 @@ export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
     description: "Design and circulate your 10-question healthy snacking questionnaire to 20–30 real consumers.",
     tools: [
       {
+        id: "google-forms",
         name: "Google Forms",
         description: "Free, zero friction, instantly generates visual summary pie charts and Google Sheets integration.",
         highlight: "Fastest way to collect 25+ survey responses.",
         badge: "Recommended",
       },
       {
-        name: "Tally.so / Typeform",
+        id: "typeform",
+        name: "Typeform / Tally",
         description: "Beautiful, conversational one-question-at-a-time forms with significantly higher completion rates.",
         highlight: "Best user experience for mobile respondents.",
       },
