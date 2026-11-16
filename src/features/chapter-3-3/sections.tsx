@@ -193,12 +193,13 @@ export function Profitability() {
             <div key={b.t} className="contents">
               {i > 0 && <ArrowRight className="mx-auto hidden size-6 text-orange md:block" />}
               <div
+                style={i === 2 ? { backgroundColor: "var(--eb-orange, #ff5c00)", color: "#ffffff" } : undefined}
                 className={`rounded-[22px] border border-cocoa p-4 text-center shadow-[3px_3px_0_0_#2f1c1a] ${
                   i === 2 ? "bg-orange text-white" : "bg-white text-cocoa"
                 }`}
               >
                 <div className="font-display text-[1.15rem] font-semibold">{b.t}</div>
-                <div className={`text-[0.92rem] ${i === 2 ? "text-white/90" : "text-cocoa-2"}`}>{b.s}</div>
+                <div className={`text-[0.92rem] ${i === 2 ? "text-white/95" : "text-cocoa-2"}`}>{b.s}</div>
               </div>
             </div>
           ))}

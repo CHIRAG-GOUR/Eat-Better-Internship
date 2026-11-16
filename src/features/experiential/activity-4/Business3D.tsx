@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
 import { CameraControls, RoundedBox } from "@react-three/drei";
 import { Human, type HumanLook } from "@/components/world2/Human";
 import { SKU_IDS, type SkuId } from "./data";
@@ -19,6 +19,11 @@ const VIEWS: Record<BusinessFocus, { pos: [number, number, number]; look: [numbe
   pitch: { pos: [0, 2.8, 1.8], look: [0, 1.8, -8.2] },
 };
 
+const hover = (on: boolean) => (e: ThreeEvent<PointerEvent>) => {
+  e.stopPropagation();
+  document.body.style.cursor = on ? "pointer" : "";
+};
+
 function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
   const c = document.createElement("canvas");
   c.width = w;
@@ -29,6 +34,64 @@ function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => 
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
   return t;
+}
+
+function StationSign({
+  text,
+  sub,
+  position,
+  rotation,
+  w = 2.4,
+  h = 0.6,
+  onClick,
+}: {
+  text: string;
+  sub?: string;
+  position: [number, number, number];
+  rotation?: [number, number, number];
+  w?: number;
+  h?: number;
+  onClick?: () => void;
+}) {
+  const tex = useMemo(
+    () =>
+      canvasTex(768, Math.round((768 * h) / w), (g) => {
+        const H = g.canvas.height;
+        g.fillStyle = "#2F1C1A";
+        g.fillRect(0, 0, 768, H);
+        g.fillStyle = "#E86127";
+        g.fillRect(0, 0, 16, H);
+        g.fillStyle = "#FED300";
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.font = `800 ${sub ? H * 0.42 : H * 0.55}px sans-serif`;
+        g.fillText(text, 392, sub ? H * 0.38 : H / 2, 720);
+        if (sub) {
+          g.font = `600 ${H * 0.28}px sans-serif`;
+          g.fillStyle = "#FFFFFF";
+          g.fillText(sub, 392, H * 0.76, 720);
+        }
+      }),
+    [text, sub, w, h],
+  );
+
+  useEffect(() => () => tex.dispose(), [tex]);
+
+  return (
+    <mesh
+      position={position}
+      rotation={rotation}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial map={tex} toneMapped={false} />
+    </mesh>
+  );
 }
 
 /* ── Camera Rig ───────────────────────────────────────────────────────── */
@@ -55,7 +118,6 @@ function CameraRig({ focus }: { focus: BusinessFocus }) {
 /* ── Architectural Suite Shell ────────────────────────────────────────── */
 
 function SuiteArchitecture() {
-  // Parquet wood floor texture
   const floorTex = useMemo(
     () =>
       canvasTex(512, 512, (g) => {
@@ -123,7 +185,6 @@ function SuiteArchitecture() {
           <planeGeometry args={[26, 5.6]} />
           <meshPhysicalMaterial color="#E8F4F8" transmission={0.7} roughness={0.1} thickness={0.5} transparent opacity={0.6} />
         </mesh>
-        {/* Window Frames */}
         {[-8, -4, 0, 4, 8].map((x) => (
           <mesh key={x} position={[x, 0, 0.05]}>
             <boxGeometry args={[0.15, 5.6, 0.1]} />
@@ -135,29 +196,26 @@ function SuiteArchitecture() {
   );
 }
 
-/* ── Executive Video Wall (Center Back) ─────────────────────────────────── */
+/* ── Executive Video Wall ─────────────────────────────────────────────── */
 
-function ExecutiveVideoWall() {
+function ExecutiveVideoWall({ onPick }: { onPick?: () => void }) {
   const tex = useMemo(
     () =>
       canvasTex(1024, 512, (g) => {
-        // Dark premium frame
         g.fillStyle = "#1E1210";
         g.fillRect(0, 0, 1024, 512);
 
-        // Header banner
         g.fillStyle = "#E86127";
         g.fillRect(0, 0, 1024, 60);
         g.fillStyle = "#FFFFFF";
         g.font = "bold 28px sans-serif";
         g.fillText("EAT BETTER CO — EXECUTIVE STRATEGY SUITE", 40, 42);
 
-        // Subtitle
         g.font = "18px sans-serif";
         g.fillStyle = "#C8B6A6";
         g.fillText("Pre-Series A Scale & Expansion · Prath Ventures & Spring Marketing Capital", 40, 95);
 
-        // KPI Card 1: Revenue
+        // KPI Card 1
         g.fillStyle = "#2A1B18";
         g.roundRect(40, 120, 280, 160, 16);
         g.fill();
@@ -171,7 +229,7 @@ function ExecutiveVideoWall() {
         g.font = "bold 18px sans-serif";
         g.fillText("+165% YoY Growth", 60, 255);
 
-        // KPI Card 2: Orders
+        // KPI Card 2
         g.fillStyle = "#2A1B18";
         g.roundRect(360, 120, 280, 160, 16);
         g.fill();
@@ -185,7 +243,7 @@ function ExecutiveVideoWall() {
         g.font = "bold 18px sans-serif";
         g.fillText("Orders / Month", 380, 255);
 
-        // KPI Card 3: Facility
+        // KPI Card 3
         g.fillStyle = "#2A1B18";
         g.roundRect(680, 120, 300, 160, 16);
         g.fill();
@@ -199,7 +257,7 @@ function ExecutiveVideoWall() {
         g.font = "bold 18px sans-serif";
         g.fillText("Jaipur Manufacturing Hub", 700, 255);
 
-        // Bottom graph line
+        // Bottom graph
         g.strokeStyle = "#E86127";
         g.lineWidth = 4;
         g.beginPath();
@@ -217,13 +275,19 @@ function ExecutiveVideoWall() {
   useEffect(() => () => tex.dispose(), [tex]);
 
   return (
-    <group position={[0, 3.2, -11.75]}>
-      {/* Black Bezel */}
+    <group
+      position={[0, 3.2, -11.75]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
       <mesh>
         <planeGeometry args={[7.2, 3.8]} />
         <meshBasicMaterial color="#110B0A" />
       </mesh>
-      {/* Screen */}
       <mesh position={[0, 0, 0.02]}>
         <planeGeometry args={[7.0, 3.6]} />
         <meshBasicMaterial map={tex} toneMapped={false} />
@@ -232,11 +296,21 @@ function ExecutiveVideoWall() {
   );
 }
 
-/* ── Boardroom Conference Table (Center) ────────────────────────────────── */
+/* ── Boardroom Table & Seating ─────────────────────────────────────────── */
 
-function BoardroomTable() {
+function BoardroomTable({ onPick }: { onPick?: () => void }) {
   return (
-    <group position={[0, 0, -4.5]}>
+    <group
+      position={[0, 0, -4.5]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
+      <StationSign text="PITCH & BOARDROOM" sub="Tap to enter investor due diligence" position={[0, 2.6, 0]} w={3.0} h={0.7} onClick={onPick} />
+
       {/* Walnut Tabletop */}
       <RoundedBox args={[5.2, 0.12, 2.4]} radius={0.06} smoothness={4} position={[0, 0.95, 0]} castShadow receiveShadow>
         <meshStandardMaterial color="#3A221E" roughness={0.3} metalness={0.1} />
@@ -250,7 +324,7 @@ function BoardroomTable() {
         </mesh>
       ))}
 
-      {/* Laptops & Tablets on Table */}
+      {/* Laptops */}
       {[-1.6, 0, 1.6].map((x, i) => (
         <group key={x} position={[x, 1.02, i % 2 === 0 ? 0.6 : -0.6]} rotation={[0, i % 2 === 0 ? 0 : Math.PI, 0]}>
           <mesh position={[0, 0.01, 0]}>
@@ -264,9 +338,9 @@ function BoardroomTable() {
         </group>
       ))}
 
-      {/* Executive Leather Chairs */}
+      {/* Chairs */}
       {[-1.8, -0.6, 0.6, 1.8].map((x) => (
-        <group key={`north-${x}`} position={[x, 0, -1.6]} rotation={[0, 0, 0]}>
+        <group key={`north-${x}`} position={[x, 0, -1.6]}>
           <mesh position={[0, 0.55, 0]} castShadow>
             <cylinderGeometry args={[0.26, 0.26, 0.08, 16]} />
             <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
@@ -302,9 +376,17 @@ function BoardroomTable() {
   );
 }
 
-/* ── Product Pricing Display (Right Side) ─────────────────────────────── */
+/* ── Product Pricing Display (Right) ──────────────────────────────────── */
 
-function ProductPricingDisplay({ selectedSku, onPickSku }: { selectedSku: SkuId; onPickSku: (id: SkuId) => void }) {
+function ProductPricingDisplay({
+  selectedSku,
+  onPickSku,
+  onFocusPricing,
+}: {
+  selectedSku: SkuId;
+  onPickSku: (id: SkuId) => void;
+  onFocusPricing?: () => void;
+}) {
   const colors: Record<SkuId, string> = {
     l24: "#E86127",
     l42: "#D946EF",
@@ -314,16 +396,30 @@ function ProductPricingDisplay({ selectedSku, onPickSku }: { selectedSku: SkuId;
 
   return (
     <group position={[7.5, 0, 1.5]}>
+      <StationSign
+        text="PRODUCT PRICING & BOM"
+        sub="Tap to inspect SKU economics"
+        position={[0, 2.6, 0]}
+        rotation={[0, -Math.PI / 6, 0]}
+        w={2.8}
+        h={0.65}
+        onClick={onFocusPricing}
+      />
+
       {/* Plinth Base */}
-      <mesh position={[0, 0.45, 0]} receiveShadow castShadow>
+      <mesh
+        position={[0, 0.45, 0]}
+        receiveShadow
+        castShadow
+        onClick={(e) => {
+          e.stopPropagation();
+          onFocusPricing?.();
+        }}
+        onPointerOver={hover(true)}
+        onPointerOut={hover(false)}
+      >
         <boxGeometry args={[4.2, 0.9, 2.2]} />
         <meshStandardMaterial color="#FAF6F0" roughness={0.4} />
-      </mesh>
-
-      {/* Sign Header */}
-      <mesh position={[0, 1.0, -1.05]}>
-        <boxGeometry args={[4.0, 0.18, 0.04]} />
-        <meshStandardMaterial color="#2F1C1A" />
       </mesh>
 
       {/* 4 Floating Product Pedestals */}
@@ -331,17 +427,23 @@ function ProductPricingDisplay({ selectedSku, onPickSku }: { selectedSku: SkuId;
         const x = (i - 1.5) * 0.95;
         const active = selectedSku === id;
         return (
-          <group key={id} position={[x, 0.9, 0]} onClick={() => onPickSku(id)}>
-            {/* Spotlight disc */}
+          <group
+            key={id}
+            position={[x, 0.9, 0]}
+            onClick={(e) => {
+              e.stopPropagation();
+              onPickSku(id);
+            }}
+            onPointerOver={hover(true)}
+            onPointerOut={hover(false)}
+          >
             <mesh position={[0, 0.02, 0]}>
               <cylinderGeometry args={[0.38, 0.4, 0.04, 24]} />
               <meshStandardMaterial color={active ? "#E86127" : "#E2D9CE"} roughness={0.3} />
             </mesh>
-            {/* Box mockup */}
             <RoundedBox args={[0.5, 0.25, 0.45]} radius={0.03} smoothness={3} position={[0, 0.2, 0]} castShadow>
               <meshStandardMaterial color={colors[id]} roughness={0.4} />
             </RoundedBox>
-            {/* Glow halo when active */}
             {active && (
               <mesh position={[0, 0.35, 0]}>
                 <sphereGeometry args={[0.45, 16, 16]} />
@@ -355,9 +457,9 @@ function ProductPricingDisplay({ selectedSku, onPickSku }: { selectedSku: SkuId;
   );
 }
 
-/* ── Financial Workstation (Left Side) ────────────────────────────────── */
+/* ── Financial Workstation (Left) ─────────────────────────────────────── */
 
-function FinancialWorkstation() {
+function FinancialWorkstation({ onPick }: { onPick?: () => void }) {
   const chartTex = useMemo(
     () =>
       canvasTex(512, 384, (g) => {
@@ -367,7 +469,6 @@ function FinancialWorkstation() {
         g.font = "bold 20px sans-serif";
         g.fillText("UNIT CONTRIBUTION & SG&A WATERFALL", 20, 35);
 
-        // Axis
         g.strokeStyle = "#443430";
         g.lineWidth = 2;
         g.beginPath();
@@ -375,7 +476,6 @@ function FinancialWorkstation() {
         g.lineTo(480, 320);
         g.stroke();
 
-        // Bars
         const bars = [
           { l: "AOV", h: 220, c: "#E86127" },
           { l: "COGS", h: 90, c: "#EF4444" },
@@ -399,8 +499,25 @@ function FinancialWorkstation() {
   useEffect(() => () => chartTex.dispose(), [chartTex]);
 
   return (
-    <group position={[-9.5, 0, 2.5]} rotation={[0, 0.4, 0]}>
-      {/* Desk */}
+    <group
+      position={[-9.5, 0, 2.5]}
+      rotation={[0, 0.4, 0]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
+      <StationSign
+        text="FINANCIAL WORKSTATION"
+        sub="Tap to view unit economics waterfall"
+        position={[0, 2.6, 0]}
+        w={2.8}
+        h={0.65}
+        onClick={onPick}
+      />
+
       <RoundedBox args={[3.6, 0.1, 1.6]} radius={0.04} position={[0, 0.95, 0]} castShadow>
         <meshStandardMaterial color="#EAE3D9" roughness={0.4} />
       </RoundedBox>
@@ -413,7 +530,7 @@ function FinancialWorkstation() {
         <meshStandardMaterial color="#332420" />
       </mesh>
 
-      {/* Dual Curved Screens */}
+      {/* Dual Screens */}
       <group position={[0, 1.5, -0.3]}>
         <mesh position={[-0.7, 0, 0]} rotation={[0, 0.25, 0]}>
           <planeGeometry args={[1.3, 0.8]} />
@@ -428,11 +545,29 @@ function FinancialWorkstation() {
   );
 }
 
-/* ── Jaipur 50,000 sq. ft. Hub Architectural Model (Right Back) ───────── */
+/* ── Jaipur 50,000 sq. ft. Hub Architectural Model ────────────────────── */
 
-function JaipurFacilityModel() {
+function JaipurFacilityModel({ onPick }: { onPick?: () => void }) {
   return (
-    <group position={[10.5, 0, -5.5]}>
+    <group
+      position={[10.5, 0, -5.5]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
+      <StationSign
+        text="JAIPUR 50,000 SQ. FT. HUB"
+        sub="Tap to plan capacity & expansion"
+        position={[0, 2.6, 0]}
+        rotation={[0, -Math.PI / 4, 0]}
+        w={3.0}
+        h={0.7}
+        onClick={onPick}
+      />
+
       {/* Lit Pedestal */}
       <mesh position={[0, 0.5, 0]} receiveShadow castShadow>
         <cylinderGeometry args={[2.0, 2.2, 1.0, 32]} />
@@ -447,23 +582,19 @@ function JaipurFacilityModel() {
 
       {/* Architectural Mini Hub Building */}
       <group position={[0, 1.05, 0]}>
-        {/* Main Processing Facility */}
         <RoundedBox args={[2.2, 0.45, 1.6]} radius={0.04} position={[0, 0.22, 0]} castShadow>
           <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
         </RoundedBox>
-        {/* Factory Roof Skylights & Solar */}
         <mesh position={[0, 0.46, 0]}>
           <boxGeometry args={[1.8, 0.04, 1.2]} />
           <meshStandardMaterial color="#1E293B" metalness={0.7} roughness={0.2} />
         </mesh>
-        {/* Loading Docks */}
         {[-0.6, 0, 0.6].map((x) => (
           <mesh key={x} position={[x, 0.12, 0.81]}>
             <boxGeometry args={[0.35, 0.24, 0.04]} />
             <meshStandardMaterial color="#E86127" />
           </mesh>
         ))}
-        {/* Sign */}
         <mesh position={[0, 0.38, 0.82]}>
           <boxGeometry args={[1.2, 0.08, 0.02]} />
           <meshStandardMaterial color="#2F1C1A" />
@@ -473,28 +604,26 @@ function JaipurFacilityModel() {
   );
 }
 
-/* ── Competitor Intelligence Wall (Left Wall) ─────────────────────────── */
+/* ── Competitor Intelligence Wall ─────────────────────────────────────── */
 
-function CompetitorIntelligenceWall() {
+function CompetitorIntelligenceWall({ onPick }: { onPick?: () => void }) {
   const wallTex = useMemo(
     () =>
       canvasTex(512, 512, (g) => {
         g.fillStyle = "#F5EFEB";
         g.fillRect(0, 0, 512, 512);
 
-        // Header
         g.fillStyle = "#2F1C1A";
         g.font = "bold 24px sans-serif";
         g.fillText("COMPETITIVE POSITIONING MATRIX", 30, 45);
 
-        // Axes
         g.strokeStyle = "#8A7669";
         g.lineWidth = 3;
         g.beginPath();
         g.moveTo(50, 270);
-        g.lineTo(460, 270); // X axis: Clean Label
+        g.lineTo(460, 270);
         g.moveTo(256, 70);
-        g.lineTo(256, 470); // Y axis: Familiar Taste
+        g.lineTo(256, 470);
         g.stroke();
 
         g.fillStyle = "#6B584C";
@@ -504,7 +633,6 @@ function CompetitorIntelligenceWall() {
         g.fillText("Familiar Indian Indulgence ^", 265, 95);
         g.fillText("Niche / Western Formats v", 265, 460);
 
-        // Quadrant Dots
         // Eat Better: Top Right
         g.fillStyle = "#E86127";
         g.beginPath();
@@ -544,7 +672,16 @@ function CompetitorIntelligenceWall() {
   useEffect(() => () => wallTex.dispose(), [wallTex]);
 
   return (
-    <group position={[-15.9, 2.8, -4.5]} rotation={[0, Math.PI / 2, 0]}>
+    <group
+      position={[-15.9, 2.8, -4.5]}
+      rotation={[0, Math.PI / 2, 0]}
+      onClick={(e) => {
+        e.stopPropagation();
+        onPick?.();
+      }}
+      onPointerOver={hover(true)}
+      onPointerOut={hover(false)}
+    >
       <mesh>
         <planeGeometry args={[5.2, 3.6]} />
         <meshBasicMaterial map={wallTex} toneMapped={false} />
@@ -553,7 +690,7 @@ function CompetitorIntelligenceWall() {
   );
 }
 
-/* ── 3D Executive Team (Realistic Humans) ──────────────────────────────── */
+/* ── 3D Executive Team ────────────────────────────────────────────────── */
 
 const EXECUTIVES: HumanLook[] = [
   {
@@ -595,9 +732,10 @@ export type Business3DProps = {
   focus: BusinessFocus;
   selectedSku: SkuId;
   onPickSku: (id: SkuId) => void;
+  onSelectFocus?: (f: BusinessFocus) => void;
 };
 
-export default function Business3D({ focus, selectedSku, onPickSku }: Business3DProps) {
+export default function Business3D({ focus, selectedSku, onPickSku, onSelectFocus }: Business3DProps) {
   return (
     <Canvas
       shadows
@@ -609,7 +747,6 @@ export default function Business3D({ focus, selectedSku, onPickSku }: Business3D
       <color attach="background" args={["#EDE8E2"]} />
       <fog attach="fog" args={["#EDE8E2", 22, 42]} />
 
-      {/* Lighting */}
       <hemisphereLight args={["#FFFFFF", "#968A7D", 1.1]} />
       <directionalLight
         position={[12, 16, 10]}
@@ -624,24 +761,49 @@ export default function Business3D({ focus, selectedSku, onPickSku }: Business3D
       <pointLight position={[0, 4.5, -4.5]} intensity={0.8} color="#FFF8F0" />
       <pointLight position={[7.5, 3.5, 1.5]} intensity={0.6} color="#FFEEDD" />
 
-      {/* Rig & Architecture */}
       <CameraRig focus={focus} />
       <SuiteArchitecture />
-      <ExecutiveVideoWall />
-      <BoardroomTable />
-      <ProductPricingDisplay selectedSku={selectedSku} onPickSku={onPickSku} />
-      <FinancialWorkstation />
-      <JaipurFacilityModel />
-      <CompetitorIntelligenceWall />
+      <ExecutiveVideoWall onPick={() => onSelectFocus?.("overview")} />
+      <BoardroomTable onPick={() => onSelectFocus?.("pitch")} />
+      <ProductPricingDisplay selectedSku={selectedSku} onPickSku={onPickSku} onFocusPricing={() => onSelectFocus?.("pricing")} />
+      <FinancialWorkstation onPick={() => onSelectFocus?.("finance")} />
+      <JaipurFacilityModel onPick={() => onSelectFocus?.("growth")} />
+      <CompetitorIntelligenceWall onPick={() => onSelectFocus?.("competitor")} />
 
       {/* 3D Human Strategists */}
-      <group position={[0, 0, -8.2]} rotation={[0, 0, 0]}>
+      <group
+        position={[0, 0, -8.2]}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectFocus?.("pitch");
+        }}
+        onPointerOver={hover(true)}
+        onPointerOut={hover(false)}
+      >
         <Human look={EXECUTIVES[0]} mode="stand" />
       </group>
-      <group position={[-3.2, 0, -3.8]} rotation={[0, Math.PI / 3, 0]}>
+      <group
+        position={[-3.2, 0, -3.8]}
+        rotation={[0, Math.PI / 3, 0]}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectFocus?.("finance");
+        }}
+        onPointerOver={hover(true)}
+        onPointerOut={hover(false)}
+      >
         <Human look={EXECUTIVES[1]} mode="stand" />
       </group>
-      <group position={[5.2, 0, -4.8]} rotation={[0, -Math.PI / 4, 0]}>
+      <group
+        position={[5.2, 0, -4.8]}
+        rotation={[0, -Math.PI / 4, 0]}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelectFocus?.("growth");
+        }}
+        onPointerOver={hover(true)}
+        onPointerOut={hover(false)}
+      >
         <Human look={EXECUTIVES[2]} mode="stand" />
       </group>
     </Canvas>
