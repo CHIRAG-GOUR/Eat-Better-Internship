@@ -1,30 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRight,
   Award,
-  Camera,
   CheckCircle2,
-  ChevronRight,
-  ClipboardCopy,
-  FileCheck,
-  Mic,
+  Palette,
+  PackageCheck,
+  ShoppingCart,
   Sparkles,
-  Video,
-  Volume2,
+  Store,
 } from "lucide-react";
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
-import { GlossaryText } from "@/components/chapter/Glossary";
 import { ToolIcon } from "@/components/ui/ToolIcon";
 import {
-  FOUR_BEATS,
-  PITCH_FORMATS,
-  PRODUCTION_TIPS,
+  BRAND_TOKENS,
   RECOMMENDED_TOOLS_TASK_B,
+  STOREFRONT_ARCHETYPES,
+  STOREFRONT_PILLARS,
+  SUBMISSION_CHECKLIST_TASK_B,
   TAKEAWAY_5_2,
-  VIDEO_SUBMISSION_CHECKLIST,
 } from "./content";
 
 const sectionCls = "relative scroll-mt-6 px-3 py-6 sm:px-6 sm:py-10";
@@ -32,104 +30,129 @@ const sectionCls = "relative scroll-mt-6 px-3 py-6 sm:px-6 sm:py-10";
 /* ── 1. Task B Overview ────────────────────────────────────────── */
 
 export function TaskBOverview() {
-  const [activeFormatId, setActiveFormatId] = useState<string>("founder-pitch");
+  const [activeArchetypeId, setActiveArchetypeId] = useState<string>("product-launch-pdp");
+  const activeArchetype = STOREFRONT_ARCHETYPES.find((a) => a.id === activeArchetypeId) || STOREFRONT_ARCHETYPES[0];
 
   return (
     <section id="task-b-overview" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro
           index="1"
-          kicker="Final Capstone Project · Task B"
-          title="Video Pitch / Product Review (60–90s)"
-        />
+          kicker="Executive Mission"
+          title="Task B: E-Commerce Storefront Development"
+        >
+          Building upon your strategy in Task A, design and develop a complete, visually appealing e-commerce webpage for your proposed Eat Better product or category expansion.
+        </SectionIntro>
 
-        <div className="mt-5 grid gap-6 lg:grid-cols-12">
-          <div className="lg:col-span-7 flex flex-col justify-between rounded-[24px] border border-cocoa bg-cream p-6 shadow-[3px_3px_0_0_#2f1c1a]">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-orange/30 bg-orange/10 px-3 py-1 text-[0.82rem] font-extrabold uppercase tracking-wider text-orange">
-                <Video className="size-4" /> Capstone Deliverable B Brief
-              </div>
-              <h3 className="mt-3 font-display text-[clamp(1.5rem,3vw,2.1rem)] font-bold leading-tight text-cocoa">
-                Present What You Learned About Eat Better
-              </h3>
-              <p className="mt-3 text-[1.05rem] leading-relaxed text-cocoa">
-                Create a short, persuasive <strong>60 to 90-second video pitch or product review</strong> that positively showcases your learnings and strategic thinking about Eat Better Co.
-              </p>
-              <p className="mt-2 text-[0.95rem] leading-relaxed text-cocoa-2">
-                You will record this video using your smartphone or desktop recording tools (such as Loom, CapCut, or OBS) and submit your cloud video link directly into the SkilliZee LMS portal.
-              </p>
-            </div>
-
-            <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 pt-4 border-t border-cocoa/15">
-              <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Duration</div>
-                <div className="font-display font-bold text-[1.1rem] text-cocoa">60 – 90 Seconds</div>
-                <div className="text-[0.75rem] text-cocoa-2">Concise executive limit</div>
-              </div>
-              <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Speaking Pace</div>
-                <div className="font-display font-bold text-[1.1rem] text-cocoa">130–150 WPM</div>
-                <div className="text-[0.75rem] text-cocoa-2">~140–190 spoken words</div>
-              </div>
-              <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Submission</div>
-                <div className="font-display font-bold text-[1.1rem] text-cocoa">Cloud Link</div>
-                <div className="text-[0.75rem] text-cocoa-2">Loom, YouTube, Drive</div>
-              </div>
-            </div>
+        {/* Executive Task Card */}
+        <div className="mt-6 rounded-[24px] border-2 border-cocoa bg-cream p-6 shadow-[4px_4px_0_0_#2f1c1a]">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full bg-orange px-3.5 py-1 text-[0.8rem] font-bold text-white uppercase tracking-wider">
+              Capstone Task B
+            </span>
+            <span className="rounded-full bg-haldi/50 px-3.5 py-1 text-[0.8rem] font-bold text-cocoa">
+              Digital Flagship Webstore
+            </span>
+            <span className="rounded-full bg-cocoa/10 px-3.5 py-1 text-[0.8rem] font-bold text-cocoa">
+              Built Upon Task A Strategy
+            </span>
           </div>
 
-          <div className="lg:col-span-5 flex flex-col justify-between rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
-            <div>
-              <div className="text-[0.82rem] font-bold uppercase tracking-wider text-haldi">
-                Choose 1 of 3 Presentation Angles
-              </div>
-              <h4 className="mt-2 font-display text-[1.35rem] font-semibold text-cream">
-                Select Your Video Angle
-              </h4>
-              <p className="mt-2 text-[0.88rem] text-cream/80">
-                Pick the pitch format that best highlights your strengths:
-              </p>
+          <p className="mt-4 text-[1.08rem] font-medium leading-relaxed text-cocoa">
+            Create original product packaging and product designs, showcase the products with descriptions and pricing, and build a branded shopping experience that reflects Eat Better&apos;s identity. The webpage should include product listings, product detail sections, shopping cart functionality, and a clear purchase journey, demonstrating how the proposed product would be presented and sold to customers online.
+          </p>
 
-              <div className="mt-4 space-y-2.5">
-                {PITCH_FORMATS.map((f) => {
-                  const isCurrent = f.id === activeFormatId;
-                  return (
-                    <button
-                      key={f.id}
-                      onClick={() => setActiveFormatId(f.id)}
-                      className={`w-full text-left rounded-xl p-3 transition-all ${
-                        isCurrent
-                          ? "bg-orange text-white shadow-[2px_2px_0_0_#ffffff]"
-                          : "bg-white/10 text-cream/90 hover:bg-white/15"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-[0.94rem]">{f.title}</span>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-[0.72rem] font-extrabold ${
-                            isCurrent ? "bg-white text-orange" : "bg-white/20 text-cream"
-                          }`}
-                        >
-                          {f.badge}
-                        </span>
-                      </div>
-                      <p className="mt-1 line-clamp-2 text-[0.8rem] opacity-85">
-                        {f.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4 pt-4 border-t border-cocoa/15">
+            <div className="flex items-center gap-2 text-[0.86rem] font-bold text-cocoa">
+              <PackageCheck className="size-4 text-orange shrink-0" /> Original Packaging
             </div>
+            <div className="flex items-center gap-2 text-[0.86rem] font-bold text-cocoa">
+              <Store className="size-4 text-orange shrink-0" /> Product Detail (PDP)
+            </div>
+            <div className="flex items-center gap-2 text-[0.86rem] font-bold text-cocoa">
+              <ShoppingCart className="size-4 text-orange shrink-0" /> Cart & Checkout
+            </div>
+            <div className="flex items-center gap-2 text-[0.86rem] font-bold text-cocoa">
+              <Palette className="size-4 text-orange shrink-0" /> Eat Better Brand UI
+            </div>
+          </div>
+        </div>
 
-            <div className="mt-5 pt-3 border-t border-white/10 text-center">
-              <a
-                href="#four-beats"
-                className="inline-flex items-center gap-2 rounded-xl bg-orange px-5 py-2.5 text-[0.92rem] font-bold text-white shadow hover:bg-orange/90"
+        {/* Archetype Selector Tabs */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-[1.25rem] font-bold text-cocoa">
+              Select Your Storefront Type
+            </h3>
+            <span className="text-[0.82rem] font-bold text-orange">
+              3 Archetypes Available
+            </span>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            {STOREFRONT_ARCHETYPES.map((arch) => (
+              <button
+                key={arch.id}
+                onClick={() => setActiveArchetypeId(arch.id)}
+                className={`rounded-xl px-4 py-2.5 text-[0.88rem] font-bold transition-all ${
+                  arch.id === activeArchetypeId
+                    ? "bg-cocoa text-cream shadow-[2px_2px_0_0_#ff5c00]"
+                    : "bg-white text-cocoa border border-cocoa/20 hover:bg-peach/30"
+                }`}
               >
-                Learn the 4-Beat Formula Below <ChevronRight className="size-4" />
-              </a>
+                {arch.title}
+              </button>
+            ))}
+          </div>
+
+          {/* Active Archetype Showcase */}
+          <div className="mt-4 overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
+            <div className="grid grid-cols-1 lg:grid-cols-12">
+              <div className="relative min-h-[220px] bg-cocoa/5 lg:col-span-5">
+                <Image
+                  src={activeArchetype.heroImg}
+                  alt={activeArchetype.title}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, 40vw"
+                />
+                <div className="absolute left-3 top-3 rounded-full bg-cocoa/85 px-3 py-1 text-[0.75rem] font-bold text-cream backdrop-blur-sm">
+                  {activeArchetype.badge}
+                </div>
+              </div>
+
+              <div className="flex flex-col justify-between p-6 lg:col-span-7">
+                <div>
+                  <span className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                    Recommended For: {activeArchetype.idealFor}
+                  </span>
+                  <h4 className="mt-1 font-display text-[1.35rem] font-bold text-cocoa">
+                    {activeArchetype.title}
+                  </h4>
+                  <p className="mt-2 text-[0.92rem] leading-relaxed text-cocoa-2">
+                    {activeArchetype.description}
+                  </p>
+
+                  <div className="mt-4">
+                    <span className="text-[0.82rem] font-bold uppercase tracking-wide text-cocoa">
+                      Must-Include Page Sections:
+                    </span>
+                    <ul className="mt-2 space-y-1.5">
+                      {activeArchetype.keySections.map((sec, idx) => (
+                        <li key={idx} className="flex items-start gap-2 text-[0.86rem] text-cocoa">
+                          <CheckCircle2 className="size-4 shrink-0 text-orange mt-0.5" />
+                          <span>{sec}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-xl border border-orange/20 bg-orange/5 p-3 text-[0.84rem] font-bold text-cocoa flex items-center gap-2">
+                  <Sparkles className="size-4 text-orange shrink-0" />
+                  <span><strong>Conversion Booster:</strong> {activeArchetype.conversionFeature}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -138,267 +161,145 @@ export function TaskBOverview() {
   );
 }
 
-/* ── 2. The 4-Beat Formula ─────────────────────────────────────── */
+/* ── 2. Storefront Architecture Blueprint ──────────────────────── */
 
-export function FourBeatFormula() {
+export function StorefrontBlueprint() {
+  const [activePillarIndex, setActivePillarIndex] = useState<number>(0);
+  const activePillar = STOREFRONT_PILLARS[activePillarIndex];
+
   return (
-    <section id="four-beats" className={sectionCls}>
+    <section id="storefront-blueprint" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro
           index="2"
-          kicker="Storytelling Mechanics"
-          title="The 4-Beat 90-Second Formula"
+          kicker="Storefront Anatomy"
+          title="The 4 Pillars of an Eat Better Storefront"
         >
-          High-retention video pitches follow a proven psychological progression: hook attention instantly, reveal the clean-label truth, prove your concept with numbers, and close with high energy.
+          Review the four non-negotiable architectural pillars of your e-commerce webpage before opening your design or no-code builder.
         </SectionIntro>
 
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {FOUR_BEATS.map((b) => (
-            <div
-              key={b.beat}
-              className="flex flex-col justify-between rounded-[22px] border border-cocoa bg-white p-5 shadow-[3px_3px_0_0_#2f1c1a]"
-            >
-              <div>
-                <div className="flex items-center justify-between">
-                  <span className="grid size-8 place-items-center rounded-xl bg-orange text-[0.85rem] font-bold text-white">
-                    {b.beat}
-                  </span>
-                  <span className="rounded-lg bg-peach px-2.5 py-1 text-[0.75rem] font-bold text-cocoa">
-                    {b.timing}
-                  </span>
-                </div>
-
-                <h4 className="mt-3 font-display text-[1.18rem] font-bold text-cocoa">
-                  {b.name}
-                </h4>
-                <div className="mt-1 text-[0.78rem] font-bold text-orange">
-                  {b.wordCount}
-                </div>
-                <p className="mt-3 text-[0.9rem] leading-relaxed text-cocoa-2">
-                  {b.goal}
-                </p>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-cocoa/10 bg-cream/70 p-3 text-[0.8rem] font-semibold text-cocoa">
-                <span className="text-orange font-bold mr-1">Pro Tip:</span>
-                {b.tip}
-              </div>
-            </div>
-          ))}
-        </div>
-      </Panel>
-    </section>
-  );
-}
-
-/* ── 3. Script Templates & Inspiration ─────────────────────────── */
-
-export function ScriptTemplates() {
-  const [selectedFormatId, setSelectedFormatId] = useState<string>("founder-pitch");
-  const [copied, setCopied] = useState(false);
-
-  const activeFormat = PITCH_FORMATS.find((f) => f.id === selectedFormatId) || PITCH_FORMATS[0];
-
-  const fullScript = [
-    `[Beat 1 - Hook]: "${activeFormat.sampleScript.hook}"`,
-    `[Beat 2 - Insight]: "${activeFormat.sampleScript.insight}"`,
-    `[Beat 3 - Solution]: "${activeFormat.sampleScript.solution}"`,
-    `[Beat 4 - CTA]: "${activeFormat.sampleScript.cta}"`,
-  ].join("\n\n");
-
-  const totalWords = [
-    activeFormat.sampleScript.hook,
-    activeFormat.sampleScript.insight,
-    activeFormat.sampleScript.solution,
-    activeFormat.sampleScript.cta,
-  ]
-    .join(" ")
-    .split(/\s+/).length;
-
-  const estimatedSeconds = Math.round((totalWords / 140) * 60);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(fullScript);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      //
-    }
-  };
-
-  return (
-    <section id="script-templates" className={sectionCls}>
-      <Panel tone="light" reveal="up" width="max-w-7xl">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <SectionIntro
-              index="3"
-              kicker="Script Blueprints"
-              title="Sample Pitch Scripts & Talking Points"
-            />
-            <p className="mt-1 text-[1rem] text-cocoa-2">
-              Review these sample 90-second scripts. You can copy the template into your teleprompter or notes app and adapt it with your own project numbers.
-            </p>
-          </div>
-
-          <button
-            onClick={handleCopy}
-            className="inline-flex items-center gap-2 self-start rounded-xl border border-cocoa/20 bg-white px-4 py-2 text-[0.88rem] font-bold text-cocoa hover:border-cocoa transition-all"
-          >
-            <ClipboardCopy className="size-4" />
-            {copied ? "Copied Script!" : "Copy Script Template"}
-          </button>
-        </div>
-
-        {/* Format Selector Tabs */}
-        <div className="mt-6 flex flex-wrap gap-2">
-          {PITCH_FORMATS.map((f) => (
+        {/* Pillars Tab Selector */}
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {STOREFRONT_PILLARS.map((p, i) => (
             <button
-              key={f.id}
-              onClick={() => setSelectedFormatId(f.id)}
-              className={`rounded-xl px-4 py-2 text-[0.88rem] font-bold transition-all ${
-                f.id === selectedFormatId
-                  ? "bg-cocoa text-cream shadow-[2px_2px_0_0_#ff5c00]"
-                  : "bg-white text-cocoa border border-cocoa/15 hover:bg-peach/40"
+              key={p.number}
+              onClick={() => setActivePillarIndex(i)}
+              className={`rounded-2xl border p-3.5 text-left transition-all ${
+                i === activePillarIndex
+                  ? "border-cocoa bg-cocoa text-cream shadow-[3px_3px_0_0_#ff5c00]"
+                  : "border-cocoa/20 bg-white text-cocoa hover:border-cocoa/50 hover:bg-peach/30"
               }`}
             >
-              {f.title}
+              <span className={`text-[0.75rem] font-bold ${i === activePillarIndex ? "text-orange" : "text-cocoa/60"}`}>
+                Pillar {p.number}
+              </span>
+              <h4 className="mt-1 font-display text-[0.98rem] font-bold leading-tight line-clamp-2">
+                {p.title}
+              </h4>
             </button>
           ))}
         </div>
 
-        {/* Script Display Card */}
-        <div className="mt-4 rounded-[24px] border border-cocoa bg-white p-6 shadow-[3px_3px_0_0_#2f1c1a]">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-cocoa/15">
+        {/* Active Pillar Card */}
+        <div className="mt-5 rounded-[24px] border border-cocoa bg-white p-6 shadow-[3px_3px_0_0_#2f1c1a]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-4 border-b border-cocoa/15">
             <div>
               <span className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
-                {activeFormat.badge} · Target Audience: {activeFormat.targetAudience}
+                Pillar {activePillar.number} · {activePillar.badge}
               </span>
-              <h4 className="font-display text-[1.3rem] font-bold text-cocoa">
-                {activeFormat.title}
+              <h3 className="font-display text-[1.4rem] font-bold text-cocoa">
+                {activePillar.title}
+              </h3>
+              <p className="text-[0.92rem] text-cocoa-2">{activePillar.subtitle}</p>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-6 lg:grid-cols-12">
+            <div className="space-y-3 lg:col-span-7">
+              <h4 className="text-[0.86rem] font-bold uppercase tracking-wider text-cocoa">
+                Specific Webpage Requirements:
               </h4>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-peach px-3 py-1 text-[0.82rem] font-bold text-cocoa">
-                ⏱ ~{estimatedSeconds}s speaking time
-              </span>
-              <span className="rounded-full bg-cream px-3 py-1 text-[0.82rem] font-bold text-cocoa-2 border border-cocoa/10">
-                📝 {totalWords} words
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-4 lg:grid-cols-2">
-            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
-              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
-                Beat 1 · Hook (0–15s)
+              <div className="space-y-2.5">
+                {activePillar.requirements.map((req, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-3 rounded-xl border border-cocoa/10 bg-cream/60 p-3 text-[0.88rem] leading-relaxed text-cocoa"
+                  >
+                    <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange text-[0.75rem] font-bold text-white">
+                      {idx + 1}
+                    </span>
+                    <span>{req}</span>
+                  </div>
+                ))}
               </div>
-              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
-                &ldquo;{activeFormat.sampleScript.hook}&rdquo;
-              </p>
             </div>
 
-            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
-              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
-                Beat 2 · The Insight (15–35s)
-              </div>
-              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
-                &ldquo;{activeFormat.sampleScript.insight}&rdquo;
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
-              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
-                Beat 3 · The Solution / Pitch (35–65s)
-              </div>
-              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
-                &ldquo;{activeFormat.sampleScript.solution}&rdquo;
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
-              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
-                Beat 4 · Call to Action (65–90s)
-              </div>
-              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
-                &ldquo;{activeFormat.sampleScript.cta}&rdquo;
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 rounded-xl bg-peach/50 p-3.5 border border-cocoa/10 flex items-center gap-3">
-            <Sparkles className="size-5 shrink-0 text-orange" />
-            <div className="text-[0.84rem] text-cocoa">
-              <strong>Suggested Props:</strong> {activeFormat.suggestedProps.join(" · ")}
-            </div>
-          </div>
-        </div>
-      </Panel>
-    </section>
-  );
-}
-
-/* ── 4. Production Masterclass Guide ───────────────────────────── */
-
-export function ProductionGuide() {
-  return (
-    <section id="production-guide" className={sectionCls}>
-      <Panel tone="light" reveal="up" width="max-w-7xl">
-        <SectionIntro
-          index="4"
-          kicker="Camera & Filming Masterclass"
-          title="Studio Production Checklist"
-        >
-          You do not need expensive cinema equipment. A smartphone camera in a quiet, well-lit room is completely sufficient to record an executive-ready video pitch.
-        </SectionIntro>
-
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {PRODUCTION_TIPS.map((tip, i) => (
-            <div
-              key={tip.title}
-              className="flex flex-col justify-between rounded-[22px] border border-cocoa bg-white p-5 shadow-[2px_2px_0_0_#2f1c1a]"
-            >
+            <div className="flex flex-col justify-between rounded-2xl border border-cocoa/15 bg-peach/40 p-5 lg:col-span-5">
               <div>
-                <span className="grid size-10 place-items-center rounded-xl bg-orange text-white">
-                  {i === 0 ? (
-                    <Mic className="size-5" />
-                  ) : i === 1 ? (
-                    <Camera className="size-5" />
-                  ) : i === 2 ? (
-                    <Award className="size-5" />
-                  ) : (
-                    <Volume2 className="size-5" />
-                  )}
+                <span className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                  Eat Better Brand Guidance
                 </span>
-                <h4 className="mt-3 font-display text-[1.12rem] font-bold text-cocoa">
-                  {tip.title}
-                </h4>
-                <p className="mt-2 text-[0.88rem] leading-relaxed text-cocoa-2">
-                  {tip.desc}
+                <p className="mt-2 text-[0.9rem] leading-relaxed text-cocoa">
+                  {activePillar.eatBetterGuidelines}
                 </p>
               </div>
+
+              <div className="mt-4 pt-3 border-t border-cocoa/15 text-[0.8rem] text-cocoa-2 font-medium">
+                💡 Tip: Use high-contrast headings, rounded card corners (16-24px), and warm shadows to match the Eat Better site aesthetic.
+              </div>
             </div>
-          ))}
+          </div>
+        </div>
+
+        {/* Brand Token Quick Reference */}
+        <div className="mt-6 rounded-[22px] border border-cocoa bg-cream p-5 shadow-sm">
+          <div className="flex items-center gap-2 pb-3 border-b border-cocoa/15">
+            <Palette className="size-5 text-orange" />
+            <h4 className="font-display text-[1.1rem] font-bold text-cocoa">
+              Eat Better Design System Color Tokens
+            </h4>
+          </div>
+
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {BRAND_TOKENS.map((token) => (
+              <div
+                key={token.name}
+                className="rounded-xl border border-cocoa/15 bg-white p-3 shadow-xs"
+              >
+                <div
+                  className="h-9 w-full rounded-lg border border-cocoa/10"
+                  style={{ backgroundColor: token.hex }}
+                />
+                <div className="mt-2 font-display text-[0.92rem] font-bold text-cocoa">
+                  {token.name}
+                </div>
+                <div className="text-[0.78rem] font-mono font-bold text-orange">
+                  {token.hex}
+                </div>
+                <p className="mt-1 text-[0.75rem] text-cocoa-2 line-clamp-2">
+                  {token.usage}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </Panel>
     </section>
   );
 }
 
-/* ── 5. Recommended Tools & Submission Guide ───────────────────── */
+/* ── 3. Recommended Tools (With Logos) ─────────────────────────── */
 
-export function RecommendedVideoTools() {
+export function RecommendedStorefrontTools() {
   return (
     <section id="recommended-tools" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro
-          index="5"
-          kicker="External Recording & Hosting Toolkit"
+          index="3"
+          kicker="External Execution Toolkit"
           title="Recommended Tools to Complete Task B"
         >
-          Use any of the recommended tools below to record your pitch, teleprompt your script, and generate your shareable cloud video link.
+          You do not need to build your webpage inside this chapter. Use any of the industry-standard tools below to design, mockup, and host your storefront, then submit your live URL or prototype link.
         </SectionIntro>
 
         <div className="mt-6 space-y-6">
@@ -453,120 +354,124 @@ export function RecommendedVideoTools() {
             </div>
           ))}
         </div>
-
-        {/* Video Submission Checklist & Instructions */}
-        <div className="mt-6 rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
-          <div className="flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-orange text-white">
-              <FileCheck className="size-6" />
-            </span>
-            <div className="space-y-3">
-              <div>
-                <div className="text-[0.8rem] font-bold uppercase tracking-wider text-haldi">
-                  Self-Evaluation Checklist Before Submitting
-                </div>
-                <h4 className="font-display text-[1.25rem] font-bold text-cream">
-                  How to Submit Your Task B Video
-                </h4>
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-2 pt-1">
-                {VIDEO_SUBMISSION_CHECKLIST.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-[0.88rem] text-cream/90">
-                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-haldi" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 pt-3 border-t border-cream/20 text-[0.88rem] text-cream/80">
-                📌 <strong>Submission Step:</strong> Copy your cloud video link (Loom, YouTube Unlisted, or Google Drive) and paste it into the Capstone Task B submission field in the SkilliZee LMS portal.
-              </div>
-            </div>
-          </div>
-        </div>
       </Panel>
     </section>
   );
 }
 
-/* ── 6. Wrap Up & Internship Completion ────────────────────────── */
+/* ── 4. Submission Checklist & Graduation ──────────────────────── */
 
-export function WrapUp() {
+export function SubmissionChecklist() {
+  const [checkedIds, setCheckedIds] = useState<Record<string, boolean>>({});
+
+  const toggleCheck = (id: string) => {
+    setCheckedIds((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  const completedCount = Object.values(checkedIds).filter(Boolean).length;
+  const totalCount = SUBMISSION_CHECKLIST_TASK_B.length;
+  const progressPercent = Math.round((completedCount / totalCount) * 100);
+
   return (
-    <section id="wrap-up" className={sectionCls}>
+    <section id="submission-checklist" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
-        <div className="text-[0.85rem] font-extrabold uppercase tracking-[0.16em] text-orange">
-          Chapter 5.2 · Wrap-Up & Graduation
-        </div>
-        <h2 className="mt-3 font-display text-[clamp(2.1rem,4.5vw,3.2rem)] font-semibold leading-[1.04] text-cocoa">
-          Congratulations! Capstone Guidelines Complete
-        </h2>
+        <SectionIntro
+          index="4"
+          kicker="Final Pre-Submission Review"
+          title="Storefront Quality Checklist"
+        >
+          Check off each requirement to ensure your storefront meets executive standards before submitting your final link.
+        </SectionIntro>
 
-        <div className="mt-6 rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
-          <div className="flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-orange text-white">
-              <Sparkles className="size-6" />
-            </span>
+        <div className="mt-6 rounded-[24px] border border-cocoa bg-white p-6 shadow-[3px_3px_0_0_#2f1c1a]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-cocoa/15">
             <div>
-              <div className="text-[0.8rem] font-bold uppercase tracking-wider text-haldi">
-                Final Internship Takeaway
-              </div>
-              <p className="mt-1 font-display text-[1.2rem] leading-snug text-cream">
-                <GlossaryText>{TAKEAWAY_5_2}</GlossaryText>
+              <h3 className="font-display text-[1.25rem] font-bold text-cocoa">
+                Storefront Deliverable Readiness
+              </h3>
+              <p className="text-[0.88rem] text-cocoa-2">
+                Click each item once verified in your Shopify, Framer, Webflow, or Figma project.
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Milestone Badge Ribbon */}
-        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5 text-center">
-          <div className="rounded-2xl border border-cocoa/15 bg-white p-3 shadow-sm">
-            <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">Module 1</div>
-            <div className="font-display font-bold text-[0.95rem] text-cocoa">Brand Story & Mission</div>
-            <CheckCircle2 className="mx-auto mt-2 size-5 text-success" />
-          </div>
-          <div className="rounded-2xl border border-cocoa/15 bg-white p-3 shadow-sm">
-            <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">Module 2</div>
-            <div className="font-display font-bold text-[0.95rem] text-cocoa">Products & Packaging</div>
-            <CheckCircle2 className="mx-auto mt-2 size-5 text-success" />
-          </div>
-          <div className="rounded-2xl border border-cocoa/15 bg-white p-3 shadow-sm">
-            <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">Module 3</div>
-            <div className="font-display font-bold text-[0.95rem] text-cocoa">Business Model Canvas</div>
-            <CheckCircle2 className="mx-auto mt-2 size-5 text-success" />
-          </div>
-          <div className="rounded-2xl border border-cocoa/15 bg-white p-3 shadow-sm">
-            <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">Module 4</div>
-            <div className="font-display font-bold text-[0.95rem] text-cocoa">Pricing & Growth</div>
-            <CheckCircle2 className="mx-auto mt-2 size-5 text-success" />
-          </div>
-          <div className="col-span-2 sm:col-span-1 rounded-2xl border border-orange bg-orange/10 p-3 shadow-sm">
-            <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">Module 5</div>
-            <div className="font-display font-bold text-[0.95rem] text-cocoa">Final Capstone</div>
-            <Award className="mx-auto mt-2 size-5 text-orange" />
-          </div>
-        </div>
-
-        {/* Certificate Submission Callout */}
-        <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 rounded-[24px] border border-cocoa bg-peach/70 p-6">
-          <div>
-            <div className="text-[0.8rem] font-bold uppercase tracking-wider text-orange">
-              Certificate Eligibility
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-peach px-3 py-1 text-[0.82rem] font-bold text-cocoa">
+                {completedCount} of {totalCount} verified
+              </span>
+              <span className="rounded-full bg-orange px-3 py-1 text-[0.82rem] font-bold text-white">
+                {progressPercent}% Complete
+              </span>
             </div>
-            <h3 className="font-display text-[1.35rem] font-bold text-cocoa">
-              Submit Task A & Task B in LMS
-            </h3>
-            <p className="mt-1 text-[0.92rem] text-cocoa-2">
-              Upload your Task A Strategy Deck/Doc and Task B Video Link into the SkilliZee LMS portal to claim your official verified Eat Better Co Internship Certificate.
-            </p>
           </div>
-          <a
-            href="/1.1"
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-cocoa px-6 py-3 font-bold text-cream shadow-[2px_2px_0_0_#ff5c00] hover:bg-cocoa/90 transition-transform active:scale-95"
-          >
-            Review Full Curriculum <ArrowRight className="size-5" />
-          </a>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {SUBMISSION_CHECKLIST_TASK_B.map((item) => {
+              const isChecked = !!checkedIds[item.id];
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => toggleCheck(item.id)}
+                  className={`flex items-start gap-3 rounded-2xl border p-4 text-left transition-all ${
+                    isChecked
+                      ? "border-orange bg-orange/5 text-cocoa"
+                      : "border-cocoa/15 bg-cream/40 text-cocoa hover:bg-cream/80"
+                  }`}
+                >
+                  <span
+                    className={`grid size-6 shrink-0 place-items-center rounded-lg border transition-colors ${
+                      isChecked
+                        ? "border-orange bg-orange text-white"
+                        : "border-cocoa/30 bg-white"
+                    }`}
+                  >
+                    {isChecked && <CheckCircle2 className="size-4" />}
+                  </span>
+                  <div>
+                    <h4 className="font-display text-[0.98rem] font-bold">
+                      {item.label}
+                    </h4>
+                    <p className="mt-1 text-[0.82rem] text-cocoa-2 leading-relaxed">
+                      {item.desc}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Graduation / Course Completion Card */}
+        <div className="mt-8 rounded-[28px] border-2 border-cocoa bg-cocoa p-8 text-cream shadow-[4px_4px_0_0_#ff5c00]">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+            <div className="space-y-3 max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-orange px-3.5 py-1 text-[0.8rem] font-bold text-white">
+                <Award className="size-4" /> Final Capstone Completed
+              </span>
+              <h3 className="font-display text-[1.8rem] font-bold text-cream">
+                {TAKEAWAY_5_2.title}
+              </h3>
+              <p className="text-[1.05rem] leading-relaxed text-cream/85 italic">
+                &ldquo;{TAKEAWAY_5_2.quote}&rdquo;
+              </p>
+              <div className="text-[0.86rem] font-bold text-haldi">
+                — {TAKEAWAY_5_2.author}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3 shrink-0">
+              <Link
+                href="/5.1"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-cream/30 bg-white/10 px-6 py-3.5 font-display text-[0.95rem] font-bold text-cream hover:bg-white/20 transition-all"
+              >
+                Review Task A Strategy
+              </Link>
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-orange px-6 py-3.5 font-display text-[0.95rem] font-bold text-white shadow-[2px_2px_0_0_#ffffff] hover:brightness-110 transition-all"
+              >
+                Back to Curriculum Hub <ArrowRight className="size-5" />
+              </Link>
+            </div>
+          </div>
         </div>
       </Panel>
     </section>

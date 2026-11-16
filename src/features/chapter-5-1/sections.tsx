@@ -507,10 +507,10 @@ export function WrapUp() {
               Next Step: Final Capstone Task B
             </div>
             <h3 className="font-display text-[1.35rem] font-bold text-cocoa">
-              Chapter 5.2 — Video Pitch / Review
+              Chapter 5.2 — E-Commerce Storefront Development
             </h3>
             <p className="mt-1 text-[0.92rem] text-cocoa-2">
-              Learn the 60–90 second pitch structure, teleprompter tools, and studio filming guidelines.
+              Design & launch a branded D2C shopping experience with original packaging, product listings, detail sections, and cart workflow.
             </p>
           </div>
           <a

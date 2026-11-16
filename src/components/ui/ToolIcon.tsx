@@ -243,6 +243,110 @@ export function ToolIcon({ id, className = "size-7" }: { id: string; className?:
         </svg>
       );
 
+    // ── Task B: E-Commerce Storefront Builders ────────────────────
+    case "shopify":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#95BF47" />
+          <path
+            d="M32.5 13.5c-.3 0-.6.2-.8.4l-3.2 3.1-.2-.2c-1.8-1.7-4.4-2.8-7.3-2.8-5.8 0-10 4.6-10 10.8 0 8.8 8.8 13.2 12.5 13.2.4 0 .7-.1 1-.2l7.2-2.3c.6-.2 1-.7 1-1.3v-20c0-.4-.3-.7-.7-.7Zm-9 20.3c-2.8 0-7.8-3.4-7.8-9.5 0-4.6 3.1-7.8 7.3-7.8 2.3 0 4.3.9 5.8 2.4l-5.3 14.9Z"
+            fill="#FFF"
+          />
+          <path
+            d="M34 18l-3.5 3.5 4.5 12.5h2.5V18.5c0-.3-.2-.5-.5-.5H34Z"
+            fill="#5E8E3E"
+            opacity="0.8"
+          />
+        </svg>
+      );
+
+    case "framer":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#0055FF" />
+          <path d="M14 12h20v12H24l-10-12Z" fill="#FFF" />
+          <path d="M14 24h10l10 12H14V24Z" fill="#FFF" opacity="0.85" />
+          <path d="M14 36l10-12v12H14Z" fill="#FFF" opacity="0.6" />
+        </svg>
+      );
+
+    case "webflow":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#146EF5" />
+          <path
+            d="M35 15.5l-4.5 17-5.5-17h-4.5l-3.5 10.5L14 15.5H8l6 17h5l3.5-10 3.5 10h5l6-17H35Z"
+            fill="#FFF"
+          />
+        </svg>
+      );
+
+    case "wix":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#0C0C0D" />
+          <path
+            d="M10 17l3.8 14h3.6l3.2-9 3.2 9h3.6L31 17h-3.6l-2.4 9.5L22.6 17h-3.2l-2.4 9.5L14.6 17H10Zm25 0v3.6h2.5V31H41V20.6h2.5V17H35Z"
+            fill="#FFF"
+          />
+        </svg>
+      );
+
+    case "squarespace":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#111" />
+          <path
+            d="M31.2 16.8a6.5 6.5 0 0 0-9.2 0l-7.2 7.2a6.5 6.5 0 0 0 0 9.2 6.5 6.5 0 0 0 9.2 0l2.3-2.3-3.2-3.2-2.3 2.3a2 2 0 0 1-2.8 0 2 2 0 0 1 0-2.8l7.2-7.2a2 2 0 0 1 2.8 0 2 2 0 0 1 0 2.8l-2.3 2.3 3.2 3.2 2.3-2.3a6.5 6.5 0 0 0 0-9.2Z"
+            fill="#FFF"
+          />
+        </svg>
+      );
+
+    case "photoshop":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#001E36" />
+          <path d="M15 16h6.5a6 6 0 0 1 0 12H18v6h-3V16Zm3 3v6h3.5a3 3 0 1 0 0-6H18Z" fill="#31A8FF" />
+          <path
+            d="M26.5 29.5a5 5 0 0 0 3.2 1.3c1.4 0 2.2-.6 2.2-1.6 0-2.4-5.3-1.6-5.3-5.5 0-2.5 2-4.2 5-4.2a6 6 0 0 1 3.5 1.1l-.8 2a5 5 0 0 0-2.7-.9c-1.3 0-2 .6-2 1.5 0 2.3 5.3 1.5 5.3 5.4 0 2.6-2 4.3-5.2 4.3a6.8 6.8 0 0 1-4-1.3l.8-2.1Z"
+            fill="#31A8FF"
+          />
+        </svg>
+      );
+
+    case "illustrator":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#330000" />
+          <path d="M14 34l6.5-18h3.2L30 34h-3.3l-1.8-5h-6.2l-1.8 5H14Zm5.7-7.7h4.4L22 20.8l-2.3 5.5Z" fill="#FF9A00" />
+          <path d="M32.5 20h3v14h-3V20Zm0-4h3v2.8h-3V16Z" fill="#FF9A00" />
+        </svg>
+      );
+
+    case "placeit":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#2E1C4D" />
+          <path
+            d="M16 16h16a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H16a3 3 0 0 1-3-3V19a3 3 0 0 1 3-3Z"
+            stroke="#FFD300"
+            strokeWidth="2.5"
+          />
+          <path d="M21 21v6l5-3-5-3Z" fill="#FF5C00" />
+        </svg>
+      );
+
+    case "live-url":
+      return (
+        <svg viewBox="0 0 48 48" className={className} fill="none">
+          <rect width="48" height="48" rx="10" fill="#FF5C00" />
+          <circle cx="24" cy="24" r="11" stroke="#FFF" strokeWidth="2.5" />
+          <ellipse cx="24" cy="24" rx="5" ry="11" stroke="#FFF" strokeWidth="2" />
+          <path d="M13 24h22" stroke="#FFF" strokeWidth="2" />
+        </svg>
+      );
+
     // ── Task B: Cloud Hosting & Submission ────────────────────────
     case "youtube":
       return (

@@ -10,24 +10,20 @@ import { WorldShell } from "@/components/world/WorldShell";
 import { CHAPTER } from "./content";
 import { GLOSSARY_5_2 } from "./glossary";
 import {
-  FourBeatFormula,
-  ProductionGuide,
-  RecommendedVideoTools,
-  ScriptTemplates,
+  RecommendedStorefrontTools,
+  StorefrontBlueprint,
+  SubmissionChecklist,
   TaskBOverview,
-  WrapUp,
 } from "./sections";
 
 const World = dynamic(() => import("./three/World"), { ssr: false, loading: () => null });
 
 const SECTIONS: ProgressSection[] = [
   { id: "intro", label: "Introduction" },
-  { id: "task-b-overview", label: "Task B Overview" },
-  { id: "four-beats", label: "4-Beat Formula" },
-  { id: "script-templates", label: "Script Templates" },
-  { id: "production-guide", label: "Filming Masterclass" },
-  { id: "recommended-tools", label: "Recording Tools" },
-  { id: "wrap-up", label: "Graduation" },
+  { id: "task-b-overview", label: "Storefront Mission" },
+  { id: "storefront-blueprint", label: "4 Storefront Pillars" },
+  { id: "recommended-tools", label: "Storefront Tools" },
+  { id: "submission-checklist", label: "Checklist & Graduation" },
 ];
 
 export default function Chapter() {
@@ -54,11 +50,9 @@ export default function Chapter() {
           objective={CHAPTER.objective}
         />
         <TaskBOverview />
-        <FourBeatFormula />
-        <ScriptTemplates />
-        <ProductionGuide />
-        <RecommendedVideoTools />
-        <WrapUp />
+        <StorefrontBlueprint />
+        <RecommendedStorefrontTools />
+        <SubmissionChecklist />
       </main>
     </GlossaryProvider>
   );
