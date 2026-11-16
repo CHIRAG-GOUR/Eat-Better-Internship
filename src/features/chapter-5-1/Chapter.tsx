@@ -10,8 +10,8 @@ import { WorldShell } from "@/components/world/WorldShell";
 import { CHAPTER } from "./content";
 import { GLOSSARY_5_1 } from "./glossary";
 import {
-  DossierExporter,
-  GTMCanvas,
+  GTMFramework,
+  RecommendedTools,
   RubricSection,
   TaskAOverview,
   TrackSelector,
@@ -24,8 +24,8 @@ const SECTIONS: ProgressSection[] = [
   { id: "intro", label: "Introduction" },
   { id: "task-a-overview", label: "Task A Overview" },
   { id: "track-selector", label: "5 Project Tracks" },
-  { id: "gtm-canvas", label: "360° GTM Planner" },
-  { id: "dossier-export", label: "Proposal Dossier" },
+  { id: "gtm-framework", label: "6-Pillar Blueprint" },
+  { id: "recommended-tools", label: "Execution Tools" },
   { id: "rubric", label: "Grading Rubric" },
   { id: "wrap-up", label: "Wrap-up" },
 ];
@@ -55,8 +55,8 @@ export default function Chapter() {
         />
         <TaskAOverview />
         <TrackSelector />
-        <GTMCanvas />
-        <DossierExporter />
+        <GTMFramework />
+        <RecommendedTools />
         <RubricSection />
         <WrapUp />
       </main>

@@ -117,6 +117,124 @@ export const FOUR_BEATS = [
   },
 ];
 
+export interface VideoToolCategory {
+  category: string;
+  badge: string;
+  description: string;
+  tools: {
+    name: string;
+    description: string;
+    highlight: string;
+    badge?: string;
+  }[];
+}
+
+export const RECOMMENDED_TOOLS_TASK_B: VideoToolCategory[] = [
+  {
+    category: "Screen & Camera Recorders",
+    badge: "Recommended for Quick Recording",
+    description: "Record your webcam and presentation slides simultaneously with instant cloud links.",
+    tools: [
+      {
+        name: "Loom",
+        description: "Free, seamless browser extension or desktop app. Records webcam + screen simultaneously with an instant shareable link.",
+        highlight: "Easiest tool: no file export or uploading required. Just copy the Loom URL.",
+        badge: "Top Recommendation",
+      },
+      {
+        name: "Tella.tv",
+        description: "Creator-friendly screen and camera recorder with beautiful backgrounds, camera zooms, and instant link generation.",
+        highlight: "Best for sleek, polished pitch presentations with side-by-side slides.",
+      },
+      {
+        name: "OBS Studio",
+        description: "Free, open-source recording studio software with full control over camera framing, audio filters, and scenes.",
+        highlight: "Best for students who want high-definition local MP4 capture.",
+      },
+      {
+        name: "Zoom Cloud Recording",
+        description: "Start a solo Zoom meeting, share your pitch deck, and record directly to the cloud or local computer.",
+        highlight: "Familiar tool available on every laptop.",
+      },
+    ],
+  },
+  {
+    category: "Smartphone Camera & Mobile Teleprompters",
+    badge: "Mobile Creator Setup",
+    description: "Use your phone's high-definition camera with a rolling script near the camera lens.",
+    tools: [
+      {
+        name: "CapCut Mobile Teleprompter",
+        description: "Free built-in teleprompter feature inside the CapCut app. Scrolls your script on-screen directly next to the camera lens.",
+        highlight: "Maintains 100% natural eye contact with the viewer while reciting your script.",
+        badge: "Best Free Mobile App",
+      },
+      {
+        name: "PromptSmart Pro",
+        description: "Voice-tracking teleprompter app for iOS and Android that automatically scrolls as you speak at your natural pace.",
+        highlight: "Speech-recognition scrolling prevents awkward pauses.",
+      },
+      {
+        name: "Native Phone Camera (1080p/4K)",
+        description: "Mount your phone on a tripod or books at eye level. Record using the primary rear camera for crisp quality.",
+        highlight: "Superior image quality compared to most built-in laptop webcams.",
+      },
+      {
+        name: "Elegant Teleprompter (Android) / BigVu (iOS)",
+        description: "Lightweight floating teleprompter overlays that sit on top of any camera application.",
+        highlight: "Simple floating text widget with adjustable speed.",
+      },
+    ],
+  },
+  {
+    category: "Video Editing & Polish (Optional)",
+    badge: "Optional Post-Production",
+    description: "Trim pauses, add automatic captions, or overlay b-roll product photos.",
+    tools: [
+      {
+        name: "CapCut (Desktop & Mobile)",
+        description: "Free video editor with 1-click auto-captions, jump-cut trimming, and clean sound enhancements.",
+        highlight: "Auto-generate engaging animated subtitles in 30 seconds.",
+        badge: "Recommended Editor",
+      },
+      {
+        name: "Descript",
+        description: "Revolutionary text-based video editor. Edit your video by simply deleting words in the transcript.",
+        highlight: "Automatically removes filler words ('um', 'ah') with one click.",
+      },
+      {
+        name: "Canva Video / InShot",
+        description: "Quick mobile and web video trimming, aspect ratio adjustment (9:16 vertical or 16:9 widescreen), and text titles.",
+        highlight: "Fastest way to add a title card and call to action.",
+      },
+    ],
+  },
+  {
+    category: "Cloud Video Hosting & Sharing",
+    badge: "Submission Formats",
+    description: "Host your video on a cloud platform and submit the public link into the LMS portal.",
+    tools: [
+      {
+        name: "Loom Link",
+        description: "Submit your public Loom video link directly. Evaluators can watch instantly at 1x or 1.25x speed.",
+        highlight: "Instant submission with zero upload friction.",
+        badge: "Fastest",
+      },
+      {
+        name: "YouTube (Unlisted)",
+        description: "Upload your video to YouTube and select 'Unlisted'. Anyone with the URL can watch, but it remains private from search.",
+        highlight: "Universal playback compatibility on any phone or browser.",
+        badge: "Universal",
+      },
+      {
+        name: "Google Drive Public Link",
+        description: "Upload your video MP4 to Google Drive and set sharing permissions to 'Anyone with the link can view'.",
+        highlight: "Reliable cloud storage option.",
+      },
+    ],
+  },
+];
+
 export const PRODUCTION_TIPS = [
   {
     title: "Audio Clarity is 60% of Quality",

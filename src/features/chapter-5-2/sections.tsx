@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState } from "react";
 import {
   ArrowRight,
   Award,
@@ -9,17 +8,11 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCopy,
-  Clock,
-  Download,
+  FileCheck,
   Mic,
-  Pause,
-  Play,
-  RotateCcw,
   Sparkles,
-  Tv,
   Video,
   Volume2,
-  X,
 } from "lucide-react";
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
@@ -28,22 +21,17 @@ import {
   FOUR_BEATS,
   PITCH_FORMATS,
   PRODUCTION_TIPS,
+  RECOMMENDED_TOOLS_TASK_B,
   TAKEAWAY_5_2,
   VIDEO_SUBMISSION_CHECKLIST,
 } from "./content";
-import {
-  computeScriptStats,
-  generatePitchMarkdown,
-  useScriptStore,
-} from "./scriptStore";
 
 const sectionCls = "relative scroll-mt-6 px-3 py-6 sm:px-6 sm:py-10";
 
 /* ── 1. Task B Overview ────────────────────────────────────────── */
 
 export function TaskBOverview() {
-  const formatId = useScriptStore((s) => s.formatId);
-  const setFormat = useScriptStore((s) => s.setFormat);
+  const [activeFormatId, setActiveFormatId] = useState<string>("founder-pitch");
 
   return (
     <section id="task-b-overview" className={sectionCls}>
@@ -58,34 +46,34 @@ export function TaskBOverview() {
           <div className="lg:col-span-7 flex flex-col justify-between rounded-[24px] border border-cocoa bg-cream p-6 shadow-[3px_3px_0_0_#2f1c1a]">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-orange/30 bg-orange/10 px-3 py-1 text-[0.82rem] font-extrabold uppercase tracking-wider text-orange">
-                <Video className="size-4" /> Capstone Deliverable B
+                <Video className="size-4" /> Capstone Deliverable B Brief
               </div>
               <h3 className="mt-3 font-display text-[clamp(1.5rem,3vw,2.1rem)] font-bold leading-tight text-cocoa">
                 Present What You Learned About Eat Better
               </h3>
               <p className="mt-3 text-[1.05rem] leading-relaxed text-cocoa">
-                Create a short, punchy <strong>60 to 90-second video pitch or product review</strong> that positively presents what you learned about Eat Better Co.
+                Create a short, persuasive <strong>60 to 90-second video pitch or product review</strong> that positively showcases your learnings and strategic thinking about Eat Better Co.
               </p>
               <p className="mt-2 text-[0.95rem] leading-relaxed text-cocoa-2">
-                Whether you pitch your Task A commercial GTM expansion to leadership or record an authentic clean-label product review, this video proves your ability to communicate complex business ideas with energy and clarity.
+                You will record this video using your smartphone or desktop recording tools (such as Loom, CapCut, or OBS) and submit your cloud video link directly into the SkilliZee LMS portal.
               </p>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 pt-4 border-t border-cocoa/15">
               <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Time Limit</div>
+                <div className="text-[0.76rem] font-bold text-orange uppercase">Duration</div>
                 <div className="font-display font-bold text-[1.1rem] text-cocoa">60 – 90 Seconds</div>
-                <div className="text-[0.75rem] text-cocoa-2">Strict concise constraint</div>
+                <div className="text-[0.75rem] text-cocoa-2">Concise executive limit</div>
               </div>
               <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Target Pace</div>
+                <div className="text-[0.76rem] font-bold text-orange uppercase">Speaking Pace</div>
                 <div className="font-display font-bold text-[1.1rem] text-cocoa">130–150 WPM</div>
                 <div className="text-[0.75rem] text-cocoa-2">~140–190 spoken words</div>
               </div>
               <div className="rounded-xl bg-white p-3 border border-cocoa/10">
-                <div className="text-[0.76rem] font-bold text-orange uppercase">Tone</div>
-                <div className="font-display font-bold text-[1.1rem] text-cocoa">Positive & Confident</div>
-                <div className="text-[0.75rem] text-cocoa-2">Fact-driven conviction</div>
+                <div className="text-[0.76rem] font-bold text-orange uppercase">Submission</div>
+                <div className="font-display font-bold text-[1.1rem] text-cocoa">Cloud Link</div>
+                <div className="text-[0.75rem] text-cocoa-2">Loom, YouTube, Drive</div>
               </div>
             </div>
           </div>
@@ -93,22 +81,22 @@ export function TaskBOverview() {
           <div className="lg:col-span-5 flex flex-col justify-between rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
             <div>
               <div className="text-[0.82rem] font-bold uppercase tracking-wider text-haldi">
-                Choose 1 of 3 Presentation Formats
+                Choose 1 of 3 Presentation Angles
               </div>
               <h4 className="mt-2 font-display text-[1.35rem] font-semibold text-cream">
                 Select Your Video Angle
               </h4>
               <p className="mt-2 text-[0.88rem] text-cream/80">
-                Click a format below to load tailored script prompts into the teleprompter studio:
+                Pick the pitch format that best highlights your strengths:
               </p>
 
               <div className="mt-4 space-y-2.5">
                 {PITCH_FORMATS.map((f) => {
-                  const isCurrent = f.id === formatId;
+                  const isCurrent = f.id === activeFormatId;
                   return (
                     <button
                       key={f.id}
-                      onClick={() => setFormat(f.id)}
+                      onClick={() => setActiveFormatId(f.id)}
                       className={`w-full text-left rounded-xl p-3 transition-all ${
                         isCurrent
                           ? "bg-orange text-white shadow-[2px_2px_0_0_#ffffff]"
@@ -139,7 +127,7 @@ export function TaskBOverview() {
                 href="#four-beats"
                 className="inline-flex items-center gap-2 rounded-xl bg-orange px-5 py-2.5 text-[0.92rem] font-bold text-white shadow hover:bg-orange/90"
               >
-                Learn the 4-Beat Story Arc <ChevronRight className="size-4" />
+                Learn the 4-Beat Formula Below <ChevronRight className="size-4" />
               </a>
             </div>
           </div>
@@ -202,358 +190,150 @@ export function FourBeatFormula() {
   );
 }
 
-/* ── 3. Interactive Teleprompter Studio ────────────────────────── */
+/* ── 3. Script Templates & Inspiration ─────────────────────────── */
 
-export function TeleprompterStudio() {
-  const store = useScriptStore();
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [speed, setSpeed] = useState<number>(1);
-  const [isPrompterModal, setIsPrompterModal] = useState(false);
+export function ScriptTemplates() {
+  const [selectedFormatId, setSelectedFormatId] = useState<string>("founder-pitch");
+  const [copied, setCopied] = useState(false);
 
-  const stats = computeScriptStats(store);
-  const prompterContentRef = useRef<HTMLDivElement>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const loadSaved = store.loadSaved;
+  const activeFormat = PITCH_FORMATS.find((f) => f.id === selectedFormatId) || PITCH_FORMATS[0];
 
-  useEffect(() => {
-    loadSaved();
-  }, [loadSaved]);
+  const fullScript = [
+    `[Beat 1 - Hook]: "${activeFormat.sampleScript.hook}"`,
+    `[Beat 2 - Insight]: "${activeFormat.sampleScript.insight}"`,
+    `[Beat 3 - Solution]: "${activeFormat.sampleScript.solution}"`,
+    `[Beat 4 - CTA]: "${activeFormat.sampleScript.cta}"`,
+  ].join("\n\n");
 
-  // Teleprompter auto-scroll loop
-  useEffect(() => {
-    if (!isPlaying || !prompterContentRef.current) {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      return;
+  const totalWords = [
+    activeFormat.sampleScript.hook,
+    activeFormat.sampleScript.insight,
+    activeFormat.sampleScript.solution,
+    activeFormat.sampleScript.cta,
+  ]
+    .join(" ")
+    .split(/\s+/).length;
+
+  const estimatedSeconds = Math.round((totalWords / 140) * 60);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(fullScript);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      //
     }
-
-    const scrollContainer = prompterContentRef.current;
-    let lastTime = performance.now();
-
-    const step = (now: number) => {
-      const dt = (now - lastTime) / 1000;
-      lastTime = now;
-
-      // speed in px per second
-      const pxPerSec = speed * 45;
-      scrollContainer.scrollTop += pxPerSec * dt;
-
-      if (scrollContainer.scrollTop + scrollContainer.clientHeight >= scrollContainer.scrollHeight - 5) {
-        setIsPlaying(false);
-      } else {
-        animationFrameRef.current = requestAnimationFrame(step);
-      }
-    };
-
-    animationFrameRef.current = requestAnimationFrame(step);
-
-    return () => {
-      if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-    };
-  }, [isPlaying, speed]);
-
-  const handleRestartPrompter = () => {
-    if (prompterContentRef.current) {
-      prompterContentRef.current.scrollTop = 0;
-    }
-    setIsPlaying(false);
   };
 
   return (
-    <section id="teleprompter-studio" className={sectionCls}>
+    <section id="script-templates" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <SectionIntro
               index="3"
-              kicker="Live Script & Teleprompter Studio"
-              title="Write, Edit & Rehearse Your Pitch"
+              kicker="Script Blueprints"
+              title="Sample Pitch Scripts & Talking Points"
             />
             <p className="mt-1 text-[1rem] text-cocoa-2">
-              Fine-tune each beat of your 60–90 second script. The pacing meter automatically calculates your speaking time at 140 WPM.
+              Review these sample 90-second scripts. You can copy the template into your teleprompter or notes app and adapt it with your own project numbers.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 self-start">
-            <button
-              onClick={store.resetScript}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-cocoa/20 bg-white px-3 py-1.5 text-[0.82rem] font-bold text-cocoa-2 hover:border-cocoa hover:text-cocoa"
-            >
-              <RotateCcw className="size-3.5" /> Reset Template
-            </button>
-            <button
-              onClick={() => {
-                setIsPrompterModal(true);
-                setIsPlaying(false);
-              }}
-              className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2 text-[0.88rem] font-bold text-white shadow hover:bg-orange/90 transition-transform active:scale-95"
-            >
-              <Tv className="size-4" /> Open Rehearsal Teleprompter
-            </button>
-          </div>
+          <button
+            onClick={handleCopy}
+            className="inline-flex items-center gap-2 self-start rounded-xl border border-cocoa/20 bg-white px-4 py-2 text-[0.88rem] font-bold text-cocoa hover:border-cocoa transition-all"
+          >
+            <ClipboardCopy className="size-4" />
+            {copied ? "Copied Script!" : "Copy Script Template"}
+          </button>
         </div>
 
-        {/* Live Pacing Meter */}
-        <div className="mt-6 rounded-2xl bg-cocoa p-4 text-cream">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-orange text-white">
-                <Clock className="size-5" />
-              </span>
-              <div>
-                <div className="text-[0.78rem] font-bold uppercase tracking-wider text-haldi">
-                  Live Pacing Meter
-                </div>
-                <div className="font-display text-[1.25rem] font-bold text-white">
-                  ~{stats.estimatedSeconds} Seconds{" "}
-                  <span className="text-[0.88rem] font-normal text-cream/70">
-                    ({stats.words} words at 140 WPM)
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <span
-                className={`rounded-full px-3 py-1 text-[0.82rem] font-bold ${
-                  stats.status === "ideal"
-                    ? "bg-success text-white"
-                    : stats.status === "short"
-                    ? "bg-haldi text-cocoa"
-                    : "bg-error text-white"
-                }`}
-              >
-                {stats.status === "ideal"
-                  ? "✓ Sweet Spot (60–90s)"
-                  : stats.status === "short"
-                  ? "A bit short (<55s)"
-                  : "Too long (>95s)"}
-              </span>
-            </div>
-          </div>
-
-          {/* Progress bar across 0 to 120s */}
-          <div className="mt-3 relative h-3 w-full rounded-full bg-white/10 overflow-hidden">
-            {/* 60 to 90s sweet spot zone */}
-            <div className="absolute left-[50%] right-[25%] inset-y-0 bg-success/30" />
-            <div
-              className={`h-full transition-all duration-300 ${
-                stats.status === "ideal" ? "bg-success" : stats.status === "short" ? "bg-haldi" : "bg-error"
+        {/* Format Selector Tabs */}
+        <div className="mt-6 flex flex-wrap gap-2">
+          {PITCH_FORMATS.map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setSelectedFormatId(f.id)}
+              className={`rounded-xl px-4 py-2 text-[0.88rem] font-bold transition-all ${
+                f.id === selectedFormatId
+                  ? "bg-cocoa text-cream shadow-[2px_2px_0_0_#ff5c00]"
+                  : "bg-white text-cocoa border border-cocoa/15 hover:bg-peach/40"
               }`}
-              style={{ width: `${Math.min(100, (stats.estimatedSeconds / 120) * 100)}%` }}
-            />
-          </div>
-          <div className="mt-1 flex justify-between text-[0.72rem] text-cream/60">
-            <span>0s</span>
-            <span className="text-haldi font-bold">60s (Minimum)</span>
-            <span className="text-haldi font-bold">90s (Maximum)</span>
-            <span>120s</span>
-          </div>
-        </div>
-
-        {/* 4 Beat Script Editors */}
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
-          {/* Beat 1 */}
-          <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[2px_2px_0_0_#2f1c1a]">
-            <div className="flex items-center justify-between text-[0.82rem]">
-              <span className="font-extrabold text-orange uppercase tracking-wider">
-                Beat 1 · The Hook (0–15s)
-              </span>
-              <span className="text-cocoa-2 font-mono">
-                {store.hook.split(/\s+/).filter(Boolean).length} words
-              </span>
-            </div>
-            <textarea
-              rows={3}
-              value={store.hook}
-              onChange={(e) => store.setField("hook", e.target.value)}
-              className="mt-2 w-full rounded-xl border border-cocoa/20 p-3 text-[0.95rem] leading-relaxed focus:border-orange focus:outline-none"
-            />
-            <p className="mt-1 text-[0.78rem] text-cocoa-2">
-              Start with a bold question, startling fact, or the 4 PM snacking struggle.
-            </p>
-          </div>
-
-          {/* Beat 2 */}
-          <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[2px_2px_0_0_#2f1c1a]">
-            <div className="flex items-center justify-between text-[0.82rem]">
-              <span className="font-extrabold text-orange uppercase tracking-wider">
-                Beat 2 · The Insight & Discovery (15–35s)
-              </span>
-              <span className="text-cocoa-2 font-mono">
-                {store.insight.split(/\s+/).filter(Boolean).length} words
-              </span>
-            </div>
-            <textarea
-              rows={3}
-              value={store.insight}
-              onChange={(e) => store.setField("insight", e.target.value)}
-              className="mt-2 w-full rounded-xl border border-cocoa/20 p-3 text-[0.95rem] leading-relaxed focus:border-orange focus:outline-none"
-            />
-            <p className="mt-1 text-[0.78rem] text-cocoa-2">
-              Explain why Eat Better wins: 0 refined sugar, fresh Jaipur craft, clean ingredients.
-            </p>
-          </div>
-
-          {/* Beat 3 */}
-          <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[2px_2px_0_0_#2f1c1a]">
-            <div className="flex items-center justify-between text-[0.82rem]">
-              <span className="font-extrabold text-orange uppercase tracking-wider">
-                Beat 3 · The Solution / Capstone Pitch (35–65s)
-              </span>
-              <span className="text-cocoa-2 font-mono">
-                {store.solution.split(/\s+/).filter(Boolean).length} words
-              </span>
-            </div>
-            <textarea
-              rows={3}
-              value={store.solution}
-              onChange={(e) => store.setField("solution", e.target.value)}
-              className="mt-2 w-full rounded-xl border border-cocoa/20 p-3 text-[0.95rem] leading-relaxed focus:border-orange focus:outline-none"
-            />
-            <p className="mt-1 text-[0.78rem] text-cocoa-2">
-              Highlight your Task A initiative, product taste profile, or unit economics.
-            </p>
-          </div>
-
-          {/* Beat 4 */}
-          <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[2px_2px_0_0_#2f1c1a]">
-            <div className="flex items-center justify-between text-[0.82rem]">
-              <span className="font-extrabold text-orange uppercase tracking-wider">
-                Beat 4 · The Climax & Call to Action (65–90s)
-              </span>
-              <span className="text-cocoa-2 font-mono">
-                {store.cta.split(/\s+/).filter(Boolean).length} words
-              </span>
-            </div>
-            <textarea
-              rows={3}
-              value={store.cta}
-              onChange={(e) => store.setField("cta", e.target.value)}
-              className="mt-2 w-full rounded-xl border border-cocoa/20 p-3 text-[0.95rem] leading-relaxed focus:border-orange focus:outline-none"
-            />
-            <p className="mt-1 text-[0.78rem] text-cocoa-2">
-              Close with a memorable line and clear CTA (review dossier or order Eat Better).
-            </p>
-          </div>
-        </div>
-
-        {/* Teleprompter Fullscreen Rehearsal Modal */}
-        <AnimatePresence>
-          {isPrompterModal && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex flex-col bg-cocoa text-cream p-4 sm:p-8"
             >
-              {/* Teleprompter Controls Header */}
-              <div className="flex items-center justify-between border-b border-cream/20 pb-4">
-                <div className="flex items-center gap-3">
-                  <span className="grid size-10 place-items-center rounded-xl bg-orange text-white">
-                    <Tv className="size-5" />
-                  </span>
-                  <div>
-                    <h3 className="font-display text-[1.2rem] font-bold text-white">
-                      Teleprompter Rehearsal Studio
-                    </h3>
-                    <div className="text-[0.8rem] text-cream/70">
-                      ~{stats.estimatedSeconds}s total speech length
-                    </div>
-                  </div>
-                </div>
+              {f.title}
+            </button>
+          ))}
+        </div>
 
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5 rounded-xl bg-white/10 p-1">
-                    {[0.8, 1, 1.25, 1.5].map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setSpeed(s)}
-                        className={`rounded-lg px-2.5 py-1 text-[0.8rem] font-bold ${
-                          speed === s ? "bg-orange text-white" : "text-cream hover:bg-white/10"
-                        }`}
-                      >
-                        {s}x
-                      </button>
-                    ))}
-                  </div>
+        {/* Script Display Card */}
+        <div className="mt-4 rounded-[24px] border border-cocoa bg-white p-6 shadow-[3px_3px_0_0_#2f1c1a]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-cocoa/15">
+            <div>
+              <span className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                {activeFormat.badge} · Target Audience: {activeFormat.targetAudience}
+              </span>
+              <h4 className="font-display text-[1.3rem] font-bold text-cocoa">
+                {activeFormat.title}
+              </h4>
+            </div>
 
-                  <button
-                    onClick={() => setIsPlaying(!isPlaying)}
-                    className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2 font-bold text-white shadow hover:bg-orange/90"
-                  >
-                    {isPlaying ? <Pause className="size-4" /> : <Play className="size-4" />}
-                    {isPlaying ? "Pause" : "Start Scrolling"}
-                  </button>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-peach px-3 py-1 text-[0.82rem] font-bold text-cocoa">
+                ⏱ ~{estimatedSeconds}s speaking time
+              </span>
+              <span className="rounded-full bg-cream px-3 py-1 text-[0.82rem] font-bold text-cocoa-2 border border-cocoa/10">
+                📝 {totalWords} words
+              </span>
+            </div>
+          </div>
 
-                  <button
-                    onClick={handleRestartPrompter}
-                    title="Restart from top"
-                    className="rounded-xl border border-cream/20 p-2 text-cream hover:bg-white/10"
-                  >
-                    <RotateCcw className="size-4" />
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setIsPrompterModal(false);
-                      setIsPlaying(false);
-                    }}
-                    className="rounded-xl bg-white/15 p-2 text-cream hover:bg-white/20"
-                  >
-                    <X className="size-5" />
-                  </button>
-                </div>
+          <div className="mt-5 grid gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
+              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                Beat 1 · Hook (0–15s)
               </div>
+              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
+                &ldquo;{activeFormat.sampleScript.hook}&rdquo;
+              </p>
+            </div>
 
-              {/* Scrolling Text Window */}
-              <div
-                ref={prompterContentRef}
-                className="relative mt-6 flex-1 overflow-y-auto px-4 text-center sm:px-20 scroll-smooth"
-              >
-                {/* Visual Eye-level Reading Focus Bar */}
-                <div className="pointer-events-none sticky top-1/3 left-0 right-0 h-16 border-y-2 border-orange/40 bg-orange/5" />
-
-                <div className="max-w-3xl mx-auto py-24 space-y-12">
-                  <div className="space-y-3">
-                    <span className="rounded-full bg-orange/30 px-3 py-1 text-[0.78rem] font-bold uppercase tracking-widest text-haldi">
-                      Beat 1 · Hook (0–15s)
-                    </span>
-                    <p className="font-display text-[clamp(1.4rem,3vw,2.2rem)] font-bold leading-relaxed text-white">
-                      {store.hook}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <span className="rounded-full bg-orange/30 px-3 py-1 text-[0.78rem] font-bold uppercase tracking-widest text-haldi">
-                      Beat 2 · Insight (15–35s)
-                    </span>
-                    <p className="font-display text-[clamp(1.4rem,3vw,2.2rem)] font-bold leading-relaxed text-cream">
-                      {store.insight}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <span className="rounded-full bg-orange/30 px-3 py-1 text-[0.78rem] font-bold uppercase tracking-widest text-haldi">
-                      Beat 3 · Solution (35–65s)
-                    </span>
-                    <p className="font-display text-[clamp(1.4rem,3vw,2.2rem)] font-bold leading-relaxed text-cream">
-                      {store.solution}
-                    </p>
-                  </div>
-
-                  <div className="space-y-3">
-                    <span className="rounded-full bg-orange/30 px-3 py-1 text-[0.78rem] font-bold uppercase tracking-widest text-haldi">
-                      Beat 4 · Call to Action (65–90s)
-                    </span>
-                    <p className="font-display text-[clamp(1.4rem,3vw,2.2rem)] font-bold leading-relaxed text-haldi">
-                      {store.cta}
-                    </p>
-                  </div>
-                </div>
+            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
+              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                Beat 2 · The Insight (15–35s)
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
+                &ldquo;{activeFormat.sampleScript.insight}&rdquo;
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
+              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                Beat 3 · The Solution / Pitch (35–65s)
+              </div>
+              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
+                &ldquo;{activeFormat.sampleScript.solution}&rdquo;
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-cocoa/15 bg-cream/50 p-4">
+              <div className="text-[0.78rem] font-bold uppercase tracking-wider text-orange">
+                Beat 4 · Call to Action (65–90s)
+              </div>
+              <p className="mt-2 text-[0.94rem] font-medium leading-relaxed text-cocoa italic">
+                &ldquo;{activeFormat.sampleScript.cta}&rdquo;
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-5 rounded-xl bg-peach/50 p-3.5 border border-cocoa/10 flex items-center gap-3">
+            <Sparkles className="size-5 shrink-0 text-orange" />
+            <div className="text-[0.84rem] text-cocoa">
+              <strong>Suggested Props:</strong> {activeFormat.suggestedProps.join(" · ")}
+            </div>
+          </div>
+        </div>
       </Panel>
     </section>
   );
@@ -570,7 +350,7 @@ export function ProductionGuide() {
           kicker="Camera & Filming Masterclass"
           title="Studio Production Checklist"
         >
-          You do not need high-end film gear. A smartphone camera in a quiet room with good lighting is enough to produce an executive-ready pitch.
+          You do not need expensive cinema equipment. A smartphone camera in a quiet, well-lit room is completely sufficient to record an executive-ready video pitch.
         </SectionIntro>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -606,123 +386,98 @@ export function ProductionGuide() {
   );
 }
 
-/* ── 5. Submission & Video Dossier ─────────────────────────────── */
+/* ── 5. Recommended Tools & Submission Guide ───────────────────── */
 
-export function SubmissionReady() {
-  const store = useScriptStore();
-  const [copied, setCopied] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-
-  const markdown = generatePitchMarkdown(store);
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(markdown);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      //
-    }
-  };
-
-  const handleDownload = () => {
-    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Eat-Better-Video-Pitch-Task-B-${store.formatId}.md`;
-    link.click();
-    URL.revokeObjectURL(url);
-    setDownloaded(true);
-    setTimeout(() => setDownloaded(false), 3000);
-  };
-
+export function RecommendedVideoTools() {
   return (
-    <section id="submission-ready" className={sectionCls}>
+    <section id="recommended-tools" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro
           index="5"
-          kicker="Final Submission & Hosting"
-          title="Video Link & Submission Dossier"
+          kicker="External Recording & Hosting Toolkit"
+          title="Recommended Tools to Complete Task B"
         >
-          Once recorded, upload your video to Loom, YouTube (Unlisted), or Google Drive, paste the URL below, and export your Task B dossier.
+          Use any of the recommended tools below to record your pitch, teleprompt your script, and generate your shareable cloud video link.
         </SectionIntro>
 
-        <div className="mt-6 rounded-[24px] border border-cocoa bg-cream p-6 shadow-[3px_3px_0_0_#2f1c1a]">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className="block text-[0.85rem] font-bold text-cocoa">
-                Author / Intern Name
-              </label>
-              <input
-                type="text"
-                value={store.authorName}
-                onChange={(e) => store.setField("authorName", e.target.value)}
-                placeholder="e.g. Priyanshu Sharma"
-                className="mt-1 w-full rounded-xl border border-cocoa/20 p-2.5 text-[0.95rem] focus:border-orange focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-[0.85rem] font-bold text-cocoa">
-                Recorded Video URL (Loom, YouTube, or Drive)
-              </label>
-              <input
-                type="url"
-                value={store.videoLink}
-                onChange={(e) => store.setField("videoLink", e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=... or https://www.loom.com/..."
-                className="mt-1 w-full rounded-xl border border-cocoa/20 p-2.5 text-[0.95rem] focus:border-orange focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <label className="block text-[0.85rem] font-bold text-cocoa">
-              Personal Reflection & Key Takeaway
-            </label>
-            <textarea
-              rows={2}
-              value={store.selfReflection}
-              onChange={(e) => store.setField("selfReflection", e.target.value)}
-              className="mt-1 w-full rounded-xl border border-cocoa/20 p-2.5 text-[0.95rem] focus:border-orange focus:outline-none"
-            />
-          </div>
-
-          {/* Submission Checklist */}
-          <div className="mt-5 rounded-2xl bg-white p-4 border border-cocoa/15">
-            <div className="text-[0.82rem] font-bold uppercase tracking-wider text-orange">
-              Self-Assessment Checklist Before Submitting
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {VIDEO_SUBMISSION_CHECKLIST.map((item, idx) => (
-                <div key={idx} className="flex items-start gap-2 text-[0.88rem] text-cocoa-2">
-                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
-                  <span>{item}</span>
+        <div className="mt-6 space-y-6">
+          {RECOMMENDED_TOOLS_TASK_B.map((cat) => (
+            <div
+              key={cat.category}
+              className="rounded-[24px] border border-cocoa bg-cream p-6 shadow-[3px_3px_0_0_#2f1c1a]"
+            >
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3 border-b border-cocoa/15">
+                <div>
+                  <h3 className="font-display text-[1.25rem] font-bold text-cocoa">
+                    {cat.category}
+                  </h3>
+                  <p className="text-[0.88rem] text-cocoa-2">{cat.description}</p>
                 </div>
-              ))}
-            </div>
-          </div>
+                <span className="self-start rounded-full bg-orange/15 px-3 py-1 text-[0.75rem] font-bold text-orange">
+                  {cat.badge}
+                </span>
+              </div>
 
-          {/* Export Buttons */}
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-cocoa/15">
-            <div className="text-[0.88rem] text-cocoa-2">
-              Ready to submit your video dossier to your evaluator?
+              <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {cat.tools.map((t) => (
+                  <div
+                    key={t.name}
+                    className="flex flex-col justify-between rounded-2xl border border-cocoa/15 bg-white p-4 shadow-sm"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-display text-[1.05rem] font-bold text-cocoa">
+                          {t.name}
+                        </span>
+                        {t.badge && (
+                          <span className="rounded bg-haldi/40 px-2 py-0.5 text-[0.7rem] font-bold text-cocoa">
+                            {t.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-[0.84rem] text-cocoa-2 leading-relaxed">
+                        {t.description}
+                      </p>
+                    </div>
+
+                    <div className="mt-3 pt-2.5 border-t border-cocoa/10 text-[0.78rem] font-semibold text-orange">
+                      💡 {t.highlight}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleCopy}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-cocoa/20 bg-white px-3.5 py-2 text-[0.88rem] font-bold text-cocoa hover:border-cocoa transition-all"
-              >
-                <ClipboardCopy className="size-4" />
-                {copied ? "Copied!" : "Copy Script"}
-              </button>
-              <button
-                onClick={handleDownload}
-                className="inline-flex items-center gap-2 rounded-xl bg-orange px-4 py-2 text-[0.88rem] font-bold text-white shadow hover:bg-orange/90 transition-all active:scale-95"
-              >
-                <Download className="size-4" />
-                {downloaded ? "Dossier Downloaded!" : "Download Task B Dossier (.md)"}
-              </button>
+          ))}
+        </div>
+
+        {/* Video Submission Checklist & Instructions */}
+        <div className="mt-6 rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
+          <div className="flex items-start gap-4">
+            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-orange text-white">
+              <FileCheck className="size-6" />
+            </span>
+            <div className="space-y-3">
+              <div>
+                <div className="text-[0.8rem] font-bold uppercase tracking-wider text-haldi">
+                  Self-Evaluation Checklist Before Submitting
+                </div>
+                <h4 className="font-display text-[1.25rem] font-bold text-cream">
+                  How to Submit Your Task B Video
+                </h4>
+              </div>
+
+              <div className="grid gap-2 sm:grid-cols-2 pt-1">
+                {VIDEO_SUBMISSION_CHECKLIST.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-[0.88rem] text-cream/90">
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-haldi" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-cream/20 text-[0.88rem] text-cream/80">
+                📌 <strong>Submission Step:</strong> Copy your cloud video link (Loom, YouTube Unlisted, or Google Drive) and paste it into the Capstone Task B submission field in the SkilliZee LMS portal.
+              </div>
             </div>
           </div>
         </div>
@@ -741,7 +496,7 @@ export function WrapUp() {
           Chapter 5.2 · Wrap-Up & Graduation
         </div>
         <h2 className="mt-3 font-display text-[clamp(2.1rem,4.5vw,3.2rem)] font-semibold leading-[1.04] text-cocoa">
-          Congratulations! Capstone Completed
+          Congratulations! Capstone Guidelines Complete
         </h2>
 
         <div className="mt-6 rounded-[24px] border border-cocoa bg-cocoa p-6 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
@@ -796,10 +551,10 @@ export function WrapUp() {
               Certificate Eligibility
             </div>
             <h3 className="font-display text-[1.35rem] font-bold text-cocoa">
-              Submit Task A & Task B Dossiers
+              Submit Task A & Task B in LMS
             </h3>
             <p className="mt-1 text-[0.92rem] text-cocoa-2">
-              Upload your downloaded Task A Proposal (.md) and Task B Video Pitch (.md) into the SkilliZee LMS portal to claim your official Eat Better Co Internship Certificate.
+              Upload your Task A Strategy Deck/Doc and Task B Video Link into the SkilliZee LMS portal to claim your official verified Eat Better Co Internship Certificate.
             </p>
           </div>
           <a

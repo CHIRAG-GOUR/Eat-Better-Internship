@@ -12,9 +12,9 @@ import { GLOSSARY_5_2 } from "./glossary";
 import {
   FourBeatFormula,
   ProductionGuide,
-  SubmissionReady,
+  RecommendedVideoTools,
+  ScriptTemplates,
   TaskBOverview,
-  TeleprompterStudio,
   WrapUp,
 } from "./sections";
 
@@ -24,9 +24,9 @@ const SECTIONS: ProgressSection[] = [
   { id: "intro", label: "Introduction" },
   { id: "task-b-overview", label: "Task B Overview" },
   { id: "four-beats", label: "4-Beat Formula" },
-  { id: "teleprompter-studio", label: "Teleprompter Studio" },
+  { id: "script-templates", label: "Script Templates" },
   { id: "production-guide", label: "Filming Masterclass" },
-  { id: "submission-ready", label: "Submission Dossier" },
+  { id: "recommended-tools", label: "Recording Tools" },
   { id: "wrap-up", label: "Graduation" },
 ];
 
@@ -55,9 +55,9 @@ export default function Chapter() {
         />
         <TaskBOverview />
         <FourBeatFormula />
-        <TeleprompterStudio />
+        <ScriptTemplates />
         <ProductionGuide />
-        <SubmissionReady />
+        <RecommendedVideoTools />
         <WrapUp />
       </main>
     </GlossaryProvider>

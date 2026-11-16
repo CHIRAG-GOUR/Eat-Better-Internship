@@ -45,7 +45,7 @@ export const CAPSTONE_TRACKS: ProjectTrack[] = [
       "Product formulation & clean-label Bill of Materials (BOM)",
       "Target customer persona and urban market selection (e.g. Bengaluru tech corridor or Mumbai commuters)",
       "Packaging format, barrier properties, and shelf-life strategy",
-      "Pricing model: Price per gram, MRP, and gross margin benchmarking (>= 58%)",
+      "Pricing model: Price per gram, MRP, and gross margin benchmarking (>= 55%)",
       "Omnichannel distribution roadmap (Quick commerce, D2C, and modern trade)",
       "360-degree launch campaign and 6-month financial projections",
     ],
@@ -184,14 +184,188 @@ export const CAPSTONE_TRACKS: ProjectTrack[] = [
   },
 ];
 
-export const GTM_STEPS = [
-  { step: 1, id: "product", label: "Product & Market Fit", hint: "Name, variant, target audience, and problem statement" },
-  { step: 2, id: "spec", label: "Formulation & Packaging", hint: "Clean ingredients, net weight, packaging type, shelf life" },
-  { step: 3, id: "economics", label: "Pricing & Unit Economics", hint: "BOM, MRP, gross margin, price per gram, and net margin" },
-  { step: 4, id: "channels", label: "Omnichannel Distribution", hint: "Split across D2C, Quick Commerce, Amazon, Corporate, Retail" },
-  { step: 5, id: "campaign", label: "Launch Campaign & Creative", hint: "Big idea, tagline, sample creative hook, and ₹ budget allocation" },
-  { step: 6, id: "forecast", label: "Financial & Scale Forecast", hint: "Monthly volume, expected revenue, and break-even milestone" },
-] as const;
+export const GTM_BLUEPRINT_PILLARS = [
+  {
+    number: "01",
+    title: "Product & Market Opportunity",
+    subtitle: "Define the core snacking friction and your clean-label solution",
+    points: [
+      "Identify the specific consumer persona (e.g. 28-year-old software engineer seeking guilt-free 4 PM energy).",
+      "Define target launch cities and high-demand pin codes.",
+      "Articulate your unique clean-label value proposition against conventional sugar-loaded alternatives.",
+    ],
+  },
+  {
+    number: "02",
+    title: "Formulation & Packaging Specification",
+    subtitle: "Clean ingredient Bill of Materials (BOM) and pack design",
+    points: [
+      "Specify exact whole food ingredients (dates, almonds, seeds, quinoa, millets). 100% free from refined sugar, artificial preservatives, and palm oil.",
+      "Determine net pack weight (e.g. 45g single pack or 350g combo box).",
+      "Select sustainable, barrier-certified packaging material (nitrogen-flushed recyclable foil).",
+    ],
+  },
+  {
+    number: "03",
+    title: "Pricing Architecture & Unit Economics",
+    subtitle: "Rigorously model margins and channel feasibility",
+    points: [
+      "Calculate raw ingredient BOM and packaging cost per unit.",
+      "Set Maximum Retail Price (MRP) and evaluate price-per-gram (₹/g benchmark: ₹0.67–₹1.55/g).",
+      "Target a Gross Margin >= 55% to comfortably absorb quick-commerce platform commissions (20-25%) and shipping costs.",
+    ],
+  },
+  {
+    number: "04",
+    title: "Omnichannel Distribution Engine",
+    subtitle: "Channel split across D2C, Q-Commerce, Amazon, and Corporate",
+    points: [
+      "Allocate volume split: Quick Commerce (Blinkit/Zepto/Instamart) for 10-minute impulse discovery.",
+      "D2C Webstore (eatbetterco.com) for high-AOV bundles and subscriptions.",
+      "Amazon & Corporate Gifting for high-volume nationwide reach.",
+    ],
+  },
+  {
+    number: "05",
+    title: "360-Degree Marketing & Launch Campaign",
+    subtitle: "High-retention storytelling, influencer seeding, and paid media",
+    points: [
+      "Craft a memorable campaign tagline and hook (e.g. #SnackSmartAt4).",
+      "Plan a 30-day launch calendar: Teaser phase, Influencer unboxing seeding, and Meta performance ads.",
+      "Allocate a practical marketing budget across paid acquisition, creator gifting, and sampling.",
+    ],
+  },
+  {
+    number: "06",
+    title: "Financial Forecast & Scalability Milestones",
+    subtitle: "Monthly volume targets, gross revenue, and break-even timeline",
+    points: [
+      "Forecast target monthly units (Eat Better fulfills ~2 lakh orders monthly across channels).",
+      "Project gross monthly revenue, net contribution after delivery, and break-even month.",
+      "Identify 3 operational risk factors and contingency mitigation strategies.",
+    ],
+  },
+];
+
+export interface ToolCategory {
+  category: string;
+  badge: string;
+  description: string;
+  tools: {
+    name: string;
+    description: string;
+    highlight: string;
+    badge?: string;
+  }[];
+}
+
+export const RECOMMENDED_TOOLS_TASK_A: ToolCategory[] = [
+  {
+    category: "Presentation & Pitch Decks",
+    badge: "Recommended Format",
+    description: "Build a polished, 10 to 15-slide executive presentation deck to showcase your strategy.",
+    tools: [
+      {
+        name: "Google Slides",
+        description: "Free, web-based, collaborative slide deck tool with seamless PDF export and cloud sharing.",
+        highlight: "Best for collaborative work and simple sharing with evaluators.",
+        badge: "Most Popular",
+      },
+      {
+        name: "Canva",
+        description: "Thousands of modern pitch deck templates, product mockups, typography, and graphic elements.",
+        highlight: "Best for high visual impact, beautiful packaging visuals, and campaign mockups.",
+        badge: "Design Favorite",
+      },
+      {
+        name: "Gamma.app / Pitch.com",
+        description: "AI-accelerated deck builders that generate clean, modern layouts and executive tables in minutes.",
+        highlight: "Best for ultra-fast formatting and sleek interactive web presentations.",
+      },
+      {
+        name: "Microsoft PowerPoint",
+        description: "The classic corporate presentation standard with robust chart and animation capabilities.",
+        highlight: "Best for traditional desktop offline editing.",
+      },
+    ],
+  },
+  {
+    category: "Financial Modeling & Unit Economics",
+    badge: "Quantitative Rigor",
+    description: "Construct your Bill of Materials (BOM), pricing calculator, and 6-month sales forecast tables.",
+    tools: [
+      {
+        name: "Google Sheets",
+        description: "Cloud spreadsheet with dynamic formulas for gross margin, contribution per unit, and AOV charts.",
+        highlight: "Create your unit economics model and embed live charts into your deck.",
+        badge: "Essential",
+      },
+      {
+        name: "Microsoft Excel",
+        description: "Powerful financial workbook software for deep P&L modeling and scenario planning.",
+        highlight: "Ideal for detailed margin sensitivity tables across channels.",
+      },
+    ],
+  },
+  {
+    category: "Strategy Documents & Proposals",
+    badge: "Written Dossier",
+    description: "If submitting an executive whitepaper or written proposal instead of or alongside a slide deck.",
+    tools: [
+      {
+        name: "Notion",
+        description: "All-in-one modular workspace with database tables, toggle sections, and clean public web links.",
+        highlight: "Best for building a comprehensive interactive product wiki or strategy document.",
+        badge: "Modern Standard",
+      },
+      {
+        name: "Google Docs",
+        description: "Standard formal business proposal editor with real-time commenting and PDF download.",
+        highlight: "Clean format for standard written internship report submissions.",
+      },
+    ],
+  },
+  {
+    category: "Visual Mockups & Campaign Creatives",
+    badge: "Visual Polish",
+    description: "Bring your product packaging, social media ads, and festive hampers to life visually.",
+    tools: [
+      {
+        name: "Canva Pro / Free",
+        description: "Drag-and-drop packaging box mockups, Instagram reel covers, and promotional banners.",
+        highlight: "Instant 3D mockup generator for pouches, jars, and gift boxes.",
+      },
+      {
+        name: "Figma",
+        description: "Professional UI and visual design canvas for custom packaging layouts and digital ad sets.",
+        highlight: "Complete layout freedom for precision graphic assets.",
+      },
+      {
+        name: "Adobe Express",
+        description: "Quick asset creation, background removal, and branded campaign templates.",
+        highlight: "High quality image editing and typography.",
+      },
+    ],
+  },
+  {
+    category: "Consumer Surveys & Research (Track 4)",
+    badge: "For Track 4",
+    description: "Design and circulate your 10-question healthy snacking questionnaire to 20–30 real consumers.",
+    tools: [
+      {
+        name: "Google Forms",
+        description: "Free, zero friction, instantly generates visual summary pie charts and Google Sheets integration.",
+        highlight: "Fastest way to collect 25+ survey responses.",
+        badge: "Recommended",
+      },
+      {
+        name: "Tally.so / Typeform",
+        description: "Beautiful, conversational one-question-at-a-time forms with significantly higher completion rates.",
+        highlight: "Best user experience for mobile respondents.",
+      },
+    ],
+  },
+];
 
 export const EVALUATION_RUBRIC = [
   {
@@ -204,7 +378,7 @@ export const EVALUATION_RUBRIC = [
     category: "Financial Rigor & Unit Economics",
     weight: "25%",
     description: "Realistic Bill of Materials (BOM), packaging, shipping, commission buffers, gross margin (>55%), and viable price-per-gram calculation.",
-    benchmark: "Are the unit economics sustainable after factoring in quick-commerce margins (25-30%) and delivery costs?",
+    benchmark: "Are the unit economics sustainable after factoring in quick-commerce margins (20-25%) and delivery costs?",
   },
   {
     category: "Go-To-Market & Channel Clarity",
@@ -215,7 +389,7 @@ export const EVALUATION_RUBRIC = [
   {
     category: "Creativity & Execution Quality",
     weight: "25%",
-    description: "Originality of the initiative, visual presentation, cohesive copywriting, and comprehensive completeness of the dossier.",
+    description: "Originality of the initiative, visual presentation, cohesive copywriting, and comprehensive completeness of the submission.",
     benchmark: "Is the proposal polished enough to present to the founders and executive leadership?",
   },
 ];
