@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { fredoka, figtree, madeTommy } from "@/lib/fonts";
 import "./globals.css";
+import { BackToTop } from "@/components/chapter/BackToTop";
 
 export const metadata: Metadata = {
   title: "Eat Better Co Internship · SkilliZee",
@@ -18,7 +19,10 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fredoka.variable} ${madeTommy.variable} ${figtree.variable} antialiased`}>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <BackToTop />
+      </body>
     </html>
   );
 }
