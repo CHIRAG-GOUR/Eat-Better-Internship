@@ -240,14 +240,6 @@ export function Social() {
                   poster={VIDEOS.reel.poster}
                   title={VIDEOS.reel.title}
                   caption="Instagram: a reel from Eat Better Co."
-                  reelMeta={{
-                    handle: "eatbetterco",
-                    likes: "18.4K",
-                    comments: "420",
-                    shares: "1.9K",
-                    audioTrack: "Eat Better Co · Original Audio",
-                    caption: "Diwali festivities at Eat Better! 🪔✨ Spreading joy with wholesome, nutritious snacks. #EatBetterCo #FestiveCelebration #CleanSnacking",
-                  }}
                 />
               ),
             },

@@ -9,7 +9,6 @@ import {
   Volume2,
   VolumeX,
   Heart,
-  MessageCircle,
   Send,
   Bookmark,
   Music,
@@ -19,13 +18,12 @@ import {
   Battery,
 } from "lucide-react";
 import { getMediaUrl } from "@/lib/media";
+import { SeekBar } from "./SeekBar";
 
+/** Only real details belong here: no invented like or comment counts. */
 export type ReelMeta = {
   handle?: string;
   avatar?: string;
-  likes?: string;
-  comments?: string;
-  shares?: string;
   audioTrack?: string;
   caption?: string;
 };
@@ -52,9 +50,7 @@ export function InstagramReelPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [progress, setProgress] = useState(0);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(14200);
   const [saved, setSaved] = useState(false);
   const [sharedToast, setSharedToast] = useState(false);
   const [showCenterIcon, setShowCenterIcon] = useState<"play" | "pause" | null>(null);
@@ -64,13 +60,8 @@ export function InstagramReelPlayer({
   const meta = {
     handle: reelMeta?.handle ?? "eatbetterco",
     avatar: reelMeta?.avatar ?? "/brand/catalog/range-laddoo.webp",
-    likes: reelMeta?.likes ?? "14.2K",
-    comments: reelMeta?.comments ?? "348",
-    shares: reelMeta?.shares ?? "1.2K",
-    audioTrack: reelMeta?.audioTrack ?? "Eat Better Co · Original Audio",
-    caption:
-      reelMeta?.caption ??
-      "Diwali celebrations and wholesome snacking moments with Eat Better! 🪔✨ #EatBetterCo #CleanSnacking #HealthyIndulgence",
+    audioTrack: reelMeta?.audioTrack ?? "Eat Better Co · Original audio",
+    caption: reelMeta?.caption ?? title,
   };
 
   // Sync play state
@@ -103,10 +94,7 @@ export function InstagramReelPlayer({
     const now = Date.now();
     if (now - lastClickTimeRef.current < 300) {
       // Double click: trigger heart burst and like
-      if (!liked) {
-        setLiked(true);
-        setLikeCount((c) => c + 1);
-      }
+      setLiked(true);
       setShowHeartBurst(true);
       setTimeout(() => setShowHeartBurst(false), 900);
     } else {
@@ -126,11 +114,7 @@ export function InstagramReelPlayer({
 
   const toggleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setLiked((prev) => {
-      const next = !prev;
-      setLikeCount((c) => (next ? c + 1 : c - 1));
-      return next;
-    });
+    setLiked((prev) => !prev);
   };
 
   const toggleSave = (e: React.MouseEvent) => {
@@ -145,23 +129,6 @@ export function InstagramReelPlayer({
       setSharedToast(true);
       setTimeout(() => setSharedToast(false), 2200);
     }
-  };
-
-  // Track progress
-  const onTimeUpdate = () => {
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-    setProgress((video.currentTime / video.duration) * 100);
-  };
-
-  // Scrub progress bar
-  const handleScrub = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    const video = videoRef.current;
-    if (!video || !video.duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    video.currentTime = pos * video.duration;
   };
 
   return (
@@ -222,7 +189,6 @@ export function InstagramReelPlayer({
             preload="metadata"
             poster={poster}
             title={title}
-            onTimeUpdate={onTimeUpdate}
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
           >
@@ -311,19 +277,8 @@ export function InstagramReelPlayer({
                 }`}
               />
             </motion.div>
-            <span className="text-[0.72rem] font-semibold drop-shadow">{likeCount.toLocaleString()}</span>
           </button>
 
-          {/* Comment Button */}
-          <button
-            type="button"
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Comments"
-            className="group flex flex-col items-center gap-1 transition-transform active:scale-110"
-          >
-            <MessageCircle className="size-7 text-white drop-shadow hover:text-white/80" />
-            <span className="text-[0.72rem] font-semibold drop-shadow">{meta.comments}</span>
-          </button>
 
           {/* Share Button */}
           <button
@@ -333,7 +288,6 @@ export function InstagramReelPlayer({
             className="group flex flex-col items-center gap-1 transition-transform active:scale-110"
           >
             <Send className="size-6 text-white drop-shadow hover:text-white/80 -rotate-12" />
-            <span className="text-[0.72rem] font-semibold drop-shadow">{meta.shares}</span>
           </button>
 
           {/* Bookmark Button */}
@@ -363,20 +317,10 @@ export function InstagramReelPlayer({
         </div>
 
         {/* ── Bottom Caption & Handle Overlay ─────────────────────────── */}
-        <div className="absolute left-3 right-16 bottom-3 z-20 text-white drop-shadow pointer-events-none">
-          {/* User Handle & Follow */}
-          <div className="flex items-center gap-2 mb-1.5 pointer-events-auto">
+        <div className="absolute left-3 right-16 bottom-7 z-20 text-white drop-shadow pointer-events-none">
+          {/* Account handle */}
+          <div className="mb-1.5 flex items-center gap-2">
             <span className="font-display text-[0.92rem] font-bold tracking-tight">@{meta.handle}</span>
-            <span className="flex size-3.5 items-center justify-center rounded-full bg-[#3897f0] text-[0.6rem] text-white">
-              ✓
-            </span>
-            <button
-              type="button"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-lg border border-white/40 bg-white/10 px-2 py-0.5 text-[0.7rem] font-semibold backdrop-blur-xs transition hover:bg-white/20"
-            >
-              Follow
-            </button>
           </div>
 
           {/* Caption */}
@@ -391,17 +335,10 @@ export function InstagramReelPlayer({
           </div>
         </div>
 
-        {/* ── Bottom Interactive Progress Bar ─────────────────────────── */}
-        <div
-          onClick={handleScrub}
-          className="absolute inset-x-0 bottom-0 z-30 h-1.5 cursor-pointer bg-white/20 hover:h-2.5 transition-all group"
-        >
-          <div
-            className="h-full bg-gradient-to-r from-orange to-[#FED300] relative"
-            style={{ width: `${progress}%` }}
-          >
-            <span className="absolute right-0 top-1/2 -translate-y-1/2 size-2 rounded-full bg-white shadow opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
+        {/* ── Seek bar along the bottom edge ─────────────────────────── */}
+        {/* kept clear of the frame's rounded corners so the whole bar stays visible */}
+        <div className="absolute inset-x-5 bottom-2.5 z-30">
+          <SeekBar video={videoRef} label={`Seek: ${title}`} variant="edge" />
         </div>
 
         {/* Copied Toast Notification */}
