@@ -126,7 +126,7 @@ export function Positioning() {
             <Concept>{POSITIONING.concept}</Concept>
           </div>
           <div className="mx-auto w-full max-w-[300px]">
-            <VideoBlock kind="file" portrait av1={VIDEO.av1} h264={VIDEO.h264} poster={VIDEO.poster} title={VIDEO.title} caption="Example · from Eat Better Co's own YouTube channel." />
+            <VideoBlock kind="file" variant="short" portrait h264={VIDEO.h264} poster={VIDEO.poster} title={VIDEO.title} caption="Example · from Eat Better Co's own YouTube channel." />
           </div>
         </div>
       </Panel>

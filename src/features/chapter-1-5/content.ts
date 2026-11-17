@@ -18,10 +18,9 @@ export const CHAPTER = {
 /** Same clip as Chapter 1.3 — Eat Better Co's own channel, self-hosted lossless copies. */
 export const VIDEO = {
   title: "Diwali Corporate Gifting, Done Thoughtfully | Inside Eat Better Co",
-  av1: "/chapter-1-3/video/diwali-gifting-av1.mp4",
-  h264: "/chapter-1-3/video/diwali-gifting-h264.mp4",
-  poster: "/chapter-1-3/video/gifting-poster.jpg",
-  caption: "Inside Eat Better Co: festive and corporate gifting — from the brand's own channel.",
+  h264: "/chapter-1-5/video/diwali-gifting-full-h264.mp4",
+  poster: "/chapter-1-5/video/diwali-gifting-full-poster.jpg",
+  caption: "Inside Eat Better Co: festive and corporate gifting — from the brand's own channel (Full Video).",
 };
 
 export type CategoryId = "laddoos" | "namkeens" | "nuts" | "gifting";

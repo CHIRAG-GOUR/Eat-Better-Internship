@@ -392,7 +392,7 @@ export function Timeline() {
         </motion.div>
 
         <div className="mt-8 grid gap-5 lg:grid-cols-2 lg:items-start">
-          <VideoBlock kind="youtube" id={VIDEOS.sharkTank.id} poster="/chapter-1-3/shark-tank-thumb.jpg" title={VIDEOS.sharkTank.title} caption={VIDEOS.sharkTank.caption} />
+          <VideoBlock kind="file" h264={VIDEOS.sharkTank.h264} poster={VIDEOS.sharkTank.poster} title={VIDEOS.sharkTank.title} caption={VIDEOS.sharkTank.caption} />
           <Valuation />
         </div>
       </Panel>

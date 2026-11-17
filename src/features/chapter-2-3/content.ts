@@ -18,7 +18,6 @@ const V = "/chapter-2-3/video";
 export const VIDEO = {
   title: "New Flavour Pudina Punch — a zesty, minty millet snack (Eat Better Co on YouTube)",
   h264: `${V}/pudina-punch-h264.mp4`,
-  av1: `${V}/pudina-punch-av1.mp4`,
   poster: `${V}/pudina-punch-poster.jpg`,
 };
 

@@ -11,7 +11,7 @@ import { MediaRow, StatBand } from "@/components/rich";
 import { LeafBulb } from "@/components/icons/EbIcons";
 import { MyWork } from "@/components/play/GameFrame";
 import { createActivityStore } from "@/lib/activities";
-import { DRIVERS, FIN, LIB, SHARK_TANK_VIDEO, SKUS, TAKEAWAY } from "./content";
+import { DRIVERS, FIN, LIB, SKUS, TAKEAWAY } from "./content";
 import { ACTS_41, useWork41 } from "./activities";
 
 export const useActivities41 = createActivityStore<string>(ACTS_41.map((a) => a.id));
@@ -272,7 +272,7 @@ export function Financials() {
           <GlossaryText>{FIN.revenue}</GlossaryText>
         </p>
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          <VideoBlock kind="youtube" id={SHARK_TANK_VIDEO.id} poster="/chapter-1-3/shark-tank-thumb.jpg" title={SHARK_TANK_VIDEO.title} caption="Shark Tank India, Season 4 (Sony LIV on YouTube): plays from YouTube." />
+          <VideoBlock kind="file" h264="/chapter-2-4/video/shark-tank-deal.mp4" poster="/chapter-2-4/video/shark-tank-deal-poster.jpg" title="Eat Better Co on Shark Tank India S4 · Financial Metrics & Deal" caption="Shark Tank India, Season 4 (Sony LIV) — Unit economics and deal negotiation." badge="Shark Tank India S4" />
           <MediaRow
             items={[
               { kind: "image", src: `${LIB}/combos/ultimate-snack-box-claims.webp`, alt: "Ultimate Snack Box claims panel", ratio: 1, caption: `A quick-commerce style combo. ${OFFICIAL}` },

@@ -100,7 +100,7 @@ export function Occasions() {
       <Panel tone="peach" reveal="left" width="max-w-7xl">
         <SectionIntro index="2" kicker="Occasions the portfolio serves" title="A snack for every moment" />
         <div className="mt-6 grid gap-5 lg:grid-cols-[1.25fr_1fr] lg:items-center">
-          <VideoBlock kind="file" av1={VIDEO.av1} h264={VIDEO.h264} poster={VIDEO.poster} title={VIDEO.title} caption={VIDEO.caption} />
+          <VideoBlock kind="file" h264={VIDEO.h264} poster={VIDEO.poster} title={VIDEO.title} caption={VIDEO.caption} />
           <p className="rounded-[22px] bg-cream p-5 text-[1.08rem] leading-relaxed text-cocoa">
             Watch how festive and corporate gifting work at Eat Better. Then look at the four occasions below: each one has its own example products — and its own reason why it works.
           </p>

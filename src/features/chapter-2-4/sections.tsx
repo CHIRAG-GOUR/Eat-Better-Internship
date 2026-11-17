@@ -127,7 +127,7 @@ export function SharkTank() {
       <Panel tone="light" reveal="left" width="max-w-7xl">
         <SectionIntro index="2" kicker="The Shark Tank India advantage" title="One pitch, a national audience" />
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          <VideoBlock kind="youtube" id={SHARK_TANK_VIDEO.id} poster="/chapter-1-3/shark-tank-thumb.jpg" title={SHARK_TANK_VIDEO.title} caption="Shark Tank India, Season 4 (Sony LIV on YouTube) — plays from YouTube." />
+          <VideoBlock kind="file" h264={SHARK_TANK_VIDEO.h264} poster={SHARK_TANK_VIDEO.poster} title={SHARK_TANK_VIDEO.title} caption={SHARK_TANK_VIDEO.caption} />
           <div className="grid gap-3">
             <Point icon={Percent} lead="The valuation & pitch structure">
               {PITCH.structure}

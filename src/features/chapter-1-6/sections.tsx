@@ -353,7 +353,7 @@ export function Compliance() {
           })}
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-          <VideoBlock kind="youtube" id={VIDEO.id} poster={VIDEO.poster} title={VIDEO.title} caption={VIDEO.caption} />
+          <VideoBlock kind="file" h264="/chapter-1-3/video/shark-tank-pitch.mp4" poster="/chapter-1-3/video/shark-tank-pitch-poster.jpg" title={VIDEO.title} caption="Shark Tank India, Season 4 (Sony LIV) — Sharks discuss product quality and lab tests." badge="Shark Tank India S4" />
           <div className="rounded-[22px] bg-cream/10 p-5 text-cream">
             <div className="text-[0.85rem] font-extrabold uppercase tracking-[0.14em] text-haldi">Watch for</div>
             <p className="mt-2 text-[1.08rem] leading-relaxed">

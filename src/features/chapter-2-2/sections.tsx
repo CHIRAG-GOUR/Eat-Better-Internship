@@ -118,7 +118,7 @@ export function Owned() {
           className="mx-auto mt-6 max-w-4xl"
           items={[
             { kind: "image", src: "/chapter-2-2/lms-2.png", alt: "Product cards on the Eat Better Co website", ratio: 866 / 731, fit: "contain", caption: "The official Eat Better Co website (screenshot)." },
-            { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" portrait fill h264={VIDEOS.perfectSnack.h264} poster={VIDEOS.perfectSnack.poster} title={VIDEOS.perfectSnack.title} caption="From Eat Better Co's own YouTube channel." /> },
+            { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" variant="short" portrait fill h264={VIDEOS.perfectSnack.h264} poster={VIDEOS.perfectSnack.poster} title={VIDEOS.perfectSnack.title} caption="From Eat Better Co's own YouTube channel." /> },
           ]}
         />
         <div className="mt-6 grid gap-3 lg:grid-cols-2">
@@ -132,13 +132,80 @@ export function Owned() {
 
 /* ── 3 · Social media marketing ───────────────────────────────── */
 
+const IG_IMAGES = [
+  { src: "/chapter-2-2/bhelpuri-1.jpg", alt: "Bombay Bhelpuri post - Slide 1" },
+  { src: "/chapter-2-2/bhelpuri-2.jpg", alt: "Bombay Bhelpuri post - Slide 2" },
+  { src: "/chapter-2-2/bhelpuri-3.jpg", alt: "Bombay Bhelpuri post - Slide 3" },
+];
+
 function InstagramPost() {
+  const [current, setCurrent] = useState(0);
+
   return (
-    <figure>
-      <Image src="/chapter-2-2/lms-3.png" alt="Eat Better Co's founders with their products — an Instagram post" width={800} height={1067} sizes="(max-width: 640px) 100vw, 340px" className="h-auto w-full rounded-2xl border border-cocoa shadow-[4px_4px_0_0_#ff5c00]" />
+    <figure className="flex flex-col h-full">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl border border-cocoa bg-cream shadow-[4px_4px_0_0_#ff5c00]">
+        <Image
+          src={IG_IMAGES[current].src}
+          alt={IG_IMAGES[current].alt}
+          fill
+          sizes="(max-width: 640px) 100vw, 340px"
+          className="object-cover transition-opacity duration-300"
+        />
+        {/* Controls */}
+        <div className="absolute inset-x-2 top-1/2 flex -translate-y-1/2 justify-between pointer-events-none">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              setCurrent((c) => (c === 0 ? IG_IMAGES.length - 1 : c - 1));
+            }}
+            aria-label="Previous slide"
+            className="pointer-events-auto grid size-7 place-items-center rounded-full bg-white/90 text-cocoa shadow hover:bg-orange hover:text-white transition-colors text-base font-bold"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              setCurrent((c) => (c === IG_IMAGES.length - 1 ? 0 : c + 1));
+            }}
+            aria-label="Next slide"
+            className="pointer-events-auto grid size-7 place-items-center rounded-full bg-white/90 text-cocoa shadow hover:bg-orange hover:text-white transition-colors text-base font-bold"
+          >
+            ›
+          </button>
+        </div>
+        {/* Slide Counter */}
+        <span className="absolute top-2 right-2 rounded-full bg-cocoa/80 px-2 py-0.5 text-[0.72rem] font-bold text-white">
+          {current + 1} / {IG_IMAGES.length}
+        </span>
+        {/* Dots */}
+        <div className="absolute bottom-2 inset-x-0 flex justify-center gap-1.5 pointer-events-none">
+          {IG_IMAGES.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrent(i);
+              }}
+              aria-label={`Slide ${i + 1}`}
+              className={`pointer-events-auto size-2 rounded-full transition-all ${
+                i === current ? "bg-orange w-4" : "bg-white/80"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
       <figcaption className="mt-3 text-[0.95rem] leading-snug text-cocoa-2">
-        A post from Eat Better Co on Instagram.{" "}
-        <a href={`https://www.instagram.com/p/${VIDEOS.instagramPost}/`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto font-bold text-orange underline underline-offset-2">
+        Instagram post: Bombay Bhelpuri carousel.{" "}
+        <a
+          href={`https://www.instagram.com/p/${VIDEOS.instagramPost}/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="pointer-events-auto font-bold text-orange underline underline-offset-2"
+        >
           View on Instagram
         </a>
       </figcaption>
@@ -160,9 +227,32 @@ export function Social() {
         <MediaRow
           className="mx-auto mt-6 max-w-4xl"
           items={[
-            { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" portrait fill h264={VIDEOS.reel.h264} poster={VIDEOS.reel.poster} title={VIDEOS.reel.title} caption="Instagram: a reel from Eat Better Co." /> },
-            { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" portrait fill av1={VIDEOS.factory.av1} h264={VIDEOS.factory.h264} poster={VIDEOS.factory.poster} title={VIDEOS.factory.title} caption="YouTube: a Short from Eat Better Co." /> },
-            { kind: "node", ratio: 800 / 1067, framed: false, node: <InstagramPost /> },
+            {
+              kind: "node",
+              ratio: 9 / 16,
+              framed: false,
+              node: (
+                <VideoBlock
+                  kind="file"
+                  variant="reel"
+                  fill
+                  h264={VIDEOS.reel.h264}
+                  poster={VIDEOS.reel.poster}
+                  title={VIDEOS.reel.title}
+                  caption="Instagram: a reel from Eat Better Co."
+                  reelMeta={{
+                    handle: "eatbetterco",
+                    likes: "18.4K",
+                    comments: "420",
+                    shares: "1.9K",
+                    audioTrack: "Eat Better Co · Original Audio",
+                    caption: "Diwali festivities at Eat Better! 🪔✨ Spreading joy with wholesome, nutritious snacks. #EatBetterCo #FestiveCelebration #CleanSnacking",
+                  }}
+                />
+              ),
+            },
+            { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" variant="short" portrait fill av1={VIDEOS.factory.av1} h264={VIDEOS.factory.h264} poster={VIDEOS.factory.poster} title={VIDEOS.factory.title} caption="YouTube: a Short from Eat Better Co." /> },
+            { kind: "node", ratio: 1, framed: false, node: <InstagramPost /> },
           ]}
         />
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
@@ -185,7 +275,7 @@ export function Story() {
           <GlossaryText>{STORY.text}</GlossaryText>
         </SectionIntro>
         <div className="mt-6 grid gap-6 lg:grid-cols-[300px_minmax(0,1fr)] lg:items-center">
-          <div className="mx-auto w-full max-w-[300px]"><VideoBlock kind="file" portrait fill av1={VIDEOS.sharks.av1} h264={VIDEOS.sharks.h264} poster={VIDEOS.sharks.poster} title={VIDEOS.sharks.title} caption="From Eat Better Co's own YouTube channel." /></div>
+          <div className="mx-auto w-full max-w-[300px]"><VideoBlock kind="file" variant="short" portrait fill av1={VIDEOS.sharks.av1} h264={VIDEOS.sharks.h264} poster={VIDEOS.sharks.poster} title={VIDEOS.sharks.title} caption="From Eat Better Co's own YouTube channel." /></div>
           <div className="space-y-4">
             <div className="grid grid-cols-3 gap-2">
               {STORY.points.map((p, i) => {
@@ -350,7 +440,7 @@ export function Markets() {
           ))}
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
-          <VideoBlock kind="youtube" id={VIDEOS.sharkTank.id} poster="/chapter-1-3/shark-tank-thumb.jpg" title={VIDEOS.sharkTank.title} caption="Shark Tank India, Season 4 (Sony LIV on YouTube) — plays from YouTube." />
+          <VideoBlock kind="file" h264="/chapter-2-4/video/shark-tank-deal.mp4" poster="/chapter-2-4/video/shark-tank-deal-poster.jpg" title="Eat Better Co on Shark Tank India S4 · Distribution & Traction" caption="Shark Tank India, Season 4 (Sony LIV) — Discussing quick-commerce scale and valuation." badge="Shark Tank India S4" />
           <div className="space-y-4">
             <Example>{MARKETS.example}</Example>
             <Concept>{MARKETS.concept}</Concept>

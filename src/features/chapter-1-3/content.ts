@@ -16,9 +16,10 @@ export const CHAPTER = {
 
 export const VIDEOS = {
   sharkTank: {
-    id: "x09Y94ksOY0",
     title: "Eat Better Co के Product पर क्यों हुआ Sharks को Doubt? | Shark Tank India S4 | 100 Crore Valuation",
-    caption: "Shark Tank India, Season 4 (Sony LIV on YouTube) — plays from YouTube.",
+    caption: "Eat Better Co on Shark Tank India, Season 4 (Sony LIV) — The Pitch (12:55 to 14:01).",
+    h264: "/chapter-1-3/video/shark-tank-pitch.mp4",
+    poster: "/chapter-1-3/video/shark-tank-pitch-poster.jpg",
   },
   gifting: {
     title: "Diwali Corporate Gifting, Done Thoughtfully | Inside Eat Better Co",

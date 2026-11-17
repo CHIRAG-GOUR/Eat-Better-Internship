@@ -15,8 +15,10 @@ export const CHAPTER = {
 };
 
 export const SHARK_TANK_VIDEO = {
-  id: "x09Y94ksOY0",
-  title: "Eat Better Co के Product पर क्यों हुआ Sharks को Doubt? | Shark Tank India S4 | 100 Crore Valuation",
+  title: "Eat Better Co on Shark Tank India S4 · Deal Finalized with Namita Thapar",
+  h264: "/chapter-2-4/video/shark-tank-deal.mp4",
+  poster: "/chapter-2-4/video/shark-tank-deal-poster.jpg",
+  caption: "Shark Tank India, Season 4 (Sony LIV) — The Deal (18:16 to 20:44).",
 };
 
 /* 1 · The Shark Tank India advantage */
