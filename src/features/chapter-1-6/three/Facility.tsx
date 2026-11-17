@@ -10,6 +10,7 @@ import FacilityScene from "./facility/Scene";
 import { BATCH_ID, ORDER, REVIEW_X, STATION_INFO, STATION_X, type StationId } from "./facility/data";
 import { mistakesAt, useFacility } from "./facility/store";
 import { SIM_NOTE, StationPanel, inspectContent } from "./facility/Panels";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * Chapter 1.6 — The Virtual Quality & Packaging Facility (3D process simulation).
@@ -91,6 +92,7 @@ export default function Facility({ three = true, onComplete }: { three?: boolean
         {!three && <div className="absolute inset-0 bg-cover bg-center opacity-80" style={{ backgroundImage: "url(/chapter-1-6/frames/facility-aerial.webp)" }} aria-hidden />}
         {visible && three && (
           <Canvas {...liteCanvasProps(lite)} camera={{ position: [STATION_X.sourcing - 2.8, 4.2, 9.4], fov: 45 }}>
+            <AsyncCompile />
             <FacilityScene lite={lite} walker={walker} walkTo={walkTo} onArrive={onArrive} />
           </Canvas>
         )}

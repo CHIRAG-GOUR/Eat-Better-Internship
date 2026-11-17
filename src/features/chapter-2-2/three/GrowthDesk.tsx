@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { AnimatePresence, motion } from "motion/react";
 import {
   BookOpen,
@@ -27,6 +27,7 @@ import { LeafBulb, Sprout } from "@/components/icons/EbIcons";
 import { LiteToggle, ObjectiveTracker, RoleBadge, SimReport, liteCanvasProps, useLiteMode, type Objective, type ReportData } from "@/components/sim";
 import { OFFERS } from "../content";
 import { usePractice22 } from "../practice";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * D2C Growth Desk — the student plays a Junior Digital Marketer running a FICTIONAL two-week launch of a
@@ -740,6 +741,7 @@ export default function GrowthDesk({ onComplete }: { onComplete: () => void }) {
         <div className="relative h-[360px] overflow-hidden rounded-[24px] border border-cocoa bg-[#FBE3CF] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[460px] lg:h-[560px]">
           {visible && (
             <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 3.5, 8], fov: 40 }}>
+              <AsyncCompile />
               <Scene chosen={chosen} toggle={toggle} step={step} review={review} reply={reply} packs={o.packs} margin={result ? result.margin : o.margin} result={result} lite={lite} />
             </Canvas>
           )}

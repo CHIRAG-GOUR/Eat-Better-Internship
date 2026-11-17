@@ -4,11 +4,14 @@
 import { createContext, Suspense, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PerformanceMonitor, RoundedBox, useTexture } from "@react-three/drei";
+import { PerformanceMonitor, useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { useReducedMotion } from "motion/react";
 import { useMediaQuery } from "@/lib/useClient";
 import { StreetLife } from "./StreetLife";
 import { Fireworks } from "./Fireworks";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { bodyFontFamily, largestFitting } from "@/lib/canvasText";
 
 /**
  * Module 2 world — "Brand Boulevard": an Indian high street the camera glides down as the student
@@ -52,8 +55,7 @@ const rng = (seed: number) => {
 };
 
 function fontFamily() {
-  if (typeof document === "undefined") return "sans-serif";
-  return getComputedStyle(document.body).fontFamily || "sans-serif";
+  return bodyFontFamily();
 }
 
 function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void, srgb = true) {
@@ -75,12 +77,12 @@ export function signTexture(text: string, bg = "#FFF5EE", fg = "#2F1C1A", w = 51
     g.fillStyle = fg;
     g.textAlign = "center";
     g.textBaseline = "middle";
-    let size = h * 0.5;
-    g.font = `800 ${size}px ${fontFamily()}`;
-    while (g.measureText(text).width > w * 0.88 && size > 10) {
-      size -= 2;
-      g.font = `800 ${size}px ${fontFamily()}`;
-    }
+    const fam = fontFamily();
+    const fits = (s: number) => {
+      g.font = `800 ${s}px ${fam}`;
+      return g.measureText(text).width <= w * 0.88;
+    };
+    g.font = `800 ${largestFitting(h * 0.5, fits, 10)}px ${fam}`;
     g.fillText(text, w / 2, h / 2 + 2);
   });
 }
@@ -442,6 +444,7 @@ export default function BoulevardWorld({ chapter, scenes, travel = 60 }: { chapt
         gl.toneMappingExposure = 1.05;
       }}
     >
+      <AsyncCompile />
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <BoulevardScene chapter={chapter} travel={travel} compact={compact} reduced={reduced} scenes={scenes} drive={drive} />
     </Canvas>

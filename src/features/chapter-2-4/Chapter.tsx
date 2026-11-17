@@ -54,7 +54,7 @@ export default function Chapter() {
           steps={[
             { img: "/brand/catalog/story-tin.webp", label: "A compelling brand story" },
             { img: "/brand/catalog/ingredients-hazelnut.webp", label: "Transparent product standards" },
-            { img: "/chapter-2-4/lms-3.png", label: "Media amplifies it" },
+            { img: "/chapter-2-4/lms-3.webp", label: "Media amplifies it" },
           ]}
         />
         <WrapUp />

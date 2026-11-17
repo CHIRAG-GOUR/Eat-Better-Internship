@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, type ThreeEvent } from "@react-three/fiber";
-import { Billboard, RoundedBox } from "@react-three/drei";
+import { Billboard } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { Person, still, type Look, type Pose } from "@/components/sim/Person";
 import { FollowCamera, useKeyboardWalk, useWalker, WalkerController, WalkGround, type Walker } from "@/components/sim/walk";
 import { CONSUMERS, LOCATIONS, STUDIO_POS, type Consumer, type LocationId } from "./data";

@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { useReducedMotion } from "motion/react";
 import { D2C } from "../content";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * 3D "two routes" diorama for the D2C section. One kitchen, two roads:
@@ -512,6 +514,7 @@ export default function RouteDiorama({ highlight }: { highlight: RouteId | null 
       <div className="relative h-[380px] overflow-hidden rounded-[24px] border border-cocoa bg-[#FBE6D3] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[460px]">
         {visible && (
           <Canvas shadows="percentage" dpr={[1, 1.5]} camera={{ position: [0, 8.2, 8.8], fov: 36 }} onCreated={({ camera }) => camera.lookAt(0, 0.2, 0.2)}>
+            <AsyncCompile />
             <color attach="background" args={["#FBE6D3"]} />
             <Scene highlight={highlight} onPick={setPick} reduced={reduced} onPhase={setPhase} labels={labels} />
           </Canvas>

@@ -24,6 +24,7 @@ import {
 } from "../content";
 import { StudioScene } from "./studio/StudioScene";
 import type { PackArt } from "./studio/packArt";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The Eat Better Product Innovation Studio — role: Junior Product Developer.
@@ -284,6 +285,7 @@ export default function InnovationStudio({ onComplete, three = true }: { onCompl
           {!three && <NextImage src="/chapter-1-5/frames/jar-hamper.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" />}
           {visible && three && (
             <Canvas {...liteCanvasProps(lite)} gl={{ ...liteCanvasProps(lite).gl, preserveDrawingBuffer: true }} camera={{ position: [3, 5, 13], fov: 40 }}>
+              <AsyncCompile />
               <StudioScene
                 step={s.step}
                 focusZone={focusZone}

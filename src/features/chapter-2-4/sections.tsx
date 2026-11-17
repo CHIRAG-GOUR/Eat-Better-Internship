@@ -72,7 +72,7 @@ export function InTheNews() {
       <Panel tone="dark" reveal="up" width="max-w-7xl">
         <SectionIntro index="1" kicker="In the news" title="₹50 lakh on national TV" tone="dark" />
         <div className="mt-6 grid items-stretch gap-5 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)]">
-          <Frame src="/chapter-2-4/lms-3.png" alt="Press graphic: Eat Better Co secures ₹50 lakh investment on Shark Tank India Season 4" caption="Press feature (screenshot, ceovine.com)" ratio="1/1" sizes="(max-width: 768px) 100vw, 520px" tone="dark" />
+          <Frame src="/chapter-2-4/lms-3.webp" alt="Press graphic: Eat Better Co secures ₹50 lakh investment on Shark Tank India Season 4" caption="Press feature (screenshot, ceovine.com)" ratio="1/1" sizes="(max-width: 768px) 100vw, 520px" tone="dark" />
           <div className="flex min-w-0 flex-col justify-center gap-4">
             <div className="grid grid-cols-[1fr_auto_1fr_auto_1fr] items-center gap-2 rounded-[22px] bg-cream p-4 text-center text-cocoa">
               <div>

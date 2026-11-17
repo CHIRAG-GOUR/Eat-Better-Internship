@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { CameraControls, ContactShadows, Environment, Lightformer, RoundedBox } from "@react-three/drei";
+import { CameraControls, ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { SHELF, STORY, type ShelfItem } from "./data";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The 3D Eat Better Brand Studio. Every object has a job:
@@ -1145,6 +1147,7 @@ function Scene(p: StudioProps) {
 export default function Studio3D(p: StudioProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: OVERVIEW.pos.toArray(), fov: 42, near: 0.05, far: 60 }} gl={{ antialias: true, preserveDrawingBuffer: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
+      <AsyncCompile />
       <color attach="background" args={["#EFE6DC"]} />
       <fog attach="fog" args={["#EFE6DC", 14, 30]} />
       <hemisphereLight args={["#FFF6EA", "#A88A6C", 0.75]} />

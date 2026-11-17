@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import type { ProductLine } from "@/lib/brand";
 import { LINE_BACKDROP } from "@/lib/brand";
 import { makeBowl, makeCyclorama, makeKatori, makeLaddooGeometry, makeSpeckleTexture } from "./geometry";

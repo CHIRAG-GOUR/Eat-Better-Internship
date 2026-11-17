@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { ArrowLeftRight, Globe2, MessageCircle, Package, Tag } from "lucide-react";
 import { Stage3D } from "@/components/play/Stage3D";
 import { GameFrame, starsFor, type Feedback } from "@/components/play/GameFrame";

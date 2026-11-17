@@ -15,6 +15,7 @@ import { Facility, Warehouse } from "./Facility";
 import { DockTruck, Traffic } from "./Traffic";
 import { Town } from "./Town";
 import { BmcTerrace } from "./BmcTerrace";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * Module 3 world — "Value Chain Valley": a scroll-driven glide through a green valley on the edge of
@@ -248,6 +249,7 @@ export default function ValleyWorld({ chapter, scenes, travel }: { chapter: Chap
         gl.toneMappingExposure = 1.0;
       }}
     >
+      <AsyncCompile />
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <ValleyScene chapter={chapter} travel={travel} compact={compact} reduced={reduced} scenes={scenes} drive={drive} />
     </Canvas>

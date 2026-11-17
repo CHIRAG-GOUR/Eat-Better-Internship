@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import * as THREE from "three";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { BhujiaPile } from "@/components/world/props";
 import type { ObjectKind } from "./data";
 

@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { Scooter } from "@/components/world2/StreetLife";
 import type { HumanLook } from "@/components/world2/Human";
 import { Hoverable } from "@/components/world/hover";

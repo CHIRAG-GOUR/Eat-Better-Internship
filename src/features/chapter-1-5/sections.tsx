@@ -138,7 +138,7 @@ export function Occasions() {
           })}
         </div>
         <motion.figure initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="mt-8 overflow-hidden rounded-[22px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
-          <Image src="/chapter-1-5/all-products-collection.png" alt="Eat Better's All Products Collection page, with shop filters for Diwali gift hampers, gift sets, namkeen, combos, nut mixes, sweets & laddoos and value packs" width={1650} height={932} sizes="(max-width: 1280px) 100vw, 1200px" className="h-auto w-full" />
+          <Image src="/chapter-1-5/all-products-collection.webp" alt="Eat Better's All Products Collection page, with shop filters for Diwali gift hampers, gift sets, namkeen, combos, nut mixes, sweets & laddoos and value packs" width={1650} height={932} sizes="(max-width: 1280px) 100vw, 1200px" className="h-auto w-full" />
           <figcaption className="bg-cream px-4 py-3 text-[0.95rem] text-cocoa-2">The All Products Collection on the official Eat Better website. Notice how the shop is organised by category and by occasion.</figcaption>
         </motion.figure>
       </Panel>

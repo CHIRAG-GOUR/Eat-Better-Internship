@@ -4,13 +4,15 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, PresentationControls, RoundedBox, useTexture } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, PresentationControls, useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowRight, Check, Lightbulb, Megaphone, Palette, Search, Users, Volume2, X } from "lucide-react";
 import { InspectPanel, LiteToggle, ObjectiveTracker, RoleBadge, SimReport, liteCanvasProps, useLiteMode, type Objective, type ReportData } from "@/components/sim";
 import { Person, still, type Pose } from "@/components/sim/Person";
 import { COLOUR_NOTE, HOTSPOTS, LAB_COLOURS, PERCEPTIONS, SHOPPERS, TONE_LINES } from "../content";
 import { useBrand21 } from "../store";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 const LAB_ORDER: [string, string][] = [["21-pack", "Match the pack to the moment"]];
 
@@ -471,6 +473,7 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
         <div className="relative h-[360px] overflow-hidden rounded-[24px] border border-cocoa bg-[#F6E3CF] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[460px] lg:h-[560px]">
           {visible && (
             <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 1.6, 4.3], fov: 40 }}>
+              <AsyncCompile />
               <Rig x={STATION_X[step]} far={step === 3} />
               <Studio
                 s={s}

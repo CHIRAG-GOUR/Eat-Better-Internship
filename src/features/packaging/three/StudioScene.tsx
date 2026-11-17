@@ -12,6 +12,7 @@ import { PACK_DIMS } from "../art/atlas";
 import type { PackDesign } from "../types";
 import { PackModel } from "./PackModel";
 import { StudioSet } from "./StudioSet";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /* capture hook used by "Export concept card" (no preserveDrawingBuffer needed) */
 export const captureRef: { current: null | (() => string) } = { current: null };
@@ -148,6 +149,7 @@ export function StudioScene({ art, design }: { art: Artwork; design: PackDesign 
       }}
       aria-label="3D view of your pack"
     >
+      <AsyncCompile />
       <PerformanceMonitor onDecline={() => setDprMax(1.1)} onIncline={() => setDprMax(1.75)} />
       <AdaptiveDpr pixelated={false} />
       <CaptureRegistrar />

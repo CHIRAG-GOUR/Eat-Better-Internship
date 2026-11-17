@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
-import { RoundedBox, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 
 /**
  * Light 3D building blocks shared by the Chapter 4.2 games: canvas-text labels, official Eat Better pack boxes

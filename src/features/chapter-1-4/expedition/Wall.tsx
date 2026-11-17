@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { Line, RoundedBox } from "@react-three/drei";
+import { Line } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { FIT_TABLE } from "../content";
 import { CONSUMERS, LOCATIONS, type ProblemId } from "./data";
 

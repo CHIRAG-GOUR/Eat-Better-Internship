@@ -11,6 +11,7 @@ import { useDC } from "./store";
 import type { DCFocus } from "./Warehouse3D";
 import { buildReport, type ReportBlock } from "../shared/pdf";
 import { ProjectReadyPopup, useStudent } from "../shared/ProjectReadyPopup";
+import { detectWebGL } from "@/lib/useClient";
 
 const Warehouse3D = dynamic(() => import("./Warehouse3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Loading the warehouse…</div> });
 
@@ -85,9 +86,8 @@ export default function Activity3() {
   const [full, setFull] = useState(false);
   const [webgl, setWebgl] = useState(true);
   useEffect(() => {
-    const c = document.createElement("canvas");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability check
-    setWebgl(!!(c.getContext("webgl2") || c.getContext("webgl")));
+    setWebgl(detectWebGL());
     const on = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", on);
     return () => document.removeEventListener("fullscreenchange", on);

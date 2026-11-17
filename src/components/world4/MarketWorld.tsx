@@ -11,6 +11,7 @@ import { Store } from "./Store";
 import { Arena } from "./Arena";
 import { Rooftop } from "./Rooftop";
 import { Sky } from "./Skyline";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * Module 4 world — "Bazaar to Boardroom": a scroll-driven journey from the shop floor to the skyline.
@@ -207,6 +208,7 @@ export default function MarketWorld({ chapter, scenes, travel }: { chapter: Chap
         gl.toneMappingExposure = 1.0;
       }}
     >
+      <AsyncCompile />
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <MarketScene chapter={chapter} travel={travel} compact={compact} reduced={reduced} scenes={scenes} drive={drive} />
     </Canvas>

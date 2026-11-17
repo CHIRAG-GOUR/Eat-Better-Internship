@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { bodyFontFamily, largestFitting } from "@/lib/canvasText";
 
 /**
  * Shared layout, terrain maths and resources for the Module 3 world ("Value Chain Valley").
@@ -127,8 +128,7 @@ export function mat(color: string, roughness = 0.8, metalness = 0, extra?: { emi
 /* ── canvas textures ──────────────────────────────────────────── */
 
 export function fontFamily() {
-  if (typeof document === "undefined") return "sans-serif";
-  return getComputedStyle(document.body).fontFamily || "sans-serif";
+  return bodyFontFamily();
 }
 
 export function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void, srgb = true) {
@@ -144,13 +144,13 @@ export function canvasTexture(w: number, h: number, draw: (g: CanvasRenderingCon
 
 /** Fit one or more lines of bold text into a box. */
 export function drawText(g: CanvasRenderingContext2D, lines: string[], cx: number, cy: number, maxW: number, maxH: number, color: string, weight = 800) {
-  let size = Math.min(maxH / (lines.length * 1.15), 200);
   const fam = fontFamily();
-  const fits = () => {
-    g.font = `${weight} ${size}px ${fam}`;
+  const fits = (s: number) => {
+    g.font = `${weight} ${s}px ${fam}`;
     return lines.every((l) => g.measureText(l).width <= maxW);
   };
-  while (!fits() && size > 8) size -= 2;
+  const size = largestFitting(Math.min(maxH / (lines.length * 1.15), 200), fits, 8);
+  g.font = `${weight} ${size}px ${fam}`;
   g.fillStyle = color;
   g.textAlign = "center";
   g.textBaseline = "middle";

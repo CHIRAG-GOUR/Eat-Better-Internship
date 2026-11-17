@@ -27,7 +27,10 @@ export function detectWebGL() {
   if (webglCache !== null) return webglCache;
   try {
     const c = document.createElement("canvas");
-    webglCache = !!(c.getContext("webgl2") || c.getContext("webgl"));
+    const ctx = (c.getContext("webgl2") || c.getContext("webgl")) as WebGLRenderingContext | null;
+    webglCache = !!ctx;
+    // release the probe context straight away, so it does not hold GPU memory or count against the browser's context limit
+    ctx?.getExtension("WEBGL_lose_context")?.loseContext();
   } catch {
     webglCache = false;
   }

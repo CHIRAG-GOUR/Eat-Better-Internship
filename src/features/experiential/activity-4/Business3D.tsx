@@ -3,9 +3,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { CameraControls, RoundedBox } from "@react-three/drei";
+import { CameraControls } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { Human, type HumanLook } from "@/components/world2/Human";
 import { DEPTS, FACILITY_CAP, KMATRIX, K_PLAYERS, LEVEL_IDX, ORDERS_NOW, SKUS, type DeptId, type Level } from "./data";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The 3D Eat Better business HQ: a pricing wall with the four real SKUs and their shelf tags, a finance screen wall,
@@ -532,6 +534,7 @@ export type HQProps = {
 export default function HQ3D(p: HQProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
+      <AsyncCompile />
       <color attach="background" args={["#EFE6DA"]} />
       <fog attach="fog" args={["#EFE6DA", 26, 52]} />
       <hemisphereLight args={["#FFF6EA", "#B9A08A", 1.0]} />

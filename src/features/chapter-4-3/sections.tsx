@@ -181,7 +181,7 @@ export function Pillars() {
           <MediaRow
             className="mt-6"
             items={[
-              { kind: "image", src: "/chapter-2-2/lms-5.png", alt: "Eat Better namkeens in quick-commerce app search results", ratio: 1181 / 497, fit: "contain", caption: "Eat Better namkeens in quick-commerce search results (screenshot); prices vary." },
+              { kind: "image", src: "/chapter-2-2/lms-5.webp", alt: "Eat Better namkeens in quick-commerce app search results", ratio: 1181 / 497, fit: "contain", caption: "Eat Better namkeens in quick-commerce search results (screenshot); prices vary." },
               { kind: "image", src: `${LIB}/site/home-banner-masaledaar-chatkara.webp`, alt: "Website banner for the Masaledaar Chatkara range", ratio: 1100 / 351, caption: `Snacks for an instant craving. ${OFFICIAL}` },
             ]}
           />

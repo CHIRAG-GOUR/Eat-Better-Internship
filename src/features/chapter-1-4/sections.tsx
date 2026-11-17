@@ -39,7 +39,7 @@ export function WhatIsFit() {
             className="mx-auto w-full max-w-[400px] overflow-hidden rounded-[22px] border border-cocoa bg-white shadow-[4px_4px_0_0_#2f1c1a]"
           >
             <div className="relative aspect-square">
-              <Image src="/chapter-1-4/what-makes-it-better.png" alt="Eat Better Co's Ultimate Snack Box with the words: What makes it better — No Cholesterol, No Transfat; No Palm Oil; Made with Millets and Dry Fruits" fill sizes="400px" className="object-contain" />
+              <Image src="/chapter-1-4/what-makes-it-better.webp" alt="Eat Better Co's Ultimate Snack Box with the words: What makes it better — No Cholesterol, No Transfat; No Palm Oil; Made with Millets and Dry Fruits" fill sizes="400px" className="object-contain" />
             </div>
             <figcaption className="border-t border-cocoa/15 bg-cream px-4 py-2.5 text-[0.88rem] text-cocoa-2">Official Eat Better Co image: “What makes it better”.</figcaption>
           </motion.figure>
@@ -587,7 +587,7 @@ export function Think() {
 const RECAP = [
   { title: "The problem", text: "Snacks that force a choice between taste and health.", img: "/chapter-1-1/art/balance.webp" },
   { title: "The answer", text: MARKET.solution, img: "/chapter-1-4/frames/natural-laddoos.webp" },
-  { title: "The evidence", text: "Customers say what they want; their buying decisions show the problem that keeps coming back.", img: "/chapter-1-4/what-makes-it-better.png" },
+  { title: "The evidence", text: "Customers say what they want; their buying decisions show the problem that keeps coming back.", img: "/chapter-1-4/what-makes-it-better.webp" },
   { title: "The signal", text: TAKEAWAY, img: "/chapter-1-2/frames/shipping-box.webp" },
 ];
 const ACT: { id: "expedition" | "signals" | "interviews"; label: string }[] = [

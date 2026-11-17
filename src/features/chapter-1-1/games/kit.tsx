@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Billboard, RoundedBox, useTexture } from "@react-three/drei";
+import { Billboard, useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { AnimatePresence, motion } from "motion/react";
 import { Heart, RotateCcw, Star, Trophy, Zap } from "lucide-react";
 

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useMediaQuery } from "@/lib/useClient";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * A 3D play area for activities (Module 4+). The WebGL canvas only exists while the stage is on screen, so a page
@@ -41,6 +42,7 @@ export function Stage3D({
     <div ref={ref} role="img" aria-label={label} className="relative w-full overflow-hidden rounded-[20px] border border-cocoa/20" style={{ height, background }}>
       {visible ? (
         <Canvas dpr={[1, compact ? 1.25 : 1.75]} shadows={!compact} camera={camera} gl={{ antialias: !compact, powerPreference: "high-performance" }} style={{ touchAction: "pan-y" }}>
+          <AsyncCompile />
           {children}
         </Canvas>
       ) : (

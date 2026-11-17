@@ -12,6 +12,7 @@ import { drawLabel } from "./label";
 import type { Focus, Lot, PackOption, TrayItem } from "./Lab3D";
 import { buildReport, downloadDataUrl, type ReportBlock } from "../shared/pdf";
 import { ProjectReady, useStudent } from "../shared/ProjectReady";
+import { detectWebGL } from "@/lib/useClient";
 
 const Lab3D = dynamic(() => import("./Lab3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Loading the lab…</div> });
 
@@ -126,9 +127,8 @@ export default function Activity1() {
   const [full, setFull] = useState(false);
   const [webgl, setWebgl] = useState(true);
   useEffect(() => {
-    const c = document.createElement("canvas");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability check
-    setWebgl(!!(c.getContext("webgl2") || c.getContext("webgl")));
+    setWebgl(detectWebGL());
     const on = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", on);
     return () => document.removeEventListener("fullscreenchange", on);

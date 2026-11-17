@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import BoulevardWorld, { signTexture, type BoulevardKit } from "@/components/world2/BoulevardWorld";
 import { Scooter } from "@/components/world2/StreetLife";
 import { Person, type Look, type Pose } from "@/components/sim/Person";

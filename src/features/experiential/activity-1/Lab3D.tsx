@@ -3,12 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { CameraControls, RoundedBox } from "@react-three/drei";
+import { CameraControls } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { Human, type HumanLook } from "@/components/world2/Human";
 import { renderToStaticMarkup } from "react-dom/server";
 import { INGREDIENTS, ING } from "./data";
 import { IngredientIcon } from "./IngredientIcon";
 import { ForeignItem, IngredientPieces, OnePiece } from "./Pieces3D";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The 3D Product Innovation Lab: an ingredient wall (13 jars), a formulation bench with a mixing bowl, and six
@@ -723,6 +725,7 @@ export type LabProps = {
 export default function Lab3D(p: LabProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true, preserveDrawingBuffer: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
+      <AsyncCompile />
       <color attach="background" args={["#F3ECE3"]} />
       <fog attach="fog" args={["#F3ECE3", 18, 34]} />
       <hemisphereLight args={["#FFF6EA", "#B9A08A", 0.9]} />

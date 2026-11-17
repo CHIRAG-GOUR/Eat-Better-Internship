@@ -4,7 +4,8 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { FollowCamera, WalkGround, WalkerController, type Walker } from "@/components/sim/walk";
 import { Person, type Look } from "@/components/sim/Person";
 import { NutPile } from "@/components/world/props";

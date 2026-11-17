@@ -51,7 +51,7 @@ const DOCS: Doc[] = [
   },
   {
     id: "box",
-    src: "/chapter-1-4/what-makes-it-better.png",
+    src: "/chapter-1-4/what-makes-it-better.webp",
     w: 447,
     h: 447,
     title: "Ultimate Snack Box creative",

@@ -4,7 +4,8 @@
 import { Suspense, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, RoundedBox, useTexture } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { makeBowl } from "@/features/packaging/three/geometry";
 import { BhujiaPile, Diya, GiftBox, MailerBox, Marigold } from "@/components/world/props";
 import { CATEGORIES, INGREDIENTS, ZONE_PRODUCTS, type CategoryId, type Format, type IngredientId, type OccasionId, type ZoneProduct } from "../../content";

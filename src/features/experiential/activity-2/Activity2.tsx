@@ -14,6 +14,7 @@ import type { Focus } from "./Studio3D";
 import { AdsPanel, BrandPanel, CanvasView, DiscoverPanel, Kicker, LaunchPanel, PackagingPanel, PostPanel, secondary, type BrandTab } from "./Panels";
 import { downloadDataUrl } from "../shared/pdf";
 import { ProjectReadyPopup as ProjectReady, useStudent } from "../shared/ProjectReadyPopup";
+import { detectWebGL } from "@/lib/useClient";
 
 const Studio3D = dynamic(() => import("./Studio3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Setting up the studio…</div> });
 
@@ -37,9 +38,8 @@ export default function Activity2() {
   const [packView, setPackView] = useState<"desk" | "photo">("desk");
   const [assets, setAssets] = useState<Assets | null>(null);
   useEffect(() => {
-    const c = document.createElement("canvas");
     // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time capability check
-    setWebgl(!!(c.getContext("webgl2") || c.getContext("webgl")));
+    setWebgl(detectWebGL());
     const on = () => setFull(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", on);
     loadAssets()

@@ -2,7 +2,8 @@
 
 import { Suspense, useMemo } from "react";
 import * as THREE from "three";
-import { RoundedBox, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import TableWorld from "@/components/world/TableWorld";
 import { Hoverable } from "@/components/world/hover";
 import { Diya, GiftBox, Laddoos, MailerBox, Marigold, NutPile, Scatter } from "@/components/world/props";

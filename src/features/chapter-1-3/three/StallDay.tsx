@@ -5,12 +5,14 @@ import NextImage from "next/image";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, RoundedBox, useTexture } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer, useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, Frown, Lightbulb, RotateCcw, Smile, Star, Store, Trophy, User, X } from "lucide-react";
 import { makeBowl, makeKatori } from "@/features/packaging/three/geometry";
 import { BhujiaPile, Laddoos } from "@/components/world/props";
 import { EXHIBITIONS, STALL_CUSTOMERS, STALL_PACKS, STALL_RANKS, type Look, type PackId } from "../content";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * Stall Day — a game set at a busy food exhibition. The student runs the Eat Better stall;
@@ -999,6 +1001,7 @@ export default function StallDay({ onComplete, three = true }: { onComplete: () 
         {!three && <NextImage src="/chapter-1-3/exhibition-stall.webp" alt="" fill sizes="(max-width: 1024px) 100vw, 760px" className="object-cover" />}
         {visible && three && (
           <Canvas shadows="percentage" dpr={[1, 1.6]} camera={{ position: [0.7, 2.5, 7.5], fov: 36 }} gl={{ antialias: true }}>
+            <AsyncCompile />
             <Scene phase={phase} idx={idx} anchor={anchor} bubble={bubble} reduce={reduce} />
           </Canvas>
         )}

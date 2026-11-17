@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import BoulevardWorld, { Billboard, signTexture, type BoulevardKit } from "@/components/world2/BoulevardWorld";
 import { Person, still, type Look, type Pose } from "@/components/sim/Person";
 import { Hoverable } from "@/components/world/hover";
@@ -237,7 +237,7 @@ export default function World() {
           <TvCamera x={5.5} z={-8.3} rot={-2.2} />
           <PressPack x={-5.8} z={-12.5} rot={1.3} kit={kit} />
           <Hoverable label="Press feature — Eat Better on Shark Tank India (ceovine.com)">
-            <Billboard src="/chapter-2-4/lms-3.png" position={[-6.1, 3.3, -19]} rotation={[0, 0.9, 0]} width={2.4} height={2.4} />
+            <Billboard src="/chapter-2-4/lms-3.webp" position={[-6.1, 3.3, -19]} rotation={[0, 0.9, 0]} width={2.4} height={2.4} />
           </Hoverable>
           <Kiosk x={5.9} z={-23} rot={-1.2} />
           <Hoverable label="Festive campaign — Diwali gift hampers (official photo)">

@@ -9,6 +9,7 @@ import { useMediaQuery } from "@/lib/useClient";
 import { makeBowl, makeKatori } from "@/features/packaging/three/geometry";
 import { Hall, TABLE_HALF } from "./Hall";
 import { makeWoodTexture } from "./props";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * Shared chapter world: the long table in the dining hall. The camera travels down the table
@@ -134,6 +135,7 @@ export default function TableWorld({ scenes, travel = 58 }: { scenes: (kit: Worl
         gl.toneMappingExposure = 1.04;
       }}
     >
+      <AsyncCompile />
       <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(1.5)} />
       <TableScene reduced={reduced} compact={compact} travel={travel} scenes={scenes} />
     </Canvas>

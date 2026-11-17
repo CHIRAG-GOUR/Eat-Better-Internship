@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import TableWorld from "@/components/world/TableWorld";
 import { Hoverable } from "@/components/world/hover";
 import { BhujiaPile, Laddoos, MailerBox, NutPile, Scatter } from "@/components/world/props";

@@ -6,12 +6,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { ContactShadows, Environment, Lightformer, RoundedBox } from "@react-three/drei";
+import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, RotateCcw, X } from "lucide-react";
 import { makeKatori } from "@/features/packaging/three/geometry";
 import { GlossaryText } from "@/components/chapter/Glossary";
 import { FILTER_DECISIONS } from "../content";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The Vision Filter. The brand's vision is a brass chalni (sieve). For each decision the student
@@ -281,6 +283,7 @@ export default function VisionFilter({ onComplete }: { onComplete: () => void })
       <div className="relative h-[340px] overflow-hidden rounded-[24px] border border-cocoa bg-[#FBE6D3] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[440px]">
         {visible && (
           <Canvas shadows="percentage" dpr={[1, 1.5]} camera={{ position: [0.6, 4.4, 6.4], fov: 38 }} onCreated={({ camera }) => camera.lookAt(0.4, 1, 0)}>
+            <AsyncCompile />
             <color attach="background" args={["#FBE6D3"]} />
             <ClockSync clockStart={clockStart} />
             <Scene

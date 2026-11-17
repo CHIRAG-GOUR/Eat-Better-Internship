@@ -117,7 +117,7 @@ export function Owned() {
         <MediaRow
           className="mx-auto mt-6 max-w-4xl"
           items={[
-            { kind: "image", src: "/chapter-2-2/lms-2.png", alt: "Product cards on the Eat Better Co website", ratio: 866 / 731, fit: "contain", caption: "The official Eat Better Co website (screenshot)." },
+            { kind: "image", src: "/chapter-2-2/lms-2.webp", alt: "Product cards on the Eat Better Co website", ratio: 866 / 731, fit: "contain", caption: "The official Eat Better Co website (screenshot)." },
             { kind: "node", ratio: 9 / 16, framed: false, node: <VideoBlock kind="file" variant="short" portrait fill h264={VIDEOS.perfectSnack.h264} poster={VIDEOS.perfectSnack.poster} title={VIDEOS.perfectSnack.title} caption="From Eat Better Co's own YouTube channel." /> },
           ]}
         />
@@ -359,7 +359,7 @@ export function Reviews() {
             <Concept>{REVIEWS.concept}</Concept>
           </div>
         </div>
-        <MediaRow className="mx-auto mt-6 max-w-3xl" items={[{ kind: "image", src: "/chapter-2-2/lms-4.png", alt: "A customer review of an Eat Better product on Amazon", ratio: 1092 / 680, fit: "contain", caption: "A customer review on Amazon (screenshot)." }]} />
+        <MediaRow className="mx-auto mt-6 max-w-3xl" items={[{ kind: "image", src: "/chapter-2-2/lms-4.webp", alt: "A customer review of an Eat Better product on Amazon", ratio: 1092 / 680, fit: "contain", caption: "A customer review on Amazon (screenshot)." }]} />
       </Panel>
     </section>
   );
@@ -446,7 +446,7 @@ export function Markets() {
             <Concept>{MARKETS.concept}</Concept>
           </div>
         </div>
-        <MediaRow className="mt-6" items={[{ kind: "image", src: "/chapter-2-2/lms-5.png", alt: "Eat Better namkeens in quick-commerce app search results", ratio: 1181 / 497, fit: "contain", caption: "Quick-commerce listings (screenshot); prices vary." }]} />
+        <MediaRow className="mt-6" items={[{ kind: "image", src: "/chapter-2-2/lms-5.webp", alt: "Eat Better namkeens in quick-commerce app search results", ratio: 1181 / 497, fit: "contain", caption: "Quick-commerce listings (screenshot); prices vary." }]} />
       </Panel>
     </section>
   );

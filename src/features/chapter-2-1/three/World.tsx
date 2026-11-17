@@ -3,7 +3,8 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
-import { RoundedBox, useTexture } from "@react-three/drei";
+import { useTexture } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import BoulevardWorld, { Billboard, signTexture } from "@/components/world2/BoulevardWorld";
 import { Hoverable } from "@/components/world/hover";
 

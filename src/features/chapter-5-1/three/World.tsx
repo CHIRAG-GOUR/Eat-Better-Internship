@@ -1,6 +1,6 @@
 "use client";
 
-import { RoundedBox } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import TableWorld from "@/components/world/TableWorld";
 import { Hoverable } from "@/components/world/hover";
 import {

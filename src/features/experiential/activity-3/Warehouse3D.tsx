@@ -3,9 +3,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
-import { CameraControls, RoundedBox } from "@react-three/drei";
+import { CameraControls } from "@react-three/drei";
+import { RoundedBox } from "@/components/three/RoundedBox";
 import { Human, type HumanLook } from "@/components/world2/Human";
 import { CHANNELS, CH_IDS, SKUS, type ChId } from "./data";
+import { AsyncCompile } from "@/components/three/AsyncCompile";
 
 /**
  * The 3D Eat Better distribution centre: receiving bay with stretch-wrapped inbound pallets and a scanning desk,
@@ -629,6 +631,7 @@ export type WarehouseProps = {
 export default function Warehouse3D(p: WarehouseProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
+      <AsyncCompile />
       <color attach="background" args={["#E9E6E1"]} />
       <fog attach="fog" args={["#E9E6E1", 24, 46]} />
       <hemisphereLight args={["#FFFFFF", "#8C8478", 1.0]} />
