@@ -1,455 +1,288 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useThree, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { CameraControls, RoundedBox } from "@react-three/drei";
 import { Human, type HumanLook } from "@/components/world2/Human";
-import { SKU_IDS, type SkuId } from "./data";
+import { DEPTS, FACILITY_CAP, KMATRIX, K_PLAYERS, LEVEL_IDX, ORDERS_NOW, SKUS, type DeptId, type Level } from "./data";
 
-export type BusinessFocus = "overview" | "pricing" | "finance" | "competitor" | "budget" | "growth" | "pitch";
+/**
+ * The 3D Eat Better business HQ: a pricing wall with the four real SKUs and their shelf tags, a finance screen wall,
+ * a competitor wall with the K-Matrix and a floor positioning grid, a budget table whose stacks follow the student's
+ * allocation, a model of the 50,000 sq. ft. Jaipur facility with a capacity gauge, and a boardroom where three
+ * investors sit. The camera glides between departments as the stages change.
+ */
 
-const VIEWS: Record<BusinessFocus, { pos: [number, number, number]; look: [number, number, number] }> = {
-  overview: { pos: [0, 8.8, 13.5], look: [0, 1.4, -1.2] },
-  pricing: { pos: [4.8, 3.4, 5.8], look: [6.8, 1.4, 0.4] },
-  finance: { pos: [-4.6, 3.2, 5.6], look: [-8.2, 1.8, 0.6] },
-  competitor: { pos: [-5.8, 3.0, 0.8], look: [-11.5, 2.4, -4.5] },
-  budget: { pos: [0, 5.2, 4.2], look: [0, 1.2, -2.8] },
-  growth: { pos: [5.8, 3.6, -1.2], look: [10.5, 1.6, -5.8] },
-  pitch: { pos: [0, 2.8, 1.8], look: [0, 1.8, -8.2] },
+export type HQFocus = "overview" | "pricing" | "finance" | "compete" | "budget" | "growth" | "pitch";
+const VIEWS: Record<HQFocus, { pos: [number, number, number]; look: [number, number, number] }> = {
+  overview: { pos: [0, 10, 17], look: [0, 1, -2.5] },
+  pricing: { pos: [-8.6, 2.3, 2.6], look: [-8.6, 1.65, -4.4] },
+  finance: { pos: [-1.5, 2.7, 3.6], look: [-1.5, 2.45, -4.6] },
+  compete: { pos: [5.2, 4.2, 4.6], look: [5.2, 1.3, -2.6] },
+  budget: { pos: [-1.5, 4.0, 7.2], look: [-1.5, 0.9, 2.2] },
+  growth: { pos: [7.6, 3.2, 6.6], look: [8.8, 1.0, 2.2] },
+  pitch: { pos: [13.2, 2.6, 6.2], look: [13.6, 1.2, 0.6] },
 };
+
+function tex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  draw(c.getContext("2d")!);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
+}
+const F = (w: number, s: number) => `${w} ${s}px Figtree, "Segoe UI", Arial, sans-serif`;
+
+function Board({ w, h, px = 1024, position, rotation, draw, deps }: { w: number; h: number; px?: number; position: [number, number, number]; rotation?: [number, number, number]; draw: (g: CanvasRenderingContext2D, W: number, H: number) => void; deps: unknown[] }) {
+  const H = Math.round((px * h) / w);
+  const key = JSON.stringify(deps);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- redraw only when the listed values change
+  const t = useMemo(() => tex(px, H, (g) => draw(g, px, H)), [key, px, H]);
+  useEffect(() => () => t.dispose(), [t]);
+  return (
+    <mesh position={position} rotation={rotation}>
+      <planeGeometry args={[w, h]} />
+      <meshBasicMaterial map={t} toneMapped={false} />
+    </mesh>
+  );
+}
+
+function Sign({ text, position, rotation, w = 2.4, h = 0.42, bg = "#2F1C1A", fg = "#FED300" }: { text: string; position: [number, number, number]; rotation?: [number, number, number]; w?: number; h?: number; bg?: string; fg?: string }) {
+  return (
+    <Board
+      w={w}
+      h={h}
+      px={768}
+      position={position}
+      rotation={rotation}
+      deps={[text, bg, fg, w, h]}
+      draw={(g, W, H) => {
+        g.fillStyle = bg;
+        g.fillRect(0, 0, W, H);
+        g.fillStyle = fg;
+        g.textAlign = "center";
+        g.textBaseline = "middle";
+        g.font = F(800, H * 0.55);
+        g.fillText(text, W / 2, H / 2, W - 24);
+      }}
+    />
+  );
+}
 
 const hover = (on: boolean) => (e: ThreeEvent<PointerEvent>) => {
   e.stopPropagation();
   document.body.style.cursor = on ? "pointer" : "";
 };
 
-function canvasTex(w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
-  const c = document.createElement("canvas");
-  c.width = w;
-  c.height = h;
-  const ctx = c.getContext("2d")!;
-  draw(ctx);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
-  return t;
-}
+/* ── pricing wall: real packs ──────────────────────────────── */
 
-function StationSign({
-  text,
-  sub,
-  position,
-  rotation,
-  w = 2.4,
-  h = 0.6,
-  onClick,
-}: {
-  text: string;
-  sub?: string;
-  position: [number, number, number];
-  rotation?: [number, number, number];
-  w?: number;
-  h?: number;
-  onClick?: () => void;
-}) {
-  const tex = useMemo(
-    () =>
-      canvasTex(768, Math.round((768 * h) / w), (g) => {
-        const H = g.canvas.height;
-        g.fillStyle = "#2F1C1A";
-        g.fillRect(0, 0, 768, H);
-        g.fillStyle = "#E86127";
-        g.fillRect(0, 0, 16, H);
-        g.fillStyle = "#FED300";
-        g.textAlign = "center";
-        g.textBaseline = "middle";
-        g.font = `800 ${sub ? H * 0.42 : H * 0.55}px sans-serif`;
-        g.fillText(text, 392, sub ? H * 0.38 : H / 2, 720);
-        if (sub) {
-          g.font = `600 ${H * 0.28}px sans-serif`;
-          g.fillStyle = "#FFFFFF";
-          g.fillText(sub, 392, H * 0.76, 720);
-        }
-      }),
-    [text, sub, w, h],
-  );
-
-  useEffect(() => () => tex.dispose(), [tex]);
-
+function Pack({ src, size }: { src: string; size: [number, number, number] }) {
+  const [t, setT] = useState<THREE.Texture | null>(null);
+  useEffect(() => {
+    let alive = true;
+    new THREE.TextureLoader().load(src, (x) => {
+      x.colorSpace = THREE.SRGBColorSpace;
+      if (alive) setT(x);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [src]);
+  useEffect(() => () => t?.dispose(), [t]);
+  const side = useMemo(() => new THREE.MeshStandardMaterial({ color: "#E9D3B5", roughness: 0.7 }), []);
+  const front = useMemo(() => new THREE.MeshStandardMaterial({ map: t, color: t ? "#FFFFFF" : "#E9D3B5", roughness: 0.55 }), [t]);
   return (
-    <mesh
-      position={position}
-      rotation={rotation}
-      onClick={(e) => {
-        e.stopPropagation();
-        onClick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <planeGeometry args={[w, h]} />
-      <meshBasicMaterial map={tex} toneMapped={false} />
+    <mesh position={[0, size[1] / 2, 0]} castShadow material={[side, side, side, side, front, side]}>
+      <boxGeometry args={size} />
     </mesh>
   );
 }
 
-/* ── Camera Rig ───────────────────────────────────────────────────────── */
-
-function CameraRig({ focus }: { focus: BusinessFocus }) {
-  const ref = useRef<CameraControls>(null);
-  const { size } = useThree();
-
-  useEffect(() => {
-    const v = VIEWS[focus];
-    const portrait = size.width < size.height;
-    const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(portrait ? 1.45 : 1.05);
-    const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
-    const shift = portrait ? 0 : dir.length() * 0.22;
-    const p = look.clone().add(dir).addScaledVector(right, shift);
-    const l = look.clone().addScaledVector(right, shift);
-    ref.current?.setLookAt(p.x, p.y, p.z, l.x, l.y, l.z, true);
-  }, [focus, size.width, size.height]);
-
-  return <CameraControls ref={ref} minDistance={2} maxDistance={28} maxPolarAngle={Math.PI / 2.05} smoothTime={0.7} />;
-}
-
-/* ── Architectural Suite Shell ────────────────────────────────────────── */
-
-function SuiteArchitecture() {
-  const floorTex = useMemo(
-    () =>
-      canvasTex(512, 512, (g) => {
-        g.fillStyle = "#DFCBB9";
-        g.fillRect(0, 0, 512, 512);
-        g.strokeStyle = "#C9B29E";
-        g.lineWidth = 2;
-        for (let x = 0; x < 512; x += 64) {
-          g.beginPath();
-          g.moveTo(x, 0);
-          g.lineTo(x, 512);
-          g.stroke();
-        }
-        for (let y = 0; y < 512; y += 128) {
-          g.beginPath();
-          g.moveTo(0, y);
-          g.lineTo(512, y);
-          g.stroke();
-        }
-      }),
-    [],
-  );
-
-  useEffect(() => () => floorTex.dispose(), [floorTex]);
-
+function PricingWall({ solved, selected, onPick }: { solved: Record<string, boolean>; selected?: string | null; onPick?: (id: string) => void }) {
   return (
-    <group>
-      {/* Floor */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[34, 26]} />
-        <meshStandardMaterial map={floorTex} roughness={0.3} metalness={0.05} />
+    <group position={[-8.6, 0, -4.6]}>
+      <mesh position={[0, 1.9, -0.25]} receiveShadow>
+        <boxGeometry args={[5.4, 3.8, 0.1]} />
+        <meshStandardMaterial color="#FFF5EE" />
       </mesh>
-
-      {/* Ceiling */}
-      <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, 5.6, 0]}>
-        <planeGeometry args={[34, 26]} />
-        <meshStandardMaterial color="#F4EFEA" roughness={0.9} />
+      <mesh position={[0, 0.98, 0.1]} castShadow receiveShadow>
+        <boxGeometry args={[5.2, 0.08, 0.7]} />
+        <meshStandardMaterial color="#B98157" roughness={0.6} />
       </mesh>
-
-      {/* Back Wall with Acoustic Wood Paneling */}
-      <mesh position={[0, 2.8, -12]} receiveShadow>
-        <planeGeometry args={[34, 5.6]} />
-        <meshStandardMaterial color="#FAF6F0" roughness={0.8} />
-      </mesh>
-
-      {/* Feature Wood Slats */}
-      <group position={[0, 2.8, -11.95]}>
-        {Array.from({ length: 48 }).map((_, i) => (
-          <mesh key={i} position={[(i - 23.5) * 0.4, 0, 0]}>
-            <boxGeometry args={[0.08, 5.6, 0.04]} />
-            <meshStandardMaterial color="#966035" roughness={0.6} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Left Wall (Competitor & Financial display) */}
-      <mesh position={[-16, 2.8, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[26, 5.6]} />
-        <meshStandardMaterial color="#F7F2EC" roughness={0.8} />
-      </mesh>
-
-      {/* Right Wall (Panoramic Window Glass looking out) */}
-      <group position={[16, 2.8, 0]} rotation={[0, -Math.PI / 2, 0]}>
-        <mesh>
-          <planeGeometry args={[26, 5.6]} />
-          <meshPhysicalMaterial color="#E8F4F8" transmission={0.7} roughness={0.1} thickness={0.5} transparent opacity={0.6} />
-        </mesh>
-        {[-8, -4, 0, 4, 8].map((x) => (
-          <mesh key={x} position={[x, 0, 0.05]}>
-            <boxGeometry args={[0.15, 5.6, 0.1]} />
-            <meshStandardMaterial color="#2F1C1A" roughness={0.4} />
-          </mesh>
-        ))}
-      </group>
-    </group>
-  );
-}
-
-/* ── Executive Video Wall ─────────────────────────────────────────────── */
-
-function ExecutiveVideoWall({ onPick }: { onPick?: () => void }) {
-  const tex = useMemo(
-    () =>
-      canvasTex(1024, 512, (g) => {
-        g.fillStyle = "#1E1210";
-        g.fillRect(0, 0, 1024, 512);
-
-        g.fillStyle = "#E86127";
-        g.fillRect(0, 0, 1024, 60);
-        g.fillStyle = "#FFFFFF";
-        g.font = "bold 28px sans-serif";
-        g.fillText("EAT BETTER CO — EXECUTIVE STRATEGY SUITE", 40, 42);
-
-        g.font = "18px sans-serif";
-        g.fillStyle = "#C8B6A6";
-        g.fillText("Pre-Series A Scale & Expansion · Prath Ventures & Spring Marketing Capital", 40, 95);
-
-        // KPI Card 1
-        g.fillStyle = "#2A1B18";
-        g.roundRect(40, 120, 280, 160, 16);
-        g.fill();
-        g.fillStyle = "#E86127";
-        g.font = "bold 16px sans-serif";
-        g.fillText("FY24 REVENUE", 60, 155);
-        g.fillStyle = "#FFFFFF";
-        g.font = "bold 44px sans-serif";
-        g.fillText("Rs 14.7 Cr", 60, 215);
-        g.fillStyle = "#4ADE80";
-        g.font = "bold 18px sans-serif";
-        g.fillText("+165% YoY Growth", 60, 255);
-
-        // KPI Card 2
-        g.fillStyle = "#2A1B18";
-        g.roundRect(360, 120, 280, 160, 16);
-        g.fill();
-        g.fillStyle = "#E86127";
-        g.font = "bold 16px sans-serif";
-        g.fillText("MONTHLY VOLUME", 380, 155);
-        g.fillStyle = "#FFFFFF";
-        g.font = "bold 44px sans-serif";
-        g.fillText("2,00,000+", 380, 215);
-        g.fillStyle = "#FDBA74";
-        g.font = "bold 18px sans-serif";
-        g.fillText("Orders / Month", 380, 255);
-
-        // KPI Card 3
-        g.fillStyle = "#2A1B18";
-        g.roundRect(680, 120, 300, 160, 16);
-        g.fill();
-        g.fillStyle = "#E86127";
-        g.font = "bold 16px sans-serif";
-        g.fillText("CENTRAL FACILITY", 700, 155);
-        g.fillStyle = "#FFFFFF";
-        g.font = "bold 44px sans-serif";
-        g.fillText("50,000 sq.ft", 700, 215);
-        g.fillStyle = "#93C5FD";
-        g.font = "bold 18px sans-serif";
-        g.fillText("Jaipur Manufacturing Hub", 700, 255);
-
-        // Bottom graph
-        g.strokeStyle = "#E86127";
-        g.lineWidth = 4;
-        g.beginPath();
-        g.moveTo(60, 440);
-        g.bezierCurveTo(240, 420, 500, 360, 960, 320);
-        g.stroke();
-
-        g.fillStyle = "#E86127";
-        g.font = "bold 16px sans-serif";
-        g.fillText("Revenue Scalability Path (FY23: Rs 5.5 Cr -> FY24: Rs 14.7 Cr -> Headroom to Rs 50 Cr+)", 60, 480);
-      }),
-    [],
-  );
-
-  useEffect(() => () => tex.dispose(), [tex]);
-
-  return (
-    <group
-      position={[0, 3.2, -11.75]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onPick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <mesh>
-        <planeGeometry args={[7.2, 3.8]} />
-        <meshBasicMaterial color="#110B0A" />
-      </mesh>
-      <mesh position={[0, 0, 0.02]}>
-        <planeGeometry args={[7.0, 3.6]} />
-        <meshBasicMaterial map={tex} toneMapped={false} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ── Boardroom Table & Seating ─────────────────────────────────────────── */
-
-function BoardroomTable({ onPick }: { onPick?: () => void }) {
-  return (
-    <group
-      position={[0, 0, -4.5]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onPick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <StationSign text="PITCH & BOARDROOM" sub="Tap to enter investor due diligence" position={[0, 2.6, 0]} w={3.0} h={0.7} onClick={onPick} />
-
-      {/* Walnut Tabletop */}
-      <RoundedBox args={[5.2, 0.12, 2.4]} radius={0.06} smoothness={4} position={[0, 0.95, 0]} castShadow receiveShadow>
-        <meshStandardMaterial color="#3A221E" roughness={0.3} metalness={0.1} />
-      </RoundedBox>
-
-      {/* Brass Table Legs */}
-      {[-2, 2].map((x) => (
-        <mesh key={x} position={[x, 0.48, 0]} castShadow>
-          <cylinderGeometry args={[0.08, 0.12, 0.96, 16]} />
-          <meshStandardMaterial color="#C59B27" roughness={0.3} metalness={0.8} />
-        </mesh>
-      ))}
-
-      {/* Laptops */}
-      {[-1.6, 0, 1.6].map((x, i) => (
-        <group key={x} position={[x, 1.02, i % 2 === 0 ? 0.6 : -0.6]} rotation={[0, i % 2 === 0 ? 0 : Math.PI, 0]}>
-          <mesh position={[0, 0.01, 0]}>
-            <boxGeometry args={[0.36, 0.01, 0.26]} />
-            <meshStandardMaterial color="#94A3B8" roughness={0.2} metalness={0.9} />
-          </mesh>
-          <mesh position={[0, 0.12, -0.13]} rotation={[-0.3, 0, 0]}>
-            <boxGeometry args={[0.36, 0.24, 0.01]} />
-            <meshStandardMaterial color="#1E293B" roughness={0.2} metalness={0.5} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Chairs */}
-      {[-1.8, -0.6, 0.6, 1.8].map((x) => (
-        <group key={`north-${x}`} position={[x, 0, -1.6]}>
-          <mesh position={[0, 0.55, 0]} castShadow>
-            <cylinderGeometry args={[0.26, 0.26, 0.08, 16]} />
-            <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
-          </mesh>
-          <mesh position={[0, 0.95, -0.22]} castShadow>
-            <boxGeometry args={[0.45, 0.6, 0.08]} />
-            <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
-          </mesh>
-          <mesh position={[0, 0.25, 0]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />
-            <meshStandardMaterial color="#64748B" metalness={0.8} roughness={0.2} />
-          </mesh>
-        </group>
-      ))}
-
-      {[-1.8, -0.6, 0.6, 1.8].map((x) => (
-        <group key={`south-${x}`} position={[x, 0, 1.6]} rotation={[0, Math.PI, 0]}>
-          <mesh position={[0, 0.55, 0]} castShadow>
-            <cylinderGeometry args={[0.26, 0.26, 0.08, 16]} />
-            <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
-          </mesh>
-          <mesh position={[0, 0.95, -0.22]} castShadow>
-            <boxGeometry args={[0.45, 0.6, 0.08]} />
-            <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
-          </mesh>
-          <mesh position={[0, 0.25, 0]}>
-            <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />
-            <meshStandardMaterial color="#64748B" metalness={0.8} roughness={0.2} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
-}
-
-/* ── Product Pricing Display (Right) ──────────────────────────────────── */
-
-function ProductPricingDisplay({
-  selectedSku,
-  onPickSku,
-  onFocusPricing,
-}: {
-  selectedSku: SkuId;
-  onPickSku: (id: SkuId) => void;
-  onFocusPricing?: () => void;
-}) {
-  const colors: Record<SkuId, string> = {
-    l24: "#E86127",
-    l42: "#D946EF",
-    usb: "#0EA5E9",
-    nam: "#F59E0B",
-  };
-
-  return (
-    <group position={[7.5, 0, 1.5]}>
-      <StationSign
-        text="PRODUCT PRICING & BOM"
-        sub="Tap to inspect SKU economics"
-        position={[0, 2.6, 0]}
-        rotation={[0, -Math.PI / 6, 0]}
-        w={2.8}
-        h={0.65}
-        onClick={onFocusPricing}
-      />
-
-      {/* Plinth Base */}
-      <mesh
-        position={[0, 0.45, 0]}
-        receiveShadow
-        castShadow
-        onClick={(e) => {
-          e.stopPropagation();
-          onFocusPricing?.();
-        }}
-        onPointerOver={hover(true)}
-        onPointerOut={hover(false)}
-      >
-        <boxGeometry args={[4.2, 0.9, 2.2]} />
-        <meshStandardMaterial color="#FAF6F0" roughness={0.4} />
-      </mesh>
-
-      {/* 4 Floating Product Pedestals */}
-      {SKU_IDS.map((id, i) => {
-        const x = (i - 1.5) * 0.95;
-        const active = selectedSku === id;
+      {SKUS.map((s, i) => {
+        const x = -1.95 + i * 1.3;
+        const size: [number, number, number] = s.id === "usb" ? [0.95, 0.62, 0.5] : s.id === "l42" ? [0.9, 0.36, 0.55] : s.id === "nam" ? [0.8, 0.85, 0.2] : [0.78, 0.3, 0.5];
         return (
-          <group
-            key={id}
-            position={[x, 0.9, 0]}
-            onClick={(e) => {
-              e.stopPropagation();
-              onPickSku(id);
-            }}
-            onPointerOver={hover(true)}
-            onPointerOut={hover(false)}
-          >
-            <mesh position={[0, 0.02, 0]}>
-              <cylinderGeometry args={[0.38, 0.4, 0.04, 24]} />
-              <meshStandardMaterial color={active ? "#E86127" : "#E2D9CE"} roughness={0.3} />
+          <group key={s.id} position={[x, 1.02, 0.1]} onClick={(e) => (e.stopPropagation(), onPick?.(s.id))} onPointerOver={hover(true)} onPointerOut={hover(false)}>
+            <Pack src={s.tex} size={size} />
+            <Board
+              w={1.15}
+              h={0.42}
+              px={512}
+              position={[0, -0.27, 0.37]}
+              deps={[s.id, solved[s.id], selected === s.id]}
+              draw={(g, W, H) => {
+                g.fillStyle = selected === s.id ? "#FF5C00" : "#FFFFFF";
+                g.fillRect(0, 0, W, H);
+                g.strokeStyle = "#2F1C1A";
+                g.lineWidth = 8;
+                g.strokeRect(4, 4, W - 8, H - 8);
+                g.fillStyle = selected === s.id ? "#FFFFFF" : "#2F1C1A";
+                g.textAlign = "center";
+                g.font = F(800, 64);
+                g.fillText(`Rs ${s.price}`, W / 2, 78);
+                g.font = F(600, 34);
+                g.fillText(`${s.grams} g · ${solved[s.id] ? `Rs ${(s.price / s.grams).toFixed(2)}/g` : "Rs ?/g"}`, W / 2, 140, W - 30);
+                g.font = F(600, 26);
+                g.fillText(s.short, W / 2, 182, W - 30);
+              }}
+            />
+          </group>
+        );
+      })}
+      <Sign text="PRICING WALL · REAL PRICES" position={[0, 3.45, -0.18]} w={3.4} h={0.45} />
+    </group>
+  );
+}
+
+/* ── finance screens ───────────────────────────────────────── */
+
+function FinanceWall({ next }: { next: { rev: number; net: number } | null }) {
+  return (
+    <group position={[-1.5, 0, -4.8]}>
+      <mesh position={[0, 2.4, -0.06]}>
+        <boxGeometry args={[5.6, 3.1, 0.08]} />
+        <meshStandardMaterial color="#111" />
+      </mesh>
+      <Board
+        w={5.4}
+        h={2.9}
+        position={[0, 2.4, 0]}
+        deps={[next?.rev, next?.net]}
+        draw={(g, W, H) => {
+          g.fillStyle = "#0E1A3A";
+          g.fillRect(0, 0, W, H);
+          g.fillStyle = "#FFFFFF";
+          g.font = F(800, 40);
+          g.fillText("FINANCIAL PERFORMANCE", 40, 64);
+          g.font = F(500, 22);
+          g.fillStyle = "#AFC2E8";
+          g.fillText("FY23 and FY24: reported (approx.). Next year: your hypothetical plan.", 40, 100);
+          const bars: [string, number, string][] = [
+            ["FY23", 5.5, "#7FA8FF"],
+            ["FY24", 14.7, "#FF5C00"],
+            ...(next ? ([["Plan", next.rev, "#FED300"]] as [string, number, string][]) : []),
+          ];
+          const max = Math.max(...bars.map((b) => b[1]), 15);
+          bars.forEach(([l, v, c], i) => {
+            const x = 80 + i * 180;
+            const bh = (v / max) * 300;
+            g.fillStyle = c;
+            g.fillRect(x, 470 - bh, 110, bh);
+            g.fillStyle = "#FFFFFF";
+            g.font = F(700, 26);
+            g.fillText(`~Rs ${v.toFixed(1)} cr`, x - 4, 455 - bh);
+            g.fillText(l, x + 20, 505);
+          });
+          g.fillStyle = "#FFFFFF";
+          g.font = F(800, 30);
+          g.fillText("NET RESULT", 640, 170);
+          const rows: [string, number][] = [["FY24 (reported)", -0.63], ...(next ? ([["Plan (hypothetical)", next.net]] as [string, number][]) : [])];
+          rows.forEach(([l, v], i) => {
+            g.font = F(600, 24);
+            g.fillStyle = "#AFC2E8";
+            g.fillText(l, 640, 220 + i * 90);
+            g.font = F(800, 40);
+            g.fillStyle = v >= 0 ? "#57D98A" : "#FF7A6B";
+            g.fillText(`${v >= 0 ? "+" : "-"}Rs ${Math.abs(v).toFixed(2)} cr`, 640, 262 + i * 90);
+          });
+          g.font = F(600, 24);
+          g.fillStyle = "#FED300";
+          g.fillText("~2 lakh orders a month", 640, 470);
+        }}
+      />
+      <Sign text="FINANCE" position={[0, 4.25, 0]} w={1.6} h={0.4} />
+    </group>
+  );
+}
+
+/* ── competitor wall + positioning floor grid ──────────────── */
+
+const PLAYER_COLORS: Record<string, string> = { eb: "#FF5C00", trad: "#C62828", health: "#2E9E5B", local: "#8A4FD6" };
+
+function CompeteZone({ grid }: { grid: Record<string, { x: Level | null; y: Level | null }> }) {
+  return (
+    <group position={[5.2, 0, -3.2]}>
+      <mesh position={[0, 2.2, -0.75]}>
+        <boxGeometry args={[5.4, 3.6, 0.08]} />
+        <meshStandardMaterial color="#FFF5EE" />
+      </mesh>
+      <Board
+        w={5.2}
+        h={3.2}
+        position={[0, 2.25, -0.7]}
+        deps={[]}
+        draw={(g, W, H) => {
+          g.fillStyle = "#FFFFFF";
+          g.fillRect(0, 0, W, H);
+          g.fillStyle = "#2F1C1A";
+          g.font = F(800, 36);
+          g.fillText("K-MATRIX (from Chapter 4.2)", 30, 52);
+          const cw = (W - 330) / 4;
+          K_PLAYERS.forEach((p, j) => {
+            g.fillStyle = PLAYER_COLORS[p.id];
+            g.fillRect(300 + j * cw, 74, cw - 6, 48);
+            g.fillStyle = "#FFFFFF";
+            g.font = F(700, 20);
+            g.textAlign = "center";
+            g.fillText(p.short, 300 + j * cw + cw / 2 - 3, 105, cw - 14);
+            g.textAlign = "left";
+          });
+          KMATRIX.forEach((r, i) => {
+            const y = 132 + i * 72;
+            g.fillStyle = "#2F1C1A";
+            g.font = F(600, 22);
+            g.fillText(r.short, 30, y + 42, 260);
+            K_PLAYERS.forEach((p, j) => {
+              const v = r.v[p.id];
+              g.fillStyle = v === "High" ? "#2E9E5B" : v === "Medium" ? "#F2A900" : "#E57373";
+              g.fillRect(300 + j * cw, y + 8, cw - 6, 60);
+              g.fillStyle = "#FFFFFF";
+              g.font = F(800, 22);
+              g.textAlign = "center";
+              g.fillText(v.toUpperCase(), 300 + j * cw + cw / 2 - 3, y + 46);
+              g.textAlign = "left";
+            });
+          });
+        }}
+      />
+      {/* floor grid: x = mass-market price accessibility, z = natural sweetening (both from the K-Matrix) */}
+      {[0, 1, 2].flatMap((xi) =>
+        [0, 1, 2].map((zi) => (
+          <mesh key={`${xi}${zi}`} rotation={[-Math.PI / 2, 0, 0]} position={[-1.3 + xi * 1.3, 0.01, 2.9 - zi * 1.3]}>
+            <planeGeometry args={[1.24, 1.24]} />
+            <meshStandardMaterial color={(xi + zi) % 2 ? "#F3E6D6" : "#EAD8C2"} />
+          </mesh>
+        )),
+      )}
+      <Sign text="PRICE ACCESSIBILITY →" position={[0, 0.03, 4.0]} rotation={[-Math.PI / 2, 0, 0]} w={2.8} h={0.32} bg="#2F1C1A" fg="#FFFFFF" />
+      <Sign text="NATURAL SWEETENING →" position={[-2.3, 0.03, 1.6]} rotation={[-Math.PI / 2, 0, Math.PI / 2]} w={2.8} h={0.32} bg="#2F1C1A" fg="#FFFFFF" />
+      {K_PLAYERS.map((p, k) => {
+        const c = grid[p.id];
+        if (!c?.x || !c?.y) return null;
+        const xi = LEVEL_IDX[c.x];
+        const zi = LEVEL_IDX[c.y];
+        return (
+          <group key={p.id} position={[-1.3 + xi * 1.3 + (k % 2 ? 0.25 : -0.25), 0, 2.9 - zi * 1.3 + (k > 1 ? 0.25 : -0.25)]}>
+            <mesh position={[0, 0.12, 0]} castShadow>
+              <cylinderGeometry args={[0.2, 0.22, 0.24, 24]} />
+              <meshStandardMaterial color={PLAYER_COLORS[p.id]} roughness={0.4} />
             </mesh>
-            <RoundedBox args={[0.5, 0.25, 0.45]} radius={0.03} smoothness={3} position={[0, 0.2, 0]} castShadow>
-              <meshStandardMaterial color={colors[id]} roughness={0.4} />
-            </RoundedBox>
-            {active && (
-              <mesh position={[0, 0.35, 0]}>
-                <sphereGeometry args={[0.45, 16, 16]} />
-                <meshBasicMaterial color="#E86127" wireframe transparent opacity={0.3} />
-              </mesh>
-            )}
+            <Sign text={p.short} position={[0, 0.55, 0]} w={1.0} h={0.22} bg={PLAYER_COLORS[p.id]} fg="#FFFFFF" />
           </group>
         );
       })}
@@ -457,355 +290,260 @@ function ProductPricingDisplay({
   );
 }
 
-/* ── Financial Workstation (Left) ─────────────────────────────────────── */
+/* ── budget table ──────────────────────────────────────────── */
 
-function FinancialWorkstation({ onPick }: { onPick?: () => void }) {
-  const chartTex = useMemo(
-    () =>
-      canvasTex(512, 384, (g) => {
-        g.fillStyle = "#161110";
-        g.fillRect(0, 0, 512, 384);
-        g.fillStyle = "#4ADE80";
-        g.font = "bold 20px sans-serif";
-        g.fillText("UNIT CONTRIBUTION & SG&A WATERFALL", 20, 35);
-
-        g.strokeStyle = "#443430";
-        g.lineWidth = 2;
-        g.beginPath();
-        g.moveTo(40, 320);
-        g.lineTo(480, 320);
-        g.stroke();
-
-        const bars = [
-          { l: "AOV", h: 220, c: "#E86127" },
-          { l: "COGS", h: 90, c: "#EF4444" },
-          { l: "Ship", h: 45, c: "#F97316" },
-          { l: "Comm", h: 32, c: "#FBBF24" },
-          { l: "CAC", h: 50, c: "#A855F7" },
-          { l: "Margin", h: 38, c: "#10B981" },
-        ];
-        bars.forEach((b, i) => {
-          const bx = 60 + i * 70;
-          g.fillStyle = b.c;
-          g.fillRect(bx, 320 - b.h, 45, b.h);
-          g.fillStyle = "#FFFFFF";
-          g.font = "13px sans-serif";
-          g.fillText(b.l, bx + 5, 345);
-        });
-      }),
-    [],
-  );
-
-  useEffect(() => () => chartTex.dispose(), [chartTex]);
-
+function BudgetTable({ budget }: { budget: Record<DeptId, number> }) {
+  const refs = useRef<(THREE.Mesh | null)[]>([]);
+  useFrame((_, dt) => {
+    DEPTS.forEach((d, i) => {
+      const m = refs.current[i];
+      if (!m) return;
+      const h = Math.max(0.02, (budget[d.id] / 100) * 2.2);
+      m.scale.y = THREE.MathUtils.damp(m.scale.y, h, 6, dt);
+      m.position.y = 0.82 + m.scale.y / 2;
+    });
+  });
   return (
-    <group
-      position={[-9.5, 0, 2.5]}
-      rotation={[0, 0.4, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onPick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <StationSign
-        text="FINANCIAL WORKSTATION"
-        sub="Tap to view unit economics waterfall"
-        position={[0, 2.6, 0]}
-        w={2.8}
-        h={0.65}
-        onClick={onPick}
-      />
-
-      <RoundedBox args={[3.6, 0.1, 1.6]} radius={0.04} position={[0, 0.95, 0]} castShadow>
-        <meshStandardMaterial color="#EAE3D9" roughness={0.4} />
-      </RoundedBox>
-      <mesh position={[-1.6, 0.48, 0]}>
-        <boxGeometry args={[0.08, 0.96, 1.4]} />
-        <meshStandardMaterial color="#332420" />
+    <group position={[-1.5, 0, 2.2]}>
+      <mesh position={[0, 0.78, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[1.9, 1.9, 0.08, 48]} />
+        <meshStandardMaterial color="#6B4A35" roughness={0.45} />
       </mesh>
-      <mesh position={[1.6, 0.48, 0]}>
-        <boxGeometry args={[0.08, 0.96, 1.4]} />
-        <meshStandardMaterial color="#332420" />
+      <mesh position={[0, 0.39, 0]}>
+        <cylinderGeometry args={[0.2, 0.35, 0.78, 16]} />
+        <meshStandardMaterial color="#3B2A20" />
       </mesh>
-
-      {/* Dual Screens */}
-      <group position={[0, 1.5, -0.3]}>
-        <mesh position={[-0.7, 0, 0]} rotation={[0, 0.25, 0]}>
-          <planeGeometry args={[1.3, 0.8]} />
-          <meshBasicMaterial map={chartTex} toneMapped={false} />
-        </mesh>
-        <mesh position={[0.7, 0, 0]} rotation={[0, -0.25, 0]}>
-          <planeGeometry args={[1.3, 0.8]} />
-          <meshStandardMaterial color="#1E1917" roughness={0.2} />
-        </mesh>
-      </group>
+      {DEPTS.map((d, i) => {
+        const a = (i / DEPTS.length) * Math.PI * 2;
+        return (
+          <group key={d.id}>
+            <mesh ref={(m) => void (refs.current[i] = m)} position={[Math.cos(a) * 1.25, 0.9, Math.sin(a) * 1.25]} castShadow>
+              <cylinderGeometry args={[0.22, 0.22, 1, 24]} />
+              <meshStandardMaterial color={d.color} roughness={0.35} metalness={0.3} />
+            </mesh>
+            <Sign text={`${d.name.split(" ")[0]} ${budget[d.id]}%`} position={[Math.cos(a) * 1.25, 0.86, Math.sin(a) * 1.25 + 0.3]} rotation={[-0.5, 0, 0]} w={0.9} h={0.18} bg="#FFFFFF" fg="#2F1C1A" />
+          </group>
+        );
+      })}
+      <Sign text="BUDGET TABLE · HYPOTHETICAL RS 10 CR" position={[0, 3.3, -1.6]} w={3.4} h={0.42} />
     </group>
   );
 }
 
-/* ── Jaipur 50,000 sq. ft. Hub Architectural Model ────────────────────── */
+/* ── Jaipur facility model + capacity gauge ────────────────── */
 
-function JaipurFacilityModel({ onPick }: { onPick?: () => void }) {
+function FacilityModel({ target }: { target: number }) {
+  const g = useRef<THREE.Mesh>(null);
+  useFrame((_, dt) => {
+    if (!g.current) return;
+    const h = (Math.min(target, 8) / 8) * 2.4;
+    g.current.scale.y = THREE.MathUtils.damp(g.current.scale.y, Math.max(0.02, h), 5, dt);
+    g.current.position.y = 0.95 + g.current.scale.y / 2;
+  });
+  const over = target > FACILITY_CAP;
   return (
-    <group
-      position={[10.5, 0, -5.5]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onPick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <StationSign
-        text="JAIPUR 50,000 SQ. FT. HUB"
-        sub="Tap to plan capacity & expansion"
-        position={[0, 2.6, 0]}
-        rotation={[0, -Math.PI / 4, 0]}
-        w={3.0}
-        h={0.7}
-        onClick={onPick}
-      />
-
-      {/* Lit Pedestal */}
-      <mesh position={[0, 0.5, 0]} receiveShadow castShadow>
-        <cylinderGeometry args={[2.0, 2.2, 1.0, 32]} />
-        <meshStandardMaterial color="#F5EFE6" roughness={0.3} />
+    <group position={[8.8, 0, 2.2]}>
+      <mesh position={[0, 0.45, 0]} receiveShadow>
+        <boxGeometry args={[3.4, 0.9, 2.4]} />
+        <meshStandardMaterial color="#E9E2D8" />
       </mesh>
-
-      {/* Glass Showcase Cover */}
-      <mesh position={[0, 1.6, 0]}>
-        <boxGeometry args={[3.0, 1.2, 2.4]} />
-        <meshPhysicalMaterial color="#FFFFFF" transmission={0.9} roughness={0.1} transparent opacity={0.3} />
+      <mesh position={[0, 0.92, 0]}>
+        <boxGeometry args={[3.3, 0.04, 2.3]} />
+        <meshStandardMaterial color="#7FA36A" />
       </mesh>
-
-      {/* Architectural Mini Hub Building */}
-      <group position={[0, 1.05, 0]}>
-        <RoundedBox args={[2.2, 0.45, 1.6]} radius={0.04} position={[0, 0.22, 0]} castShadow>
-          <meshStandardMaterial color="#FFFFFF" roughness={0.3} />
-        </RoundedBox>
-        <mesh position={[0, 0.46, 0]}>
-          <boxGeometry args={[1.8, 0.04, 1.2]} />
-          <meshStandardMaterial color="#1E293B" metalness={0.7} roughness={0.2} />
+      {/* the factory: main hall with a sawtooth roof, solar panels, loading bays, sign */}
+      <mesh position={[-0.2, 1.22, -0.1]} castShadow>
+        <boxGeometry args={[2.2, 0.56, 1.4]} />
+        <meshStandardMaterial color="#F4F1EC" roughness={0.6} />
+      </mesh>
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} position={[-1.05 + i * 0.55, 1.62, -0.1]} rotation={[0, 0, 0.5]} castShadow>
+          <boxGeometry args={[0.6, 0.04, 1.42]} />
+          <meshStandardMaterial color="#1E3A5F" metalness={0.5} roughness={0.3} />
         </mesh>
-        {[-0.6, 0, 0.6].map((x) => (
-          <mesh key={x} position={[x, 0.12, 0.81]}>
-            <boxGeometry args={[0.35, 0.24, 0.04]} />
-            <meshStandardMaterial color="#E86127" />
-          </mesh>
-        ))}
-        <mesh position={[0, 0.38, 0.82]}>
-          <boxGeometry args={[1.2, 0.08, 0.02]} />
-          <meshStandardMaterial color="#2F1C1A" />
+      ))}
+      {[-0.7, -0.2, 0.3].map((x) => (
+        <mesh key={x} position={[x, 1.08, 0.61]}>
+          <boxGeometry args={[0.32, 0.28, 0.02]} />
+          <meshStandardMaterial color="#5C6670" />
         </mesh>
-      </group>
+      ))}
+      <Sign text="JAIPUR · 50,000 SQ. FT." position={[-0.2, 1.42, 0.61]} w={1.6} h={0.16} bg="#FF5C00" fg="#FFFFFF" />
+      {/* capacity gauge */}
+      <mesh position={[1.35, 0.95 + 1.2, 0.4]}>
+        <cylinderGeometry args={[0.2, 0.2, 2.4, 20, 1, true]} />
+        <meshStandardMaterial color="#FFFFFF" transparent opacity={0.25} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh ref={g} position={[1.35, 1, 0.4]}>
+        <cylinderGeometry args={[0.17, 0.17, 1, 20]} />
+        <meshStandardMaterial color={over ? "#E53935" : "#2E9E5B"} emissive={over ? "#E53935" : "#2E9E5B"} emissiveIntensity={0.3} />
+      </mesh>
+      <mesh position={[1.35, 0.95 + (FACILITY_CAP / 8) * 2.4, 0.4]}>
+        <boxGeometry args={[0.6, 0.03, 0.03]} />
+        <meshBasicMaterial color="#2F1C1A" />
+      </mesh>
+      <mesh position={[1.35, 0.95 + (ORDERS_NOW / 8) * 2.4, 0.4]}>
+        <boxGeometry args={[0.5, 0.025, 0.025]} />
+        <meshBasicMaterial color="#7FA8FF" />
+      </mesh>
+      <Sign text={`Target ${target} lakh/mo · capacity ${FACILITY_CAP} (hypothetical)`} position={[0.3, 3.7, 0.4]} w={3.2} h={0.36} bg={over ? "#C62828" : "#2F1C1A"} fg="#FFFFFF" />
     </group>
   );
 }
 
-/* ── Competitor Intelligence Wall ─────────────────────────────────────── */
+/* ── boardroom ─────────────────────────────────────────────── */
 
-function CompetitorIntelligenceWall({ onPick }: { onPick?: () => void }) {
-  const wallTex = useMemo(
-    () =>
-      canvasTex(512, 512, (g) => {
-        g.fillStyle = "#F5EFEB";
-        g.fillRect(0, 0, 512, 512);
-
-        g.fillStyle = "#2F1C1A";
-        g.font = "bold 24px sans-serif";
-        g.fillText("COMPETITIVE POSITIONING MATRIX", 30, 45);
-
-        g.strokeStyle = "#8A7669";
-        g.lineWidth = 3;
-        g.beginPath();
-        g.moveTo(50, 270);
-        g.lineTo(460, 270);
-        g.moveTo(256, 70);
-        g.lineTo(256, 470);
-        g.stroke();
-
-        g.fillStyle = "#6B584C";
-        g.font = "bold 14px sans-serif";
-        g.fillText("Clean-Label / Whole Food ->", 280, 295);
-        g.fillText("<- Mass Market / Fried", 60, 295);
-        g.fillText("Familiar Indian Indulgence ^", 265, 95);
-        g.fillText("Niche / Western Formats v", 265, 460);
-
-        // Eat Better: Top Right
-        g.fillStyle = "#E86127";
-        g.beginPath();
-        g.arc(390, 150, 16, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#FFFFFF";
-        g.font = "bold 12px sans-serif";
-        g.fillText("EAT BETTER", 350, 185);
-
-        // Haldiram's / Bikaji: Top Left
-        g.fillStyle = "#B91C1C";
-        g.beginPath();
-        g.arc(120, 160, 14, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#2F1C1A";
-        g.fillText("Haldiram's / Bikaji", 80, 190);
-
-        // Yoga Bar / Health: Bottom Right
-        g.fillStyle = "#2563EB";
-        g.beginPath();
-        g.arc(380, 380, 14, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#2F1C1A";
-        g.fillText("Yoga Bar / True Elements", 300, 410);
-
-        // Local Mithai: Middle Top Left
-        g.fillStyle = "#D97706";
-        g.beginPath();
-        g.arc(170, 120, 12, 0, Math.PI * 2);
-        g.fill();
-        g.fillStyle = "#2F1C1A";
-        g.fillText("Local Sweet Shops", 110, 105);
-      }),
-    [],
-  );
-
-  useEffect(() => () => wallTex.dispose(), [wallTex]);
-
-  return (
-    <group
-      position={[-15.9, 2.8, -4.5]}
-      rotation={[0, Math.PI / 2, 0]}
-      onClick={(e) => {
-        e.stopPropagation();
-        onPick?.();
-      }}
-      onPointerOver={hover(true)}
-      onPointerOut={hover(false)}
-    >
-      <mesh>
-        <planeGeometry args={[5.2, 3.6]} />
-        <meshBasicMaterial map={wallTex} toneMapped={false} />
-      </mesh>
-    </group>
-  );
-}
-
-/* ── 3D Executive Team ────────────────────────────────────────────────── */
-
-const EXECUTIVES: HumanLook[] = [
-  {
-    skin: "#D29A74",
-    hair: "#1E1815",
-    hairStyle: "side",
-    outfit: "shirt",
-    top: "#FFFFFF",
-    bottom: "#1E293B",
-    accent: "#E86127",
-    shoe: "#2F1C1A",
-    glasses: "#2F1C1A",
-  },
-  {
-    skin: "#B87F56",
-    hair: "#151210",
-    hairStyle: "bun",
-    outfit: "salwar",
-    top: "#E86127",
-    bottom: "#FFFFFF",
-    accent: "#C59B27",
-    shoe: "#FAF6F0",
-    bindi: true,
-  },
-  {
-    skin: "#C68E65",
-    hair: "#201B17",
-    hairStyle: "short",
-    outfit: "shirt",
-    top: "#38BDF8",
-    bottom: "#334155",
-    shoe: "#1E1E1E",
-  },
+const INVESTORS: HumanLook[] = [
+  { skin: "#C68B59", hair: "#1E1410", hairStyle: "side", outfit: "shirt", top: "#1E3A5F", bottom: "#2B2B2B", accent: "#DCE6F0", facial: "beard", glasses: "#1A1A1A" },
+  { skin: "#9C6644", hair: "#140C08", hairStyle: "bun", outfit: "shirt", top: "#7B2D26", bottom: "#2B3A55", accent: "#F2D7D0", slim: true, height: 0.95 },
+  { skin: "#A86B45", hair: "#CFC8C0", hairStyle: "bald", outfit: "kurta", top: "#F4EFE6", bottom: "#E8DCC8", facial: "moustache" },
 ];
 
-/* ── Master 3D Scene ──────────────────────────────────────────────────── */
+function Boardroom({ asking, pitchTitle }: { asking: number; pitchTitle: string }) {
+  return (
+    <group position={[13.6, 0, 0.4]}>
+      <RoundedBox args={[4.2, 0.1, 1.6]} radius={0.04} position={[0, 0.78, 0]} castShadow receiveShadow>
+        <meshStandardMaterial color="#5A3D2B" roughness={0.35} />
+      </RoundedBox>
+      {[-1.7, 1.7].map((x) => (
+        <mesh key={x} position={[x, 0.39, 0]}>
+          <boxGeometry args={[0.12, 0.78, 1.2]} />
+          <meshStandardMaterial color="#2B2B2B" />
+        </mesh>
+      ))}
+      {INVESTORS.map((l, i) => (
+        <group key={i} position={[-1.3 + i * 1.3, 0, -1.25]}>
+          <mesh position={[0, 0.48, -0.05]}>
+            <boxGeometry args={[0.55, 0.08, 0.55]} />
+            <meshStandardMaterial color="#1E1E20" />
+          </mesh>
+          <mesh position={[0, 0.85, -0.3]}>
+            <boxGeometry args={[0.55, 0.7, 0.08]} />
+            <meshStandardMaterial color="#1E1E20" />
+          </mesh>
+          <group position={[0, -0.32, 0]}>
+            <Human look={l} mode="drive" phase={i * 2} />
+          </group>
+        </group>
+      ))}
+      <mesh position={[0, 2.2, -2.3]}>
+        <boxGeometry args={[3.6, 2.0, 0.08]} />
+        <meshStandardMaterial color="#111" />
+      </mesh>
+      <Board
+        w={3.4}
+        h={1.8}
+        px={1024}
+        position={[0, 2.2, -2.25]}
+        deps={[asking, pitchTitle]}
+        draw={(g, W, H) => {
+          g.fillStyle = "#FFF5EE";
+          g.fillRect(0, 0, W, H);
+          g.fillStyle = "#FF5C00";
+          g.fillRect(0, 0, W, 90);
+          g.fillStyle = "#FFFFFF";
+          g.font = F(800, 50);
+          g.fillText("EAT BETTER CO · INVESTOR PITCH", 40, 62, W - 80);
+          g.fillStyle = "#2F1C1A";
+          g.font = F(700, 44);
+          g.fillText(pitchTitle || "The joy of snacking, made better.", 40, 200, W - 80);
+          g.font = F(800, 72);
+          g.fillText(`Ask: Rs ${asking} crore`, 40, 340);
+          g.font = F(500, 28);
+          g.fillStyle = "#6B5650";
+          g.fillText("Learning simulation · not Eat Better's real terms", 40, 460);
+        }}
+      />
+      <Sign text="BOARDROOM" position={[0, 3.5, -2.3]} w={1.8} h={0.38} />
+    </group>
+  );
+}
 
-export type Business3DProps = {
-  focus: BusinessFocus;
-  selectedSku: SkuId;
-  onPickSku: (id: SkuId) => void;
-  onSelectFocus?: (f: BusinessFocus) => void;
+/* ── shell ─────────────────────────────────────────────────── */
+
+function Building() {
+  return (
+    <group>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[40, 26]} />
+        <meshStandardMaterial color="#D9CFC2" roughness={0.75} />
+      </mesh>
+      <mesh position={[2.5, 3, -5.2]} receiveShadow>
+        <planeGeometry args={[40, 6]} />
+        <meshStandardMaterial color="#F7EBDD" roughness={0.9} />
+      </mesh>
+      <mesh position={[2.5, 0.25, -5.18]}>
+        <planeGeometry args={[40, 0.1]} />
+        <meshStandardMaterial color="#FF5C00" />
+      </mesh>
+      {/* glass partition for the boardroom */}
+      <mesh position={[11, 1.6, 1.5]} rotation={[0, Math.PI / 2, 0]}>
+        <planeGeometry args={[6, 3.2]} />
+        <meshPhysicalMaterial color="#CFE6F5" transparent opacity={0.15} roughness={0.05} />
+      </mesh>
+      <Sign text="EAT BETTER CO · HEAD OFFICE" position={[2.5, 5.3, -5.15]} w={6} h={0.6} bg="#FF5C00" fg="#FFFFFF" />
+      {/* plants */}
+      {[-12.4, 0.8, 11.5].map((x) => (
+        <group key={x} position={[x, 0, -4.4]}>
+          <mesh position={[0, 0.3, 0]}>
+            <cylinderGeometry args={[0.28, 0.22, 0.6, 16]} />
+            <meshStandardMaterial color="#B5541E" />
+          </mesh>
+          <mesh position={[0, 1.0, 0]}>
+            <sphereGeometry args={[0.5, 12, 10]} />
+            <meshStandardMaterial color="#3E8E41" roughness={0.8} />
+          </mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function Rig({ focus }: { focus: HQFocus }) {
+  const ref = useRef<CameraControls>(null);
+  const { size } = useThree();
+  useEffect(() => {
+    const v = VIEWS[focus];
+    const portrait = size.width < size.height;
+    const look = new THREE.Vector3(...v.look);
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(portrait ? 1.5 : 1.08);
+    const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
+    const shift = portrait || focus === "overview" ? 0 : dir.length() * 0.27;
+    const p = look.clone().add(dir).addScaledVector(right, shift);
+    const l = look.clone().addScaledVector(right, shift);
+    ref.current?.setLookAt(p.x, p.y, p.z, l.x, l.y, l.z, true);
+  }, [focus, size.width, size.height]);
+  return <CameraControls ref={ref} minDistance={2} maxDistance={28} maxPolarAngle={Math.PI / 2.05} smoothTime={0.7} />;
+}
+
+export type HQProps = {
+  focus: HQFocus;
+  solved: Record<string, boolean>;
+  selectedSku?: string | null;
+  onSku?: (id: string) => void;
+  next: { rev: number; net: number } | null;
+  grid: Record<string, { x: Level | null; y: Level | null }>;
+  budget: Record<DeptId, number>;
+  target: number;
+  ask: number;
+  pitchTitle: string;
 };
 
-export default function Business3D({ focus, selectedSku, onPickSku, onSelectFocus }: Business3DProps) {
+export default function HQ3D(p: HQProps) {
   return (
-    <Canvas
-      shadows
-      dpr={[1, 1.6]}
-      camera={{ position: VIEWS.overview.pos, fov: 42 }}
-      gl={{ antialias: true }}
-      onPointerMissed={() => (document.body.style.cursor = "")}
-    >
-      <color attach="background" args={["#EDE8E2"]} />
-      <fog attach="fog" args={["#EDE8E2", 22, 42]} />
-
-      <hemisphereLight args={["#FFFFFF", "#968A7D", 1.1]} />
-      <directionalLight
-        position={[12, 16, 10]}
-        intensity={1.6}
-        castShadow
-        shadow-mapSize={[1024, 1024]}
-        shadow-camera-left={-18}
-        shadow-camera-right={18}
-        shadow-camera-top={14}
-        shadow-camera-bottom={-14}
-      />
-      <pointLight position={[0, 4.5, -4.5]} intensity={0.8} color="#FFF8F0" />
-      <pointLight position={[7.5, 3.5, 1.5]} intensity={0.6} color="#FFEEDD" />
-
-      <CameraRig focus={focus} />
-      <SuiteArchitecture />
-      <ExecutiveVideoWall onPick={() => onSelectFocus?.("overview")} />
-      <BoardroomTable onPick={() => onSelectFocus?.("pitch")} />
-      <ProductPricingDisplay selectedSku={selectedSku} onPickSku={onPickSku} onFocusPricing={() => onSelectFocus?.("pricing")} />
-      <FinancialWorkstation onPick={() => onSelectFocus?.("finance")} />
-      <JaipurFacilityModel onPick={() => onSelectFocus?.("growth")} />
-      <CompetitorIntelligenceWall onPick={() => onSelectFocus?.("competitor")} />
-
-      {/* 3D Human Strategists */}
-      <group
-        position={[0, 0, -8.2]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectFocus?.("pitch");
-        }}
-        onPointerOver={hover(true)}
-        onPointerOut={hover(false)}
-      >
-        <Human look={EXECUTIVES[0]} mode="stand" />
-      </group>
-      <group
-        position={[-3.2, 0, -3.8]}
-        rotation={[0, Math.PI / 3, 0]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectFocus?.("finance");
-        }}
-        onPointerOver={hover(true)}
-        onPointerOut={hover(false)}
-      >
-        <Human look={EXECUTIVES[1]} mode="stand" />
-      </group>
-      <group
-        position={[5.2, 0, -4.8]}
-        rotation={[0, -Math.PI / 4, 0]}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelectFocus?.("growth");
-        }}
-        onPointerOver={hover(true)}
-        onPointerOut={hover(false)}
-      >
-        <Human look={EXECUTIVES[2]} mode="stand" />
-      </group>
+    <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
+      <color attach="background" args={["#EFE6DA"]} />
+      <fog attach="fog" args={["#EFE6DA", 26, 52]} />
+      <hemisphereLight args={["#FFF6EA", "#B9A08A", 1.0]} />
+      <directionalLight position={[6, 12, 8]} intensity={1.5} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-20} shadow-camera-right={20} shadow-camera-top={14} shadow-camera-bottom={-14} />
+      <Rig focus={p.focus} />
+      <Building />
+      <PricingWall solved={p.solved} selected={p.selectedSku} onPick={p.onSku} />
+      <FinanceWall next={p.next} />
+      <CompeteZone grid={p.grid} />
+      <BudgetTable budget={p.budget} />
+      <FacilityModel target={p.target} />
+      <Boardroom asking={p.ask} pitchTitle={p.pitchTitle} />
     </Canvas>
   );
 }

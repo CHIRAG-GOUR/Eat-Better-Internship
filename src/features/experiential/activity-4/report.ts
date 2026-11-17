@@ -1,269 +1,128 @@
 "use client";
 
 import { buildReport, type ReportBlock, type Student } from "../shared/pdf";
-import { BUDGET_AREAS, BUDGET_IDS, COMPETITOR_CATEGORIES, FINANCIAL_FACTS, PITCH_QUESTIONS, SKU_IDS, SKUS } from "./data";
-import type { Activity4State } from "./store";
+import { BASE, BUDGET_CR, CHANNEL_FEES, DEPTS, FACILITY_CAP, FIXED, FIN, K_PLAYERS, KMATRIX, ORDERS_NOW, PILLARS, SKUS, budgetOutcome, contribution, investorQuestions, plNext, ppg, unitEconomics, type ChannelId } from "./data";
+import type { useBiz } from "./store";
 
-/**
- * Generates the official "Eat Better Co × SkilliZee — Business Growth & Financial Strategy Report" PDF.
- */
-export async function buildBusinessReport(state: Activity4State, student: Student) {
-  const blocks: ReportBlock[] = [];
+type St = ReturnType<typeof useBiz.getState>;
+const rs = (n: number) => `Rs ${Math.round(n).toLocaleString("en-IN")}`;
+const cr = (n: number) => `Rs ${n.toFixed(2)} cr`;
+const pc = (x: number) => `${(x * 100).toFixed(1)}%`;
+const fileStem = (s: Student) => (s.name.trim() || "student").replace(/\s+/g, "-");
 
-  // 1. Executive Summary
-  blocks.push({ kind: "h", text: "1. Executive Summary" });
-  blocks.push({
-    kind: "p",
-    text: `This Business Growth & Financial Strategy Report was formulated by ${student.name || "the Student"} as part of the Eat Better Co x SkilliZee Experiential Internship Programme (Activity 4). It evaluates the commercial foundation, unit economics, competitive moat, capital allocation, and 3-year scalability trajectory of Eat Better Co following its April 2025 Pre-Series A funding round co-led by Prath Ventures and Spring Marketing Capital.`,
+export function basketOf(s: St) {
+  const lines = SKUS.filter((k) => (s.basket[k.id] ?? 0) > 0).map((k) => {
+    const q = s.basket[k.id];
+    const ue = unitEconomics(k.price, s.costs[k.id]);
+    return { k, q, value: k.price * q, cogs: ue.cogs * q };
   });
-  blocks.push({
-    kind: "kv",
-    rows: [
-      ["Executive Strategist", student.name || "Student Strategist"],
-      ["Internship Track", "Module 4: Pricing, Competition & Growth"],
-      ["Operating Revenue FY24", "Rs 14.7 crore (+165% YoY growth)"],
-      ["Operating Scale", "~200,000 orders fulfilled monthly"],
-      ["Central Production Facility", "50,000 sq. ft. Hub in Jaipur, Rajasthan"],
-      ["Funding Milestone", "Pre-Series A co-led by Prath Ventures & Spring Marketing"],
-    ],
-  });
-
-  // 2. Product Pricing & Bill of Materials (BOM)
-  blocks.push({ kind: "h", text: "2. Product Pricing & Unit Economics Analysis" });
-  blocks.push({
-    kind: "p",
-    text: "Pricing in clean-label FMCG reflects raw material purity and pack format efficiency. Comparing SKUs on a price-per-gram basis demonstrates how bundling drives higher AOV while reducing per-gram packaging and shipping overhead.",
-  });
-
-  const skuTableHead = ["SKU Name", "Weight", "Retail Price", "Price / Gram", "Total COGS", "Gross Margin %"];
-  const skuTableRows = SKU_IDS.map((id) => {
-    const s = SKUS[id];
-    const c = state.skuCosts[id] ?? s.bom;
-    const totalCogs = c.ingredients + c.packaging + c.production;
-    const grossMarginPct = Math.round(((s.retailPrice - totalCogs) / s.retailPrice) * 100);
-    return [s.name, `${s.grams} g`, `Rs ${s.retailPrice}`, `Rs ${s.statedPricePerGram.toFixed(2)}/g`, `Rs ${totalCogs}`, `${grossMarginPct}%`];
-  });
-
-  blocks.push({
-    kind: "table",
-    head: skuTableHead,
-    rows: skuTableRows,
-    widths: [55, 20, 25, 25, 25, 25],
-  });
-
-  blocks.push({
-    kind: "callout",
-    tone: "good",
-    text: "BOM Leverage Insight: Bundled formats like the Ultimate Snack Box (Rs 1.13/g) achieve higher absolute gross profit per transaction while delivering value to family snackers, directly expanding order contribution margins.",
-  });
-
-  // 3. Financial Performance & Operational Leverage
-  blocks.push({ kind: "h", text: "3. Financial Scale & Operational Leverage Analysis" });
-  blocks.push({
-    kind: "p",
-    text: "Between FY23 and FY24, Eat Better Co expanded revenue from Rs 5.5 crore to Rs 14.7 crore (+165% YoY), while maintaining a moderate net loss of Rs 63 lakh. This reflects deliberate growth capital investment rather than structural unprofitability.",
-  });
-
-  blocks.push({
-    kind: "kv",
-    rows: [
-      ["FY23 Top-Line Revenue", "Rs 5.5 crore"],
-      ["FY24 Top-Line Revenue", "Rs 14.7 crore (+165% YoY)"],
-      ["FY24 Net Loss", "Rs 63 lakh (operational investment)"],
-      ["Monthly Order Velocity", "~2,00,000 orders/month"],
-      ["Fixed Overhead Leverage", "SG&A overheads getting absorbed across 2.6x top-line scale"],
-      ["Facility Readiness", "50,000 sq. ft. Jaipur hub transitions co-packing markups into internal gross margin"],
-    ],
-  });
-
-  blocks.push({
-    kind: "callout",
-    tone: "info",
-    text: "Financial Principle: In high-growth D2C, a net loss during 165% top-line scaling demonstrates reinvestment into customer acquisition and manufacturing infrastructure. As order volumes exceed the fixed-cost break-even threshold, profit margins expand rapidly.",
-  });
-
-  // 4. Competitive Landscape & K-Matrix
-  blocks.push({ kind: "h", text: "4. Competitive Landscape & Positioning Moat" });
-  blocks.push({
-    kind: "p",
-    text: "Eat Better Co occupies a distinct market quadrant: combining authentic Indian flavour profiles with strict clean-label ingredient integrity (zero palm oil, zero refined sugar).",
-  });
-
-  const compTableHead = ["Category / Brand", "Primary Focus", "Key Ingredients & Process", "Price / Gram", "Clean Label", "Indian Flavour"];
-  const compTableRows = COMPETITOR_CATEGORIES.map((c) => [c.name, c.focus, c.ingredients, c.pricePerGramRange, c.cleanLabel, c.familiarTaste]);
-
-  blocks.push({
-    kind: "table",
-    head: compTableHead,
-    rows: compTableRows,
-    widths: [40, 40, 45, 25, 22, 22],
-  });
-
-  blocks.push({
-    kind: "callout",
-    tone: "good",
-    text: "Core Competitive Moat: Traditional incumbents (Haldiram's, Bikaji) are locked into industrial palm-oil fryers, while fitness bars lack festive and desi emotional resonance. Eat Better bridges indulgence with genuine whole-food health.",
-  });
-
-  // 5. Strategic Growth Budget Allocation (Rs 10 Cr Capital)
-  blocks.push({ kind: "h", text: "5. Strategic Capital Allocation (Rs 10 Crore Growth Budget)" });
-  blocks.push({
-    kind: "p",
-    text: "The student allocated a simulated Rs 10 Crore growth capital budget across six core functional areas to balance top-line acquisition with factory execution and channel depth.",
-  });
-
-  const budgetTableHead = ["Functional Area", "Allocation %", "Capital (INR)", "Strategic Impact Gain"];
-  const budgetTableRows = BUDGET_IDS.map((id) => {
-    const a = BUDGET_AREAS[id];
-    const pctVal = state.budget[id] ?? a.defaultPct;
-    const crVal = (pctVal / 10).toFixed(2);
-    return [a.title, `${pctVal}%`, `Rs ${crVal} Cr`, a.impactGain];
-  });
-
-  blocks.push({
-    kind: "table",
-    head: budgetTableHead,
-    rows: budgetTableRows,
-    widths: [48, 24, 28, 75],
-  });
-
-  // 6. 4-Pillar Growth Roadmap & Jaipur Hub
-  blocks.push({ kind: "h", text: "6. Operational Scalability & Jaipur 50,000 sq. ft. Hub" });
-  blocks.push({
-    kind: "bullets",
-    items: [
-      "Pillar 1: Product Portfolio Expansion across high-protein sweet & savoury ancient grain formulations.",
-      "Pillar 2: Quick-Commerce Acceleration deepening dark-store density across Tier-1 & Tier-2 cities.",
-      "Pillar 3: Corporate & B2B Gifting Scale transforming seasonal Diwali spikes into year-round enterprise wellness contracts.",
-      "Pillar 4: Jaipur 50,000 sq. ft. Manufacturing Hub providing 5x output headroom with batch-level lab testing.",
-    ],
-  });
-  blocks.push({
-    kind: "callout",
-    tone: "info",
-    text: `Student Strategic Rationale: ${state.growthStrategy.rationale || "Expanding internal manufacturing capacity in Jaipur enables quality consistency while driving significant gross margin expansion across all retail channels."}`,
-  });
-
-  // 7. Investor Pitch Due Diligence Scorecard
-  blocks.push({ kind: "h", text: "7. Investor Pitch Due Diligence Scorecard" });
-  let totalScore = 0;
-  const pitchReview = PITCH_QUESTIONS.map((q, idx) => {
-    const chosenOptId = state.pitchAnswers[q.id];
-    const opt = q.options.find((o) => o.id === chosenOptId) || q.options[0];
-    const score = opt.score;
-    totalScore += score;
-    return `Q${idx + 1} (${q.investor} - ${q.firm}): ${opt.text} [Score: ${score}/25 - ${opt.strategicRating.toUpperCase()}]`;
-  });
-
-  blocks.push({
-    kind: "bullets",
-    items: pitchReview,
-  });
-
-  blocks.push({
-    kind: "callout",
-    tone: totalScore >= 80 ? "good" : "warn",
-    text: `Investor Readiness Score: ${totalScore} / 100. ${totalScore >= 80 ? "Outstanding strategic maturity! The student demonstrated executive-level command of unit economics, operational moats, and investor due diligence." : "Solid commercial reasoning with opportunities to tighten gross margin defences and supply chain control."}`,
-  });
-
-  // 8. Student Reflection
-  blocks.push({ kind: "h", text: "8. Strategist Reflection & Learning Synthesis" });
-  blocks.push({
-    kind: "p",
-    text: state.reflection.trim() || "Through this activity, I evaluated how clean-label FMCG pricing structures, operational leverage, and in-house manufacturing enable a high-velocity brand like Eat Better to build long-term profitability while competing against industrial incumbents.",
-  });
-
-  const dateStr = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-  const filename = `EatBetter-SkilliZee-Business-Strategy-Report-${(student.name || "Student").replace(/\s+/g, "-")}.pdf`;
-
-  return await buildReport({
-    title: "Business Growth & Financial Strategy Report",
-    activity: "Experiential Activity 4",
-    module: "Module 4 · Pricing, Competition & Growth",
-    student,
-    date: dateStr,
-    blocks,
-    filename,
-  });
+  const value = lines.reduce((a, l) => a + l.value, 0);
+  const cogs = lines.reduce((a, l) => a + l.cogs, 0);
+  return { lines, value, cogs };
 }
 
-/**
- * Generates and triggers the direct browser download of the Financial Model CSV.
- */
-export function downloadFinancialCsv(state: Activity4State, student: Student) {
-  const lines: string[] = [];
-  const safe = (s: string) => `"${s.replace(/"/g, '""')}"`;
+export async function buildBusinessReport(s: St, student: Student) {
+  const date = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+  const pl = plNext(s.levers);
+  const bo = budgetOutcome(s.budget);
+  const b = basketOf(s);
+  const qs = investorQuestions({ ask: s.ask, levers: s.levers, budget: s.budget, target: s.target, weights: s.weights, weakness: s.swot.weakness });
+  const blocks: ReportBlock[] = [
+    { kind: "h", text: "Objective" },
+    { kind: "p", text: "Act as Eat Better's management team: price the products, read the financials, map the competition, allocate a budget, plan growth within the Jaipur facility's capacity, and pitch the plan to investors." },
+    { kind: "h", text: "Learning outcomes" },
+    { kind: "bullets", items: ["Calculate price per gram and explain how pack size and bundles change it.", "Build unit economics: cost of goods, gross margin and contribution after channel fees.", "Explain why a fast-growing brand can still report a net loss, and which levers move it to break-even.", "Position Eat Better against competitor types using the K-Matrix.", "Allocate a budget and explain the opportunity cost of each choice.", "Link growth targets to production capacity and justify a funding plan."] },
+    { kind: "callout", tone: "info", text: "REPORTED facts (from the Module 4 chapters): the four product prices and weights, FY23 ~Rs 5.5 crore and FY24 ~Rs 14.7 crore revenue, FY24 net loss ~Rs 63 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. Jaipur facility. Every cost, commission, budget, capacity figure and outcome below is HYPOTHETICAL practice data." },
+    { kind: "h", text: "1. Product pricing calculations" },
+    { kind: "table", head: ["Product", "Weight", "Price (reported)", "My Rs/g", "Actual Rs/g"], rows: SKUS.map((k) => [k.name, `${k.grams} g`, rs(k.price), s.ppg[k.id] != null ? s.ppg[k.id].toFixed(2) : "-", ppg(k.price, k.grams).toFixed(2)]), widths: [62, 22, 30, 28, 32] },
+    { kind: "p", text: `Price-per-gram attempts that needed correcting: ${s.ppgMistakes}. The 42-laddoo box costs more per gram than the 24-laddoo box, while the Ultimate Snack Box and the namkeen combo bring the price per gram down.` },
+    { kind: "h", text: "2. Unit economics (hypothetical cost sheet)" },
+    { kind: "table", head: ["Product", "Ingredients", "Packaging", "Production", "COGS", "Gross margin"], rows: SKUS.map((k) => { const c = s.costs[k.id]; const ue = unitEconomics(k.price, c); return [k.short, rs(c.ingredient), rs(c.packaging), rs(c.production), rs(ue.cogs), pc(ue.grossPct)]; }), widths: [38, 28, 26, 26, 24, 32] },
+    { kind: "p", text: `My D2C basket: ${b.lines.map((l) => `${l.q} x ${l.k.short}`).join(", ") || "-"}; basket value (average order value for this order) ${rs(b.value)}.` },
+    { kind: "table", head: ["Channel", "Fees (hypothetical)", "Fees on my basket", "Contribution", "Contribution %"], rows: (Object.keys(CHANNEL_FEES) as ChannelId[]).map((ch) => { const c = contribution(b.value, b.cogs, ch); return [CHANNEL_FEES[ch].name, CHANNEL_FEES[ch].note, rs(c.fees), rs(c.contribution), pc(c.pct)]; }), widths: [28, 62, 28, 28, 28] },
+    { kind: "h", text: "3. Financial performance analysis" },
+    { kind: "kv", rows: [["FY23 revenue (reported)", "~Rs 5.5 crore"], ["FY24 revenue (reported)", "~Rs 14.7 crore"], ["Growth (computed)", `${(((FIN.revenueCrore - FIN.priorCrore) / FIN.priorCrore) * 100).toFixed(0)}% from the rounded figures (reported as ~165%)`], ["FY24 net loss (reported)", "~Rs 63 lakh"], ["Implied total costs", `~${cr(BASE.revenue + BASE.netLoss)} (revenue + loss)`], ["Net margin FY24", pc(-BASE.netLoss / BASE.revenue)]] },
+    { kind: "p", text: `Hypothetical split used in the lever lab: gross margin ${pc(BASE.gm)}, marketing and platform fees ${pc(BASE.mk)} of revenue, fixed overheads ${cr(FIXED)} (set so the model reproduces the reported loss).` },
+    { kind: "table", head: ["Lever", "My setting"], rows: [["Revenue growth", `${s.levers.growth}%`], ["Gross-margin improvement (bundles, sourcing)", `+${s.levers.gmGain} points`], ["Marketing and fees, % of revenue", `${s.levers.mk}%`], ["Growth in fixed overheads", `${s.levers.fixedGrowth}%`]], widths: [110, 64] },
+    { kind: "kv", rows: [["Plan revenue", cr(pl.rev)], ["Gross profit", cr(pl.gross)], ["Marketing and fees", cr(pl.marketing)], ["Fixed overheads", cr(pl.fixed)], ["Net result (hypothetical)", `${pl.net >= 0 ? "+" : "-"}${cr(Math.abs(pl.net))} (${pc(pl.netPct)})`]] },
+    { kind: "p", text: `Why a growing business can post a loss (my explanation): ${s.plExplain}` },
+    { kind: "h", text: "4. Competitive positioning matrix" },
+    { kind: "table", head: ["Parameter", ...K_PLAYERS.map((p) => p.short)], rows: KMATRIX.map((r) => [r.short, ...K_PLAYERS.map((p) => r.v[p.id])]), widths: [54, 30, 30, 30, 30] },
+    { kind: "table", head: ["Player", "Price accessibility (my map)", "Natural sweetening (my map)"], rows: K_PLAYERS.map((p) => [p.name, s.grid[p.id]?.x ?? "-", s.grid[p.id]?.y ?? "-"]), widths: [62, 56, 56] },
+    { kind: "kv", rows: [["Strength", s.swot.strength], ["Weakness", s.swot.weakness], ["Opportunity", s.swot.opportunity], ["Differentiation", s.swot.edge]] },
+    { kind: "h", text: `5. Budget and asset allocation (hypothetical Rs ${BUDGET_CR} crore)` },
+    { kind: "table", head: ["Department", "Share", "Amount"], rows: DEPTS.map((d) => [d.name, `${s.budget[d.id]}%`, cr((s.budget[d.id] / 100) * BUDGET_CR)]), widths: [90, 40, 44] },
+    { kind: "kv", rows: [["Demand growth (simulated)", `${Math.round(bo.demand)}%`], ["Capacity growth (simulated)", `${Math.round(bo.capacity)}%`], ["Growth I can actually serve", `${Math.round(bo.fulfilled)}%`], ["B2B share of sales (simulated)", `${Math.round(bo.b2bShare)}%`]] },
+    { kind: "h", text: "6. Growth strategy and scalability" },
+    { kind: "table", head: ["Growth pillar", "My weight"], rows: PILLARS.map((p) => [p.title, `${s.weights[p.id] ?? 0}%`]), widths: [130, 44] },
+    { kind: "p", text: `Target: ${s.target} lakh orders a month in 12 months (today ~${ORDERS_NOW} lakh, reported). Practice capacity of the 50,000 sq. ft. Jaipur facility in this exercise: ${FACILITY_CAP} lakh a month (hypothetical).` },
+    { kind: "p", text: `My justification: ${s.growthWhy}` },
+    { kind: "h", text: "7. Investment proposal (learning simulation)" },
+    { kind: "kv", rows: [["Funding ask", `Rs ${s.ask} crore (hypothetical)`]] },
+    { kind: "table", head: ["Use of funds", "Share", "Amount"], rows: DEPTS.map((d) => [d.name, `${s.budget[d.id]}%`, cr((s.budget[d.id] / 100) * s.ask)]), widths: [90, 40, 44] },
+    { kind: "h", text: "8. Investor pitch summary" },
+    { kind: "kv", rows: [["The opportunity", s.pitch.opportunity], ["Product differentiation", s.pitch.differentiation], ["Growth strategy", s.pitch.growth]] },
+    ...qs.flatMap((q, i): ReportBlock[] => [{ kind: "p", text: `${q.who} (simulated): "${q.q}"` }, { kind: "p", text: `My answer: ${s.answers[i] ?? "-"}`, muted: true }]),
+    { kind: "callout", tone: "info", text: "This pitch is a learning simulation. It does not represent Eat Better Co's actual investment terms, investors or plans." },
+    { kind: "h", text: "Final decision rationale and reflection" },
+    { kind: "p", text: s.reflection },
+  ];
+  await buildReport({ title: "Business Growth & Financial Strategy Report", activity: "Experiential Activity 4", module: "Module 4 · Business Strategy, Financials & Competitive Analysis", student, date, blocks, filename: `EatBetter-SkilliZee-Business-Strategy-Report-${fileStem(student)}.pdf` });
+}
 
-  lines.push("EAT BETTER CO x SKILLIZEE — FINANCIAL MODEL & BUSINESS VALUATION EXPORT");
-  lines.push(`Strategist,${safe(student.name || "Student")}`);
-  lines.push(`Student ID,${safe(student.id || "N/A")}`);
-  lines.push(`Date,${safe(new Date().toISOString().split("T")[0])}`);
-  lines.push("");
-
-  // Section 1: SKU Unit Economics
-  lines.push("SECTION 1: PRODUCT PRICING & BOM BREAKDOWN");
-  lines.push("SKU Name,Package Weight (g),Retail Price (INR),Stated Price/Gram (INR),Ingredients BOM (INR),Packaging BOM (INR),Production Cost (INR),Total COGS (INR),Gross Profit (INR),Gross Margin (%)");
-  for (const id of SKU_IDS) {
-    const s = SKUS[id];
-    const c = state.skuCosts[id] ?? s.bom;
-    const totalCogs = c.ingredients + c.packaging + c.production;
-    const profit = s.retailPrice - totalCogs;
-    const margin = Math.round((profit / s.retailPrice) * 100);
-    lines.push(
-      [safe(s.name), s.grams, s.retailPrice, s.statedPricePerGram, c.ingredients, c.packaging, c.production, totalCogs, profit, `${margin}%`].join(","),
-    );
+export function downloadFinancialCsv(s: St, student: Student) {
+  const rows: (string | number)[][] = [];
+  const add = (...r: (string | number)[]) => rows.push(r);
+  add("Eat Better Co x SkilliZee - Business Growth & Financial Model");
+  add("Student", student.name, "Date", new Date().toISOString().slice(0, 10));
+  add("Note", "Prices/weights/FY figures are REPORTED; all costs, fees, budgets and outcomes are HYPOTHETICAL practice data");
+  add();
+  add("PRICING", "Weight (g)", "Price (Rs, reported)", "My price per g", "Actual price per g", "Ingredients (Rs, hyp.)", "Packaging (Rs, hyp.)", "Production (Rs, hyp.)", "COGS (Rs)", "Gross profit (Rs)", "Gross margin %");
+  for (const k of SKUS) {
+    const c = s.costs[k.id];
+    const ue = unitEconomics(k.price, c);
+    add(k.name, k.grams, k.price, s.ppg[k.id] != null ? s.ppg[k.id].toFixed(2) : "", ppg(k.price, k.grams).toFixed(4), c.ingredient, c.packaging, c.production, ue.cogs, ue.gross, (ue.grossPct * 100).toFixed(1));
   }
-  lines.push("");
-
-  // Section 2: Macro Financials
-  lines.push("SECTION 2: REPORTED FINANCIAL PERFORMANCE");
-  lines.push("Metric,Value,Unit,Note");
-  lines.push(`FY23 Operating Revenue,${FINANCIAL_FACTS.fy23RevenueCr},Crore INR,Base year reported top-line`);
-  lines.push(`FY24 Operating Revenue,${FINANCIAL_FACTS.fy24RevenueCr},Crore INR,Reported top-line scale`);
-  lines.push(`YoY Revenue Growth,${FINANCIAL_FACTS.yoyGrowthPct},%,High-velocity expansion`);
-  lines.push(`FY24 Reported Net Loss,${FINANCIAL_FACTS.fy24NetLossLakh},Lakh INR,Growth investment in operating leverage`);
-  lines.push(`Monthly Order Volume,${FINANCIAL_FACTS.monthlyOrders},Orders/Month,Across web quick commerce & marketplaces`);
-  lines.push(`Manufacturing Hub Size,${FINANCIAL_FACTS.facilitySqFt},Square Feet,Central facility in Jaipur`);
-  lines.push("");
-
-  // Section 3: Representative Order Economics
-  lines.push("SECTION 3: REPRESENTATIVE ORDER UNIT ECONOMICS WATERFALL");
-  lines.push("Line Item,Percentage of Cart,Amount (INR),Description");
-  const aov = FINANCIAL_FACTS.avgOrderValue;
-  lines.push(`Gross Order Value (AOV),100%,${aov},Blended order cart size`);
-  lines.push(`Raw Materials (COGS),38%,${Math.round(aov * 0.38)},Dates nuts seeds millets`);
-  lines.push(`Packaging Materials,8%,${Math.round(aov * 0.08)},Pouch moisture seal carton box`);
-  lines.push(`Logistics & Freight,16%,${Math.round(aov * 0.16)},Surface 3PL and courier`);
-  lines.push(`Marketplace Commissions,12%,${Math.round(aov * 0.12)},Platform fees and payment gateway`);
-  lines.push(`Performance Marketing (CAC),18%,${Math.round(aov * 0.18)},Paid customer acquisition`);
-  lines.push(`Order Contribution Margin,8%,${Math.round(aov * 0.08)},Contribution before fixed corporate SG&A`);
-  lines.push("");
-
-  // Section 4: Budget Allocation
-  lines.push("SECTION 4: STRATEGIC GROWTH BUDGET ALLOCATION (10 CRORE INR)");
-  lines.push("Functional Area,Allocation Percentage,Capital Allocated (Crore INR),Strategic Impact");
-  for (const id of BUDGET_IDS) {
-    const a = BUDGET_AREAS[id];
-    const pct = state.budget[id] ?? a.defaultPct;
-    const cr = (pct / 10).toFixed(2);
-    lines.push([safe(a.title), `${pct}%`, cr, safe(a.impactGain)].join(","));
+  add();
+  const b = basketOf(s);
+  add("D2C BASKET", "Qty", "Value (Rs)");
+  for (const l of b.lines) add(l.k.name, l.q, l.value);
+  add("Basket value (AOV)", "", b.value);
+  add("CHANNEL", "Commission %", "Per-order fee (Rs)", "Fees on basket (Rs)", "Contribution (Rs)", "Contribution %");
+  for (const ch of Object.keys(CHANNEL_FEES) as ChannelId[]) {
+    const c = contribution(b.value, b.cogs, ch);
+    add(CHANNEL_FEES[ch].name, CHANNEL_FEES[ch].commission * 100, CHANNEL_FEES[ch].perOrder, c.fees.toFixed(0), c.contribution.toFixed(0), (c.pct * 100).toFixed(1));
   }
-  lines.push("");
-
-  // Section 5: Investor Pitch Scores
-  lines.push("SECTION 5: INVESTOR PITCH DUE DILIGENCE RESULTS");
-  lines.push("Question ID,Investor,Partner Firm,Option Selected,Score Awarded (out of 25),Strategic Rating");
-  for (const q of PITCH_QUESTIONS) {
-    const optId = state.pitchAnswers[q.id];
-    const opt = q.options.find((o) => o.id === optId) || q.options[0];
-    lines.push([safe(q.id), safe(q.investor), safe(q.firm), safe(opt.text), opt.score, opt.strategicRating].join(","));
-  }
-
-  const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(lines.join("\n"));
-  const link = document.createElement("a");
-  link.setAttribute("href", csvContent);
-  link.setAttribute("download", `EatBetter-Financial-Model-${(student.name || "Student").replace(/\s+/g, "-")}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
+  add();
+  const pl = plNext(s.levers);
+  add("P&L (Rs crore)", "FY24 reported/implied", "My plan (hypothetical)");
+  add("Revenue", BASE.revenue, pl.rev.toFixed(2));
+  add("Gross profit", (BASE.revenue * BASE.gm).toFixed(2), pl.gross.toFixed(2));
+  add("Marketing + fees", (BASE.revenue * BASE.mk).toFixed(2), pl.marketing.toFixed(2));
+  add("Fixed overheads", FIXED, pl.fixed.toFixed(2));
+  add("Net result", (-BASE.netLoss).toFixed(2), pl.net.toFixed(2));
+  add("Levers", `growth ${s.levers.growth}%`, `margin +${s.levers.gmGain} pts`, `marketing ${s.levers.mk}%`, `fixed +${s.levers.fixedGrowth}%`);
+  add();
+  const bo = budgetOutcome(s.budget);
+  add("BUDGET (hypothetical Rs crore)", "Share %", "Amount (Rs cr)", "Use of funding ask (Rs cr)");
+  for (const d of DEPTS) add(d.name, s.budget[d.id], ((s.budget[d.id] / 100) * BUDGET_CR).toFixed(2), ((s.budget[d.id] / 100) * s.ask).toFixed(2));
+  add("Simulated demand growth %", bo.demand.toFixed(0), "Simulated capacity growth %", bo.capacity.toFixed(0));
+  add();
+  add("GROWTH", "Weight %");
+  for (const p of PILLARS) add(p.title, s.weights[p.id] ?? 0);
+  add("Target lakh orders/month", s.target, "Practice facility capacity", FACILITY_CAP);
+  add("Funding ask (Rs crore, hypothetical)", s.ask);
+  const esc = (v: string | number) => {
+    const t = String(v);
+    return /[",\n]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t;
+  };
+  const csv = "﻿" + rows.map((r) => r.map(esc).join(",")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `EatBetter-SkilliZee-Financial-Model-${fileStem(student)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
 }
