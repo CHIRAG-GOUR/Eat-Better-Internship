@@ -38,7 +38,11 @@ export type HumanLook = {
   slim?: boolean;
 };
 
-export type HumanMode = "walk" | "ride" | "drive" | "stand";
+/**
+ * walk · ride (scooter) · drive · stand, plus office poses: sit (typing at a desk), listen (seated, hands resting,
+ * can nod or shake the head via `mood`), talk (standing, gesturing) and point (standing, right arm pointing ahead).
+ */
+export type HumanMode = "walk" | "ride" | "drive" | "stand" | "sit" | "listen" | "talk" | "point";
 
 /* ── shared resources ─────────────────────────────────────────── */
 
@@ -114,7 +118,7 @@ const darken = (hex: string, k: number) => {
 
 /* ── the person ───────────────────────────────────────────────── */
 
-export function Human({ look, mode = "walk", speed = 1, phase = 0, lean }: { look: HumanLook; mode?: HumanMode; speed?: number; phase?: number; lean?: number }) {
+export function Human({ look, mode = "walk", speed = 1, phase = 0, lean, mood }: { look: HumanLook; mode?: HumanMode; speed?: number; phase?: number; lean?: number; mood?: "nod" | "shake" | null }) {
   const g = geos();
   const root = useRef<THREE.Group>(null);
   const upper = useRef<THREE.Group>(null);
@@ -128,11 +132,64 @@ export function Human({ look, mode = "walk", speed = 1, phase = 0, lean }: { loo
   const elL = useRef<THREE.Group>(null);
   const elR = useRef<THREE.Group>(null);
 
-  const seated = mode === "ride" || mode === "drive";
-  const bodyLean = lean ?? (mode === "ride" ? 0.3 : mode === "drive" ? 0.18 : 0.04);
+  const seated = mode === "ride" || mode === "drive" || mode === "sit" || mode === "listen";
+  const bodyLean = lean ?? (mode === "ride" ? 0.3 : mode === "drive" ? 0.18 : mode === "sit" ? 0.12 : mode === "listen" ? 0.02 : 0.04);
 
   useFrame(({ clock }) => {
     const t = clock.elapsedTime * speed * 5.6 + phase;
+    const now = clock.elapsedTime;
+    // head reaction: a nod (yes) or a shake (no)
+    const nod = mood === "nod" ? Math.sin(now * 7) * 0.16 : 0;
+    const shake = mood === "shake" ? Math.sin(now * 8) * 0.32 : 0;
+    if (mode === "sit" || mode === "listen") {
+      hipL.current?.rotation.set(-1.5, 0, 0.08);
+      hipR.current?.rotation.set(-1.5, 0, -0.08);
+      kneeL.current?.rotation.set(1.5, 0, 0);
+      kneeR.current?.rotation.set(1.5, 0, 0);
+      if (mode === "sit") {
+        // forearms forward onto the desk, fingers tapping the keyboard
+        const tap = Math.sin(now * 13 + phase) * 0.05;
+        shL.current?.rotation.set(-0.62, 0, -0.1);
+        shR.current?.rotation.set(-0.62, 0, 0.1);
+        elL.current?.rotation.set(-0.95 + tap, 0, 0.12);
+        elR.current?.rotation.set(-0.95 - tap, 0, -0.12);
+      } else {
+        // hands resting on the table edge
+        shL.current?.rotation.set(-0.42, 0, -0.06);
+        shR.current?.rotation.set(-0.42, 0, 0.06);
+        elL.current?.rotation.set(-1.15, 0, 0.3);
+        elR.current?.rotation.set(-1.15, 0, -0.3);
+      }
+      if (upper.current) upper.current.rotation.x = bodyLean + Math.sin(now * 1.6 + phase) * 0.012;
+      if (headG.current) headG.current.rotation.set(-bodyLean * 0.5 + 0.06 + nod, shake + Math.sin(now * 0.45 + phase) * (mood ? 0 : 0.14), 0);
+      return;
+    }
+    if (mode === "talk" || mode === "point") {
+      hipL.current?.rotation.set(0, 0, 0.03);
+      hipR.current?.rotation.set(0, 0, -0.03);
+      kneeL.current?.rotation.set(0.04, 0, 0);
+      kneeR.current?.rotation.set(0.04, 0, 0);
+      if (mode === "point") {
+        shR.current?.rotation.set(-1.35, 0, 0.22);
+        elR.current?.rotation.set(-0.08, 0, 0);
+        shL.current?.rotation.set(0.05, 0, -0.08);
+        elL.current?.rotation.set(-0.25, 0, 0);
+      } else {
+        const a = Math.sin(now * 1.7 + phase);
+        const b = Math.sin(now * 1.1 + phase * 1.3);
+        shR.current?.rotation.set(-0.55 + a * 0.22, 0, 0.18);
+        elR.current?.rotation.set(-1.05 + b * 0.25, 0, 0);
+        shL.current?.rotation.set(-0.3 - b * 0.15, 0, -0.16);
+        elL.current?.rotation.set(-0.9 + a * 0.2, 0, 0);
+      }
+      if (root.current) {
+        root.current.position.y = 0;
+        root.current.rotation.z = 0;
+      }
+      if (upper.current) upper.current.rotation.set(0.02, Math.sin(now * 0.8 + phase) * 0.05, 0);
+      if (headG.current) headG.current.rotation.set(-0.02 + nod, (mode === "point" ? 0.22 : Math.sin(now * 0.9 + phase) * 0.18) + shake, 0);
+      return;
+    }
     if (seated) {
       const reach = mode === "ride" ? -0.86 : -0.7;
       hipL.current?.rotation.set(-1.42, 0, 0.06);

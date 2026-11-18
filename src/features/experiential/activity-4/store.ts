@@ -2,25 +2,22 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DEFAULT_BUDGET, DEFAULT_COSTS, DEFAULT_LEVERS, type Costs, type DeptId, type Level, type Levers } from "./data";
+import { DEFAULT_LEVERS, NO_COINS, type DeptId, type Level, type Levers } from "./data";
 
 type S = {
-  stage: number; // 0 discover · 1 pricing · 2 finance · 3 competition · 4 budget · 5 growth · 6 pitch · 7 project
-  ppg: Record<string, number>; // student's price-per-gram answers
-  ppgMistakes: number;
-  costs: Record<string, Costs>;
-  basket: Record<string, number>;
+  stage: number; // 0 welcome · 1 price detective · 2 money machine · 3 rival radar · 4 budget coins · 5 grow & pitch · 6 report
+  rank: string[]; // boxes placed on the podium, cheapest per gram first
+  rankTries: number;
+  rankDone: boolean;
+  bag: Record<string, number>;
   levers: Levers;
-  plExplain: string;
-  grid: Record<string, { x: Level | null; y: Level | null }>; // positioning map placements
+  grid: Record<string, { x: Level | null; y: Level | null }>;
   gridMistakes: number;
-  swot: { strength: string; weakness: string; opportunity: string; edge: string };
-  budget: Record<DeptId, number>;
-  weights: Record<string, number>;
-  target: number; // lakh orders / month in 12 months
-  growthWhy: string;
-  ask: number; // ₹ crore
-  pitch: { opportunity: string; differentiation: string; growth: string };
+  edge: string; // "Eat Better wins because…"
+  coins: Record<DeptId, number>;
+  target: number; // lakh orders a month in a year
+  lead: string | null; // growth pillar that leads
+  pitch: string;
   answers: Record<number, string>;
   reflection: string;
   set: (p: Partial<Omit<S, "set" | "restart">>) => void;
@@ -29,21 +26,18 @@ type S = {
 
 const fresh = () => ({
   stage: 0,
-  ppg: {},
-  ppgMistakes: 0,
-  costs: structuredClone(DEFAULT_COSTS),
-  basket: {},
+  rank: [] as string[],
+  rankTries: 0,
+  rankDone: false,
+  bag: {},
   levers: { ...DEFAULT_LEVERS },
-  plExplain: "",
   grid: {},
   gridMistakes: 0,
-  swot: { strength: "", weakness: "", opportunity: "", edge: "" },
-  budget: { ...DEFAULT_BUDGET },
-  weights: { portfolio: 25, qcom: 25, b2b: 25, infra: 25 },
-  target: 3,
-  growthWhy: "",
-  ask: 15,
-  pitch: { opportunity: "", differentiation: "", growth: "" },
+  edge: "",
+  coins: { ...NO_COINS },
+  target: 2.5,
+  lead: null,
+  pitch: "",
   answers: {},
   reflection: "",
 });
@@ -55,6 +49,7 @@ export const useBiz = create<S>()(
       set: (p) => set(p),
       restart: () => set(fresh()),
     }),
-    { name: "eb-exp-4", version: 1 },
+    // version 2 = the kid-friendly game; older saved attempts start fresh
+    { name: "eb-exp-4", version: 2, migrate: () => fresh() as unknown as S },
   ),
 );
