@@ -224,14 +224,14 @@ export function KMatrix() {
                   onClick={() => setCol(col === p.id ? null : p.id)}
                   className={`hyphens-auto rounded-lg p-1 text-center text-[0.72rem] font-extrabold leading-tight sm:p-2 sm:text-[0.85rem] ${p.id === "eb" ? "bg-cocoa text-cream" : "bg-cream text-cocoa"} ${col === p.id ? "ring-2 ring-orange" : ""}`}
                 >
-                  <span className="sm:hidden">{p.short}</span>
+                  <span className="sm:hidden">{softBreak(p.short)}</span>
                   <span className="hidden sm:inline">{p.name}</span>
                 </button>
               ))}
               {KMATRIX.map((k, j) => (
                 <div key={k.id} role="row" className="contents">
                   <button role="rowheader" onClick={() => setRow(row === k.id ? null : k.id)} className={`rounded-lg p-1.5 text-left text-[0.8rem] font-bold leading-tight text-cocoa sm:p-2.5 sm:text-[0.95rem] ${row === k.id ? "bg-peach ring-2 ring-orange" : "bg-cream/60 hover:bg-cream"}`}>
-                    <span className="sm:hidden">{k.short}</span>
+                    <span className="sm:hidden">{softBreak(k.short)}</span>
                     <span className="hidden sm:inline">{k.param}</span>
                   </button>
                   {K_PLAYERS.map((p, i) => {
@@ -294,6 +294,9 @@ export function KMatrix() {
 
 const ROW_ICON: Record<(typeof BRAND_ROWS)[number]["key"], LucideIcon> = { hq: MapPin, category: Tags, positioning: Target, usp: Landmark, price: Scale, channels: Truck, edge: Swords };
 // short labels fit the five narrow columns on a phone
+// soft hyphens let the two longest words break inside the narrow phone columns of the K-Matrix table
+const softBreak = (t: string) => t.replace("Traditional", "Tradi\u00ADtional").replace("sweetening", "sweet\u00ADening");
+
 const CHANNEL_COLS: { label: string; short: string; match: RegExp }[] = [
   { label: "Online", short: "Online", match: /online|d2c website/i },
   { label: "Quick-commerce", short: "Q-comm", match: /quick/i },
