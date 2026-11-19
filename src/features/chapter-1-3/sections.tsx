@@ -169,7 +169,7 @@ export function National() {
           ))}
         </div>
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-          <VideoBlock kind="file" av1={VIDEOS.gifting.av1} h264={VIDEOS.gifting.h264} poster={VIDEOS.gifting.poster} title={VIDEOS.gifting.title} caption={VIDEOS.gifting.caption} />
+          <VideoBlock kind="file" h264={VIDEOS.gifting.h264} poster={VIDEOS.gifting.poster} title={VIDEOS.gifting.title} caption={VIDEOS.gifting.caption} />
           <div className="rounded-[22px] bg-peach/70 p-5">
             <div className="text-[0.85rem] font-extrabold uppercase tracking-[0.14em] text-orange">Watch for</div>
             <p className="mt-2 text-[1.08rem] leading-relaxed text-cocoa">
@@ -235,6 +235,16 @@ export function Leaders() {
           </div>
         </div>
         <p className="mt-4 text-[0.92rem] text-cream/75">{LEADERS_NOTE}</p>
+        <div className="mt-8">
+          <VideoBlock
+            kind="file"
+            h264={VIDEOS.leadership.h264}
+            poster={VIDEOS.leadership.poster}
+            title={VIDEOS.leadership.title}
+            caption={VIDEOS.leadership.caption}
+            badge="Shark Tank India S4"
+          />
+        </div>
       </Panel>
     </section>
   );

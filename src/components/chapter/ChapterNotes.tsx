@@ -29,7 +29,9 @@ export function ChapterNotes({ chapterNumber, chapterTitle }: ChapterNotesProps)
   const [pendingNavUrl, setPendingNavUrl] = useState<string | null>(null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const leaving = useRef(false);
 
   // Restore saved draft on mount
   useEffect(() => {
@@ -67,7 +69,8 @@ export function ChapterNotes({ chapterNumber, chapterTitle }: ChapterNotesProps)
   // Window unload guard (browser reload / closing tab)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (isDirty) {
+      // the learner already chose to leave in our own dialog; do not ask a second time
+      if (isDirty && !leaving.current) {
         e.preventDefault();
         e.returnValue = "You have notes that haven't been downloaded yet! Download them before leaving to avoid losing your work.";
         return e.returnValue;
@@ -85,8 +88,11 @@ export function ChapterNotes({ chapterNumber, chapterTitle }: ChapterNotesProps)
 
       const target = (e.target as HTMLElement).closest("a");
       if (!target || !target.href) return;
+      // links that open a new tab, download a file, or are opened with a modifier key keep this page open
+      if (target.target === "_blank" || target.hasAttribute("download") || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
 
       const url = new URL(target.href, window.location.href);
+      if (url.protocol !== "http:" && url.protocol !== "https:") return;
 
       // Ignore in-page hash links (e.g. #glance, #d2c)
       if (url.origin === window.location.origin && url.pathname === window.location.pathname) {
@@ -104,16 +110,18 @@ export function ChapterNotes({ chapterNumber, chapterTitle }: ChapterNotesProps)
     return () => document.removeEventListener("click", handleLinkClick, { capture: true });
   }, [isDirty]);
 
-  // Browser back/forward navigation guard (client-side routing)
+  // Browser back guard: one extra history entry catches the first Back press so the learner can download first.
+  // The entry keeps the router's own state so Next.js treats it as the same page.
   useEffect(() => {
     if (!isDirty) return;
-
+    if (!window.history.state?.ebNotesGuard) {
+      window.history.pushState({ ...window.history.state, ebNotesGuard: true }, "", window.location.href);
+    }
     const handlePopState = () => {
-      window.history.pushState(null, "", window.location.href);
+      if (leaving.current) return;
+      setPendingNavUrl(null);
       setShowExitConfirm(true);
     };
-
-    window.history.pushState(null, "", window.location.href);
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [isDirty]);
@@ -182,26 +190,30 @@ Generated from Eat Better Co Internship Portal
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
-  // Exit dialog handlers
+  // Exit dialog handlers: a link click remembers its URL; a Back press has no URL and continues backwards
+  const leave = () => {
+    leaving.current = true;
+    if (pendingNavUrl) window.location.href = pendingNavUrl;
+    else window.history.back();
+  };
+
   const handleConfirmLeaveWithoutSaving = () => {
     setShowExitConfirm(false);
-    if (pendingNavUrl) {
-      window.location.href = pendingNavUrl;
-    }
+    leave();
   };
 
   const handleDownloadAndLeave = () => {
     handleDownload();
     setShowExitConfirm(false);
-    if (pendingNavUrl) {
-      setTimeout(() => {
-        window.location.href = pendingNavUrl;
-      }, 350);
-    }
+    setTimeout(leave, 350);
   };
 
   const handleCancelExit = () => {
     setShowExitConfirm(false);
+    // a Back press used up the guard entry; put it back so the next Back is caught too
+    if (!pendingNavUrl && !window.history.state?.ebNotesGuard) {
+      window.history.pushState({ ...window.history.state, ebNotesGuard: true }, "", window.location.href);
+    }
     setPendingNavUrl(null);
     setIsOpen(true);
   };
@@ -327,7 +339,7 @@ Generated from Eat Better Co Internship Portal
                   {isDirty ? (
                     <span className="inline-flex items-center gap-1.5 font-bold text-orange">
                       <span className="size-2 rounded-full bg-orange animate-pulse" />
-                      Unsaved changes — download before leaving
+                      Not downloaded yet
                     </span>
                   ) : notes.trim().length > 0 ? (
                     <span className="inline-flex items-center gap-1.5 font-bold text-success">
@@ -362,21 +374,21 @@ Generated from Eat Better Co Internship Portal
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertSnippet("📌 Key Takeaway:\n- ")}
+                  onClick={() => insertSnippet("Key takeaway:\n- ")}
                   className="rounded-full border border-cocoa/20 bg-white px-2.5 py-1 text-[0.8rem] font-bold text-cocoa hover:border-cocoa hover:bg-peach"
                 >
                   + Key Takeaway
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertSnippet("❓ Question for Mentor:\n- ")}
+                  onClick={() => insertSnippet("Question for my mentor:\n- ")}
                   className="rounded-full border border-cocoa/20 bg-white px-2.5 py-1 text-[0.8rem] font-bold text-cocoa hover:border-cocoa hover:bg-peach"
                 >
                   + Mentor Question
                 </button>
                 <button
                   type="button"
-                  onClick={() => insertSnippet("💡 Idea for Project:\n- ")}
+                  onClick={() => insertSnippet("Project idea:\n- ")}
                   className="rounded-full border border-cocoa/20 bg-white px-2.5 py-1 text-[0.8rem] font-bold text-cocoa hover:border-cocoa hover:bg-peach"
                 >
                   + Project Idea
@@ -428,15 +440,26 @@ Generated from Eat Better Co Internship Portal
                       <button
                         type="button"
                         onClick={() => {
-                          if (window.confirm("Clear all notes in this chapter? This cannot be undone.")) {
-                            setNotes("");
-                            setLastDownloadedText(null);
+                          // tap twice to clear: some LMS app views block browser confirm boxes
+                          if (!confirmClear) {
+                            setConfirmClear(true);
+                            setTimeout(() => setConfirmClear(false), 3000);
+                            return;
                           }
+                          setConfirmClear(false);
+                          setNotes("");
+                          setLastDownloadedText(null);
                         }}
-                        className="flex size-9 items-center justify-center rounded-lg border border-cocoa/20 text-cocoa-2 transition-colors hover:border-error hover:bg-error/10 hover:text-error"
+                        className={`flex h-9 items-center justify-center gap-1.5 rounded-lg border transition-colors ${
+                          confirmClear
+                            ? "border-error bg-error/10 px-2.5 text-[0.82rem] font-bold text-error"
+                            : "w-9 border-cocoa/20 text-cocoa-2 hover:border-error hover:bg-error/10 hover:text-error"
+                        }`}
+                        aria-label={confirmClear ? "Tap again to clear all notes" : "Clear notes"}
                         title="Clear notes"
                       >
                         <Trash2 className="size-4" />
+                        {confirmClear && <span>Tap again to clear</span>}
                       </button>
                     )}
                   </div>
@@ -452,8 +475,9 @@ Generated from Eat Better Co Internship Portal
                   </button>
                 </div>
 
-                <p className="mt-3 text-center text-[0.8rem] text-cocoa-2/80">
-                  ⚠️ Download your notes before leaving the page to ensure they are saved.
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[0.8rem] text-cocoa-2">
+                  <AlertTriangle className="size-3.5 shrink-0 text-orange" />
+                  Notes stay in this browser only. Download them to keep your own copy.
                 </p>
               </div>
             </motion.aside>
@@ -493,13 +517,13 @@ Generated from Eat Better Co Internship Portal
                     id="confirm-title"
                     className="font-display text-[1.45rem] font-semibold text-cocoa"
                   >
-                    Hold on! You have unsaved notes
+                    Download your notes first?
                   </h3>
                   <p
                     id="confirm-desc"
                     className="mt-2 text-[1.05rem] leading-relaxed text-cocoa-2"
                   >
-                    Your notes for <strong>Chapter {chapterNumber}</strong> have not been downloaded. If you change pages, your notes will not be saved to your files.
+                    Your notes for <strong>Chapter {chapterNumber}</strong> have not been downloaded yet. They stay in this browser, but you will not have your own copy until you download them.
                   </p>
                 </div>
               </div>
@@ -534,7 +558,7 @@ Generated from Eat Better Co Internship Portal
                   onClick={handleConfirmLeaveWithoutSaving}
                   className="text-center text-[0.88rem] font-bold text-error hover:underline sm:self-center sm:px-2"
                 >
-                  Leave without saving
+                  Leave without downloading
                 </button>
               </div>
             </motion.div>

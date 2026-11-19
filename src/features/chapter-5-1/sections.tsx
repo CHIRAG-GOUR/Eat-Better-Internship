@@ -126,7 +126,7 @@ export function TaskABriefAndTracks() {
                 <div className="mt-1 font-display font-bold text-[0.94rem] text-cocoa">
                   {activeTrack.exampleInitiative.title}
                 </div>
-                <p className="mt-0.5 text-[0.8rem] text-cocoa-2 line-clamp-2">
+                <p className="mt-0.5 text-[0.8rem] text-cocoa-2">
                   {activeTrack.exampleInitiative.description}
                 </p>
               </div>
@@ -215,7 +215,7 @@ export function GTMFramework() {
               <span className={`text-[0.72rem] font-bold ${i === activeStep ? "text-orange" : "text-cocoa/60"}`}>
                 Pillar {p.number}
               </span>
-              <div className="mt-0.5 truncate font-display text-[0.86rem] font-bold">
+              <div className="mt-0.5 font-display text-[0.86rem] font-bold leading-tight">
                 {p.title}
               </div>
             </button>
@@ -272,18 +272,18 @@ export function RecommendedToolsAndRubric() {
         </SectionIntro>
 
         {/* Compact Tools Grid */}
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {RECOMMENDED_TOOLS_TASK_A.map((cat) => (
             <div
               key={cat.category}
-              className="rounded-2xl border border-cocoa bg-cream p-4 shadow-sm flex flex-col justify-between"
+              className="min-w-0 rounded-2xl border border-cocoa bg-cream p-4 shadow-sm flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between pb-2 border-b border-cocoa/10">
                   <h4 className="font-display text-[0.98rem] font-bold text-cocoa">
                     {cat.category}
                   </h4>
-                  <span className="rounded-full bg-orange/15 px-2 py-0.5 text-[0.68rem] font-bold text-orange">
+                  <span className="rounded-full bg-orange/15 px-2 py-0.5 text-[0.72rem] font-bold text-orange">
                     {cat.badge}
                   </span>
                 </div>
@@ -296,16 +296,16 @@ export function RecommendedToolsAndRubric() {
                       <ToolIcon id={t.id} className="size-6 shrink-0 rounded-lg" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="truncate font-display text-[0.88rem] font-bold text-cocoa">
+                          <span className="min-w-0 truncate font-display text-[0.88rem] font-bold text-cocoa">
                             {t.name}
                           </span>
                           {t.badge && (
-                            <span className="shrink-0 rounded bg-haldi/40 px-1.5 py-0.2 text-[0.65rem] font-bold text-cocoa">
+                            <span className="shrink-0 rounded bg-haldi/40 px-1.5 py-0.5 text-[0.7rem] font-bold text-cocoa">
                               {t.badge}
                             </span>
                           )}
                         </div>
-                        <p className="truncate text-[0.75rem] text-cocoa-2">
+                        <p className="text-[0.8rem] leading-snug text-cocoa-2">
                           {t.description}
                         </p>
                       </div>
@@ -326,7 +326,7 @@ export function RecommendedToolsAndRubric() {
             <span className="text-[0.78rem] font-bold text-orange">4 Pillars · 25% Each</span>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {CAPSTONE_RUBRIC.map((r) => (
               <div key={r.title} className="rounded-xl border border-cocoa/10 bg-cream/40 p-2.5">
                 <div className="flex items-center justify-between">
@@ -338,7 +338,7 @@ export function RecommendedToolsAndRubric() {
                 <div className="mt-1 font-display text-[0.84rem] font-bold text-cocoa leading-tight">
                   {r.title}
                 </div>
-                <p className="mt-1 text-[0.74rem] text-cocoa-2 line-clamp-3">
+                <p className="mt-1 text-[0.8rem] leading-snug text-cocoa-2">
                   {r.criteria}
                 </p>
               </div>

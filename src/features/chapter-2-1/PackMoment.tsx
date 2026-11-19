@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Suspense, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Stage3D } from "@/components/play/Stage3D";
 import { GameFrame, starsFor, type Feedback } from "@/components/play/GameFrame";
 import type { LabResult } from "@/components/learn/LearnLab";
@@ -293,27 +293,26 @@ export default function PackMoment({ onDone }: { onDone: (r: LabResult) => void 
   const moment = queue[qi];
   const levelStart = level * PER_LEVEL;
 
-  const patience = useCountdown(phase === "serve" && !!cust?.waiting && !flying, () => timeout());
+  // the countdown fires after render, so it calls whichever timeout handler the latest render produced
+  const onTimeout = useRef<() => void>(() => {});
+  const patience = useCountdown(phase === "serve" && !!cust?.waiting && !flying, () => onTimeout.current());
   const buildClock = useCountdown(phase === "build", () => {
     setPhase("lost");
     setFb({ tone: "bad", text: "The shelf-ready deadline passed. Grab the logo, the name, the real snack photo and one true claim faster; ignore the decoys." });
   });
-  // belt movement
-  const beltRaf = useRef(0);
+  // belt movement: runs only while the build level is on screen, and stops if the learner leaves the page
   const beltOn = phase === "build";
-  const startBelt = () => {
-    cancelAnimationFrame(beltRaf.current);
+  useEffect(() => {
+    if (!beltOn) return;
     const t0 = performance.now();
+    let id = 0;
     const tick = (t: number) => {
       setBeltT((t - t0) / 1000);
-      beltRaf.current = requestAnimationFrame(tick);
+      id = requestAnimationFrame(tick);
     };
-    beltRaf.current = requestAnimationFrame(tick);
-  };
-  if (!beltOn && beltRaf.current) {
-    cancelAnimationFrame(beltRaf.current);
-    beltRaf.current = 0;
-  }
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [beltOn]);
 
   const lose = (text: string) => {
     setPhase("lost");
@@ -392,7 +391,6 @@ export default function PackMoment({ onDone }: { onDone: (r: LabResult) => void 
           setCust(null);
           setPhase("build");
           buildClock.reset(50);
-          startBelt();
           setFb({ tone: "info", text: `Last level: put the front of a ${getProduct(p).name} pouch together so it sells at a glance. Tap a tile on the belt, then tap its place on the pouch. Some tiles are traps.` });
         }
         return;
@@ -411,6 +409,9 @@ export default function PackMoment({ onDone }: { onDone: (r: LabResult) => void 
     const ok = m.ok.map((id) => SHORT[id]).join(" or ");
     if (!miss("patience", `Too slow: the customer walked out. “${m.text}” needed ${ok}. ${m.why}`)) next(qi);
   };
+  useEffect(() => {
+    onTimeout.current = timeout;
+  });
 
   const onPack = (id: string) => {
     if (phase !== "serve" || !cust?.waiting || flying || busy.current) return;

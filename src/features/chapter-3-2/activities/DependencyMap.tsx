@@ -351,7 +351,7 @@ export default function DependencyMap({ onDone }: { onDone: (summary: string) =>
 
   const column = (kind: Kind, title: string) => (
     <div className="flex min-w-0 flex-col">
-      <div className="mb-2 text-center text-[0.68rem] font-extrabold uppercase tracking-[0.06em] text-cocoa-2 sm:text-[0.78rem] sm:tracking-[0.1em]">{title}</div>
+      <div className="mb-2 text-center text-[0.72rem] font-extrabold uppercase tracking-[0.04em] text-cocoa-2 sm:text-[0.78rem] sm:tracking-[0.1em]">{title}</div>
       <div className={`flex flex-1 flex-col gap-1.5 ${kind === "need" ? "" : "justify-around"}`}>
         {NODES.filter((n) => n.kind === kind).map((n) => (
           <motion.button
@@ -365,7 +365,7 @@ export default function DependencyMap({ onDone }: { onDone: (summary: string) =>
             transition={{ delay: (broken.get(n.id) ?? 0) * 0.25 }}
             className={nodeCls(n)}
           >
-            {n.kind === "need" && <span className={`mb-0.5 block text-[0.6rem] font-extrabold uppercase tracking-[0.08em] sm:text-[0.66rem] ${!wiring && S?.fail === n.id ? "text-white/80" : n.sub === "partner" ? "text-[#2E7D6B]" : "text-orange"}`}>{n.sub === "partner" ? "Key partner" : "Key resource"}</span>}
+            {n.kind === "need" && <span className={`mb-0.5 block text-[0.66rem] font-extrabold uppercase tracking-[0.06em] sm:text-[0.7rem] ${!wiring && S?.fail === n.id ? "text-white/80" : n.sub === "partner" ? "text-[#2E7D6B]" : "text-orange"}`}>{n.sub === "partner" ? "Key partner" : "Key resource"}</span>}
             {n.label}
           </motion.button>
         ))}

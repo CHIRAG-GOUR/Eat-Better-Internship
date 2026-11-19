@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "motion/react";
 import type { ReactNode } from "react";
+import { Zoomable } from "./Zoomable";
 
 /**
  * Equal-height media row: every item keeps its true aspect ratio and all items share one height
@@ -14,8 +15,10 @@ export type MediaItem =
   | { kind: "node"; ratio: number; node: ReactNode; caption?: string; framed?: boolean };
 
 export function MediaRow({ items, className = "" }: { items: MediaItem[]; className?: string }) {
+  // three or more near-square photos sit two to a row on phones instead of one tall stack
+  const pairOnPhone = items.length >= 3 && items.every((it) => it.kind === "image" && it.ratio >= 0.75 && it.ratio <= 1.35);
   return (
-    <div className={`flex flex-col gap-4 sm:flex-row sm:items-start ${className}`}>
+    <div className={`${pairOnPhone ? "grid grid-cols-2 gap-3" : "flex flex-col gap-4"} sm:flex sm:flex-row sm:items-start sm:gap-4 ${className}`}>
       {items.map((it, i) => (
         <motion.figure
           key={i}
@@ -23,13 +26,16 @@ export function MediaRow({ items, className = "" }: { items: MediaItem[]; classN
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-40px" }}
           transition={{ delay: i * 0.08, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          style={{ ["--r" as string]: it.ratio }}
-          className="min-w-0 sm:[flex:var(--r)_1_0%]"
+          style={{ ["--r" as string]: it.ratio, ["--pmax" as string]: `calc(64svh * ${it.ratio})` }}
+          // tall items (9:16 clips, phone screenshots) are capped to about two-thirds of a phone screen and centred
+          className={`min-w-0 sm:[flex:var(--r)_1_0%] ${it.ratio < 0.8 ? "max-sm:mx-auto max-sm:w-full max-sm:max-w-[var(--pmax)]" : ""}`}
         >
           {it.kind === "image" ? (
-            <div className="relative w-full overflow-hidden rounded-2xl border border-cocoa bg-cream shadow-[3px_3px_0_0_#2f1c1a]" style={{ aspectRatio: it.ratio }}>
-              <Image src={it.src} alt={it.alt} fill sizes="(max-width: 640px) 100vw, 60vw" className={it.fit === "contain" ? "object-contain" : "object-cover object-top"} />
-            </div>
+            <Zoomable src={it.src} alt={it.alt} ratio={it.ratio} className="w-full overflow-hidden rounded-2xl border border-cocoa bg-cream shadow-[3px_3px_0_0_#2f1c1a]">
+              <div className="relative w-full" style={{ aspectRatio: it.ratio }}>
+                <Image src={it.src} alt={it.alt} fill sizes="(max-width: 640px) 100vw, 60vw" className={it.fit === "contain" ? "object-contain" : "object-cover object-top"} />
+              </div>
+            </Zoomable>
           ) : it.framed === false ? (
             it.node
           ) : (

@@ -213,13 +213,16 @@ export function KMatrix() {
           </div>
           <div className="p-2 sm:p-4">
             <div role="table" aria-label="Competitive K-Matrix" className="grid grid-cols-[minmax(0,1.25fr)_repeat(4,minmax(0,1fr))] gap-1 sm:grid-cols-[minmax(0,2.1fr)_repeat(4,minmax(0,1fr))] sm:gap-1.5">
-              <div role="columnheader" className="p-1 text-[0.72rem] font-extrabold uppercase tracking-[0.08em] text-cocoa-2 sm:p-2">Capability parameter</div>
+              <div role="columnheader" className="self-end p-1 text-[0.72rem] font-extrabold text-cocoa-2 sm:p-2 sm:uppercase sm:tracking-[0.08em]">
+                <span className="sm:hidden">Parameter</span>
+                <span className="hidden sm:inline">Capability parameter</span>
+              </div>
               {K_PLAYERS.map((p) => (
                 <button
                   key={p.id}
                   role="columnheader"
                   onClick={() => setCol(col === p.id ? null : p.id)}
-                  className={`rounded-lg p-1 text-center text-[0.72rem] font-extrabold leading-tight sm:p-2 sm:text-[0.85rem] ${p.id === "eb" ? "bg-cocoa text-cream" : "bg-cream text-cocoa"} ${col === p.id ? "ring-2 ring-orange" : ""}`}
+                  className={`hyphens-auto rounded-lg p-1 text-center text-[0.72rem] font-extrabold leading-tight sm:p-2 sm:text-[0.85rem] ${p.id === "eb" ? "bg-cocoa text-cream" : "bg-cream text-cocoa"} ${col === p.id ? "ring-2 ring-orange" : ""}`}
                 >
                   <span className="sm:hidden">{p.short}</span>
                   <span className="hidden sm:inline">{p.name}</span>
@@ -290,12 +293,13 @@ export function KMatrix() {
 /* ── 3 · Six-brand comparison ────────────────────────────────── */
 
 const ROW_ICON: Record<(typeof BRAND_ROWS)[number]["key"], LucideIcon> = { hq: MapPin, category: Tags, positioning: Target, usp: Landmark, price: Scale, channels: Truck, edge: Swords };
-const CHANNEL_COLS: { label: string; match: RegExp }[] = [
-  { label: "Online", match: /online|d2c website/i },
-  { label: "Quick-commerce", match: /quick/i },
-  { label: "Corporate gifting", match: /corporate/i },
-  { label: "Modern retail", match: /modern retail/i },
-  { label: "Retail", match: /^retail$/i },
+// short labels fit the five narrow columns on a phone
+const CHANNEL_COLS: { label: string; short: string; match: RegExp }[] = [
+  { label: "Online", short: "Online", match: /online|d2c website/i },
+  { label: "Quick-commerce", short: "Q-comm", match: /quick/i },
+  { label: "Corporate gifting", short: "Gifting", match: /corporate/i },
+  { label: "Modern retail", short: "Modern retail", match: /modern retail/i },
+  { label: "Retail", short: "Retail", match: /^retail$/i },
 ];
 const PRICE_ZONES = ["Mid", "Mid to premium", "Premium"];
 
@@ -387,8 +391,9 @@ export function Brands() {
             <div className="mt-3 grid grid-cols-[minmax(0,1.3fr)_repeat(5,minmax(0,1fr))] gap-1 text-center">
               <div />
               {CHANNEL_COLS.map((c) => (
-                <div key={c.label} className="px-0.5 text-[0.66rem] font-extrabold uppercase leading-tight tracking-[0.02em] text-cocoa-2 sm:text-[0.72rem]">
-                  {c.label}
+                <div key={c.label} title={c.label} className="self-end px-0.5 text-[0.72rem] font-extrabold leading-tight text-cocoa-2 sm:uppercase sm:tracking-[0.02em]">
+                  <span className="sm:hidden">{c.short}</span>
+                  <span className="hidden sm:inline">{c.label}</span>
                 </div>
               ))}
               {BRANDS.map((b) => (
@@ -405,7 +410,7 @@ export function Brands() {
                 </div>
               ))}
             </div>
-            <p className="mt-2 text-[0.8rem] leading-snug text-cocoa-2">“Online” includes Eat Better&apos;s own D2C website and Nourish You&apos;s “mostly online”.</p>
+            <p className="mt-2 text-[0.8rem] leading-snug text-cocoa-2">“Online” includes Eat Better&apos;s own D2C website and Nourish You&apos;s “mostly online”.<span className="sm:hidden"> Q-comm means quick-commerce.</span></p>
           </div>
         </div>
         <PlainWords>
@@ -438,7 +443,7 @@ export function Edge() {
             const img = EDGE_IMG[b.id as Exclude<BrandId, "eb">];
             return (
               <motion.article key={b.id} initial={{ opacity: 0, y: 22 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className="flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
-                <div className="relative aspect-square bg-cream">
+                <div className="relative aspect-[4/3] bg-cream sm:aspect-square">
                   <Image src={img.src} alt={img.alt} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw" className="object-cover" />
                   <span className="absolute left-3 top-3 rounded-full border border-cocoa bg-cream px-2.5 py-1 text-[0.8rem] font-extrabold text-cocoa">vs {b.name}</span>
                 </div>

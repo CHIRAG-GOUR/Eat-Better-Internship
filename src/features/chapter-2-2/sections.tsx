@@ -432,7 +432,14 @@ export function Markets() {
           ))}
         </div>
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
-          <VideoBlock kind="file" h264="/chapter-2-4/video/shark-tank-deal.mp4" poster="/chapter-2-4/video/shark-tank-deal-poster.jpg" title="Eat Better Co on Shark Tank India S4 · Distribution & Traction" caption="Shark Tank India, Season 4 (Sony LIV) — Discussing quick-commerce scale and valuation." badge="Shark Tank India S4" />
+          <VideoBlock
+            kind="file"
+            h264="/chapter-2-2/video/marketplaces-quick-commerce.mp4"
+            poster="/chapter-2-2/video/marketplaces-quick-commerce-poster.jpg"
+            title="Eat Better Co on Shark Tank India S4 · Marketplaces & Quick Commerce"
+            caption="Shark Tank India, Season 4 (Sony LIV) — Discussing marketplace & quick-commerce channels (11:24 to 12:54)."
+            badge="Shark Tank India S4"
+          />
           <div className="space-y-4">
             <Example>{MARKETS.example}</Example>
             <Concept>{MARKETS.concept}</Concept>

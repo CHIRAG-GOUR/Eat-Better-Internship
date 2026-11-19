@@ -272,16 +272,17 @@ export function FlipCards({ cards, cols = 3 }: { cards: Flip[]; cols?: 2 | 3 | 4
   const [open, setOpen] = useState<Record<number, boolean>>({});
   const grid = cols === 4 ? "sm:grid-cols-2 lg:grid-cols-4" : cols === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2";
   return (
-    <div className={`grid grid-cols-1 gap-3 ${grid}`}>
+    // two per row on phones too: the fronts are an icon and a few words, the backs one short sentence
+    <div className={`grid grid-cols-2 gap-2.5 sm:gap-3 ${grid}`}>
       {cards.map((c, i) => {
         const on = !!open[i];
         const Icon = c.icon;
         return (
-          <button key={c.front} onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))} aria-pressed={on} className="group relative min-h-[170px] text-left [perspective:1000px]">
+          <button key={c.front} onClick={() => setOpen((o) => ({ ...o, [i]: !o[i] }))} aria-pressed={on} className="group relative min-h-[156px] text-left [perspective:1000px] sm:min-h-[170px]">
             <motion.span className="absolute inset-0 block [transform-style:preserve-3d]" animate={{ rotateY: on ? 180 : 0 }} transition={{ type: "spring", stiffness: 260, damping: 26 }}>
-              <span className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-2xl border border-cocoa bg-cream p-4 shadow-[2px_2px_0_0_#2f1c1a] [backface-visibility:hidden]">
+              <span className="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-2xl border border-cocoa bg-cream p-3 shadow-[2px_2px_0_0_#2f1c1a] [backface-visibility:hidden] sm:p-4">
                 {c.img ? (
-                  <span className="relative -m-4 mb-0 block h-24">
+                  <span className="relative -m-3 mb-0 block h-24 sm:-m-4 sm:mb-0">
                     <Image src={c.img} alt="" fill sizes="320px" className="object-cover" />
                   </span>
                 ) : (
@@ -291,12 +292,12 @@ export function FlipCards({ cards, cols = 3 }: { cards: Flip[]; cols?: 2 | 3 | 4
                     </span>
                   )
                 )}
-                <span className="mt-3 font-display text-[1.15rem] font-semibold leading-tight text-cocoa">{c.front}</span>
+                <span className="mt-3 font-display text-[1.02rem] font-semibold leading-tight text-cocoa sm:text-[1.15rem]">{c.front}</span>
                 <span className="mt-2 flex items-center gap-1 text-[0.82rem] font-bold text-orange">
                   <RotateCw className="size-3.5" /> Tap to flip
                 </span>
               </span>
-              <span className="absolute inset-0 flex items-center overflow-auto rounded-2xl border border-cocoa bg-cocoa p-4 text-[1rem] leading-relaxed text-cream [backface-visibility:hidden] [transform:rotateY(180deg)]">{c.back}</span>
+              <span className="absolute inset-0 flex items-center overflow-auto rounded-2xl border border-cocoa bg-cocoa p-3 text-[0.9rem] leading-snug text-cream [backface-visibility:hidden] [transform:rotateY(180deg)] sm:p-4 sm:text-[1rem] sm:leading-relaxed">{c.back}</span>
             </motion.span>
           </button>
         );

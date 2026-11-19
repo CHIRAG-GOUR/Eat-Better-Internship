@@ -410,7 +410,10 @@ export default function Activity1() {
               inspected={s.inspected}
               selected={stage === 1 ? sel : null}
               onJar={(id) => {
-                if (stage === 1) (s.inspect(id), setSel(id));
+                if (stage === 1) {
+                  s.inspect(id);
+                  setSel(id);
+                }
                 if (stage === 2) toggleIng(id);
               }}
               lots={sc.lots as Lot[]}

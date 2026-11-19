@@ -89,7 +89,7 @@ export function TaskBStorefrontHub() {
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                       sizes="(max-width: 640px) 100vw, 33vw"
                     />
-                    <div className="absolute left-2 top-2 rounded-md bg-cocoa/85 px-2 py-0.5 text-[0.68rem] font-bold text-cream backdrop-blur-xs">
+                    <div className="absolute left-2 top-2 rounded-md bg-cocoa/85 px-2 py-0.5 text-[0.72rem] font-bold text-cream backdrop-blur-xs">
                       {arch.badge}
                     </div>
                   </div>
@@ -98,7 +98,7 @@ export function TaskBStorefrontHub() {
                       <h4 className="font-display text-[0.92rem] font-bold leading-tight text-cocoa">
                         {arch.title}
                       </h4>
-                      <p className="mt-0.5 text-[0.76rem] text-cocoa-2 line-clamp-1">
+                      <p className="mt-0.5 text-[0.8rem] leading-snug text-cocoa-2">
                         {arch.tagline}
                       </p>
                     </div>
@@ -197,10 +197,10 @@ export function StorefrontPillars() {
                   : "border-cocoa/15 bg-white text-cocoa hover:border-cocoa/40 hover:bg-peach/20"
               }`}
             >
-              <span className={`text-[0.68rem] font-bold ${i === activePillarIndex ? "text-orange" : "text-cocoa/60"}`}>
+              <span className={`text-[0.72rem] font-bold ${i === activePillarIndex ? "text-orange" : "text-cocoa/60"}`}>
                 Pillar {p.number}
               </span>
-              <div className="mt-0.5 truncate font-display text-[0.85rem] font-bold">
+              <div className="mt-0.5 font-display text-[0.85rem] font-bold leading-tight">
                 {p.title}
               </div>
             </button>
@@ -309,7 +309,7 @@ export function RecommendedStorefrontToolsAndChecklist() {
         </SectionIntro>
 
         {/* Compact Tools Grid */}
-        <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           {RECOMMENDED_TOOLS_TASK_B.map((cat) => (
             <div
               key={cat.category}
@@ -320,7 +320,7 @@ export function RecommendedStorefrontToolsAndChecklist() {
                   <h4 className="font-display text-[0.92rem] font-bold text-cocoa">
                     {cat.category}
                   </h4>
-                  <span className="rounded-full bg-orange/15 px-2 py-0.5 text-[0.65rem] font-bold text-orange">
+                  <span className="rounded-full bg-orange/15 px-2 py-0.5 text-[0.72rem] font-bold text-orange">
                     {cat.badge}
                   </span>
                 </div>
@@ -333,16 +333,16 @@ export function RecommendedStorefrontToolsAndChecklist() {
                       <ToolIcon id={t.id} className="size-5.5 shrink-0 rounded-md" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between">
-                          <span className="truncate font-display text-[0.84rem] font-bold text-cocoa">
+                          <span className="min-w-0 truncate font-display text-[0.84rem] font-bold text-cocoa">
                             {t.name}
                           </span>
                           {t.badge && (
-                            <span className="shrink-0 rounded bg-haldi/40 px-1.5 py-0.2 text-[0.62rem] font-bold text-cocoa">
+                            <span className="shrink-0 rounded bg-haldi/40 px-1.5 py-0.5 text-[0.7rem] font-bold text-cocoa">
                               {t.badge}
                             </span>
                           )}
                         </div>
-                        <p className="truncate text-[0.72rem] text-cocoa-2">
+                        <p className="text-[0.8rem] leading-snug text-cocoa-2">
                           {t.description}
                         </p>
                       </div>
@@ -387,7 +387,7 @@ export function RecommendedStorefrontToolsAndChecklist() {
                   >
                     {isChecked && <CheckCircle2 className="size-3.5" />}
                   </span>
-                  <span className="truncate font-display text-[0.82rem] font-bold">
+                  <span className="font-display text-[0.86rem] font-bold leading-snug">
                     {item.label}
                   </span>
                 </button>
@@ -403,7 +403,7 @@ export function RecommendedStorefrontToolsAndChecklist() {
               <Award className="size-4" />
             </span>
             <div>
-              <div className="text-[0.68rem] font-bold uppercase tracking-wider text-orange">
+              <div className="text-[0.72rem] font-bold uppercase tracking-wider text-orange">
                 Virtual Internship Milestone
               </div>
               <h3 className="font-display text-[1rem] font-bold text-cream">

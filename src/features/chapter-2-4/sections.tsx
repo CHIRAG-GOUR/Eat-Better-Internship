@@ -9,7 +9,7 @@ import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
 import { GlossaryText } from "@/components/chapter/Glossary";
 import { VideoBlock } from "@/components/chapter/VideoBlock";
-import { IconFlow, StatBand } from "@/components/rich";
+import { IconFlow, StatBand, Zoomable } from "@/components/rich";
 import { LeafBulb } from "@/components/icons/EbIcons";
 import { createActivityStore } from "@/lib/activities";
 import { CORPORATE, FESTIVE, FUNDING, PITCH, PRESS, SHARK_TANK_VIDEO, TAKEAWAY } from "./content";
@@ -23,12 +23,19 @@ const sectionCls = "relative scroll-mt-6 px-3 py-6 sm:px-6 sm:py-10";
 /* ── shared pieces ────────────────────────────────────────────── */
 
 /** An image in a fixed-ratio frame with a caption — keeps every row aligned. */
+const ratioNum = (r: string) => {
+  const [w, h] = r.split("/").map(Number);
+  return h ? w / h : w || 1;
+};
+
 function Frame({ src, alt, caption, ratio, fit = "cover", sizes = "(max-width: 1024px) 100vw, 640px", tone = "light" }: { src: string; alt: string; caption: string; ratio: string; fit?: "cover" | "contain"; sizes?: string; tone?: "light" | "dark" }) {
   return (
     <motion.figure initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="flex h-full min-w-0 flex-col overflow-hidden rounded-[20px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
-      <div className={`relative w-full ${fit === "contain" ? "bg-cream" : ""}`} style={{ aspectRatio: ratio }}>
-        <Image src={src} alt={alt} fill sizes={sizes} className={fit === "contain" ? "object-contain" : "object-cover"} />
-      </div>
+      <Zoomable src={src} alt={alt} ratio={ratioNum(ratio)} className="w-full">
+        <div className={`relative w-full ${fit === "contain" ? "bg-cream" : ""}`} style={{ aspectRatio: ratio }}>
+          <Image src={src} alt={alt} fill sizes={sizes} className={fit === "contain" ? "object-contain" : "object-cover"} />
+        </div>
+      </Zoomable>
       <figcaption className={`mt-auto border-t border-cocoa/10 px-3.5 py-2 text-[0.88rem] ${tone === "dark" ? "bg-cocoa text-cream/80" : "bg-cream text-cocoa-2"}`}>{caption}</figcaption>
     </motion.figure>
   );

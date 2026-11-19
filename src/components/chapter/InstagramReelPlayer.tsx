@@ -139,7 +139,7 @@ export function InstagramReelPlayer({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className={`relative overflow-hidden rounded-[36px] border-[5px] border-[#221816] bg-black shadow-[6px_6px_0_0_#ff5c00,0_16px_40px_rgba(47,28,26,0.25)] select-none ${
-          fill ? "aspect-[9/16] w-full" : "mx-auto aspect-[9/16] w-full max-w-[340px]"
+          fill ? "aspect-[9/16] w-full" : "mx-auto aspect-[9/16] w-full max-w-[min(340px,36svh)] sm:max-w-[340px]"
         }`}
       >
         {/* Dynamic Notch & Speaker Slit */}

@@ -110,7 +110,7 @@ export function SeekBar({ video, label, variant = "bar", onInteract }: Props) {
       aria-valuemax={Math.round(duration)}
       aria-valuenow={Math.round(time)}
       aria-valuetext={`${formatTime(time)} of ${formatTime(duration)}`}
-      className={`group/seek relative w-full cursor-pointer touch-none outline-none select-none ${edge ? "pt-3" : "py-2"}`}
+      className={`group/seek relative w-full cursor-pointer touch-none outline-none select-none ${edge ? "pt-3 pointer-coarse:pt-4" : "py-2 pointer-coarse:py-3.5"}`}
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => {
         e.stopPropagation();

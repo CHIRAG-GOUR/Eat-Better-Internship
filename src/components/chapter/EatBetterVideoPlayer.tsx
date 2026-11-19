@@ -39,11 +39,11 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
   const [playbackRate, setPlaybackRate] = useState(1);
   const [feedback, setFeedback] = useState<"play" | "pause" | "back" | "fwd" | null>(null);
 
-  const flash = (f: NonNullable<typeof feedback>) => {
+  const flash = useCallback((f: NonNullable<typeof feedback>) => {
     setFeedback(f);
     if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
     feedbackTimer.current = setTimeout(() => setFeedback(null), 600);
-  };
+  }, []);
 
   const resetHideTimer = useCallback(() => {
     setShowControls(true);
@@ -75,7 +75,7 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
       flash("pause");
       setShowControls(true);
     }
-  }, [resetHideTimer]);
+  }, [flash, resetHideTimer]);
 
   const toggleMute = () => {
     const video = videoRef.current;
@@ -132,7 +132,6 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
   useEffect(() => {
     const v = videoRef.current;
     if (v && Number.isFinite(v.duration) && v.duration > 0) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync with the already-loaded element
       setDuration(v.duration);
       setCurrentTime(v.currentTime);
     }
@@ -168,7 +167,7 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
   const frameClass = portrait
     ? fill
       ? "aspect-[9/16] w-full"
-      : "mx-auto aspect-[9/16] max-h-[78vh] w-auto max-w-full"
+      : "mx-auto aspect-[9/16] max-h-[64svh] w-auto max-w-full sm:max-h-[78vh]"
     : "aspect-video w-full";
   const controlsVisible = showControls || !isPlaying;
   const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
@@ -331,7 +330,7 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
                   type="button"
                   onClick={toggleMute}
                   aria-label={isMuted ? "Unmute" : "Mute"}
-                  className="grid size-8 place-items-center rounded-lg bg-white/10 transition-colors hover:bg-white/20"
+                  className="grid size-8 place-items-center rounded-lg bg-white/10 transition-colors hover:bg-white/20 pointer-coarse:size-9"
                 >
                   <VolumeIcon className={`size-4 ${isMuted || volume === 0 ? "text-orange" : ""}`} />
                 </button>
@@ -359,7 +358,7 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
                 onClick={cyclePlaybackRate}
                 aria-label={`Playback speed ${playbackRate}x`}
                 title="Playback speed"
-                className={`rounded-lg border px-2 py-1 text-[0.75rem] font-bold transition-colors ${
+                className={`rounded-lg border px-2 py-1 text-[0.75rem] font-bold transition-colors pointer-coarse:min-h-9 pointer-coarse:min-w-10 pointer-coarse:text-[0.82rem] ${
                   playbackRate === 1 ? "border-white/20 bg-white/10 text-cream hover:bg-white/20" : "border-haldi bg-haldi text-cocoa"
                 }`}
               >
@@ -370,7 +369,7 @@ export function EatBetterVideoPlayer({ h264, av1, poster, title, caption, portra
                 onClick={toggleFullscreen}
                 aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
                 title="Fullscreen (F)"
-                className="grid size-8 place-items-center rounded-lg bg-white/10 transition-colors hover:bg-white/20"
+                className="grid size-8 place-items-center rounded-lg bg-white/10 transition-colors hover:bg-white/20 pointer-coarse:size-9"
               >
                 {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
               </button>

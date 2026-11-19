@@ -1,7 +1,6 @@
 "use client";
-/* eslint-disable react-hooks/immutability -- three.js objects are animated inside useFrame by design */
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import type { HumanLook } from "@/components/world2/Human";

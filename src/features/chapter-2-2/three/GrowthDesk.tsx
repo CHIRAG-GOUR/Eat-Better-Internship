@@ -755,7 +755,7 @@ export default function GrowthDesk({ onComplete }: { onComplete: () => void }) {
           <div className="pointer-events-none absolute inset-x-2 bottom-2 z-10 grid grid-cols-4 gap-1 sm:inset-x-3 sm:bottom-3 sm:gap-1.5">
             {coverage.map((c) => (
               <div key={c.id} className="rounded-lg bg-cream/90 px-1.5 py-1 sm:rounded-xl sm:px-2.5 sm:py-1.5">
-                <div className="truncate text-[0.68rem] font-extrabold uppercase tracking-[0.04em] text-cocoa-2 sm:text-[0.75rem]">
+                <div className="truncate text-[0.72rem] font-extrabold uppercase tracking-[0.02em] text-cocoa-2 sm:text-[0.75rem]">
                   <span className="sm:hidden">{c.short}</span>
                   <span className="hidden sm:inline">{c.label}</span>
                 </div>

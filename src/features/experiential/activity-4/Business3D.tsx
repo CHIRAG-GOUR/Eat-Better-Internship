@@ -821,7 +821,6 @@ function Mentor({ focus }: { focus: HQFocus }) {
     if (G.position.distanceTo(tgt) < 0.05) return;
     // walk along the aisle so the mentor never cuts through furniture
     path.current = [new THREE.Vector3(G.position.x, 0, AISLE), new THREE.Vector3(tgt.x, 0, AISLE), tgt];
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- start the walk animation when the mission changes
     setMoving(true);
   }, [spot]);
   useFrame((_, dt) => {

@@ -46,18 +46,19 @@ export function PriceTable() {
         </SectionIntro>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {SKUS.map((s, i) => (
-            <motion.article key={s.id} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: i * 0.07, duration: 0.5, ease: EASE }} className="flex min-w-0 flex-col overflow-hidden rounded-[22px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
-              <div className="relative aspect-square w-full bg-cream">
-                <Image src={s.img} alt={s.alt} fill sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 300px" className="object-cover" />
+            <motion.article key={s.id} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: i * 0.07, duration: 0.5, ease: EASE }} className="flex min-w-0 flex-row overflow-hidden rounded-[22px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a] sm:flex-col">
+              {/* phones: photo beside the numbers so all four packs fit on about one screen */}
+              <div className="relative aspect-square w-[40%] shrink-0 self-start bg-cream sm:w-full">
+                <Image src={s.img} alt={s.alt} fill sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 300px" className="object-cover" />
                 <span className="absolute left-2 top-2 rounded-full bg-cocoa px-2.5 py-0.5 text-[0.8rem] font-bold text-cream">{s.grams} g</span>
               </div>
-              <div className="flex flex-1 flex-col gap-2 p-4">
-                <h3 className="font-display text-[1.08rem] font-semibold leading-tight text-cocoa">
+              <div className="flex min-w-0 flex-1 flex-col gap-2 p-3 sm:p-4">
+                <h3 className="font-display text-[1.02rem] font-semibold leading-tight text-cocoa sm:text-[1.08rem]">
                   <GlossaryText>{s.name}</GlossaryText>
                 </h3>
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="text-[0.9rem] font-bold text-cocoa-2">Retail price</span>
-                  <span className="font-display text-[1.5rem] font-semibold text-cocoa">₹{s.price}</span>
+                  <span className="font-display text-[1.3rem] font-semibold text-cocoa sm:text-[1.5rem]">₹{s.price}</span>
                 </div>
                 <Bar pct={(s.pg / max) * 100} label={`~₹${s.pg.toFixed(2)}/g`} tone={s.pg === Math.min(...SKUS.map((k) => k.pg)) ? "success" : s.pg === max ? "cocoa" : "orange"} delay={0.2 + i * 0.07} />
               </div>
@@ -272,7 +273,14 @@ export function Financials() {
           <GlossaryText>{FIN.revenue}</GlossaryText>
         </p>
         <div className="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
-          <VideoBlock kind="file" h264="/chapter-2-4/video/shark-tank-deal.mp4" poster="/chapter-2-4/video/shark-tank-deal-poster.jpg" title="Eat Better Co on Shark Tank India S4 · Financial Metrics & Deal" caption="Shark Tank India, Season 4 (Sony LIV) — Unit economics and deal negotiation." badge="Shark Tank India S4" />
+          <VideoBlock
+            kind="file"
+            h264="/chapter-4-1/video/financial-performance.mp4"
+            poster="/chapter-4-1/video/financial-performance-poster.jpg"
+            title="Eat Better Co on Shark Tank India S4 · Financial Performance & Scale Trajectory"
+            caption="Shark Tank India, Season 4 (Sony LIV) — Financial performance, revenues & growth metrics (9:19 to 11:24)."
+            badge="Shark Tank India S4"
+          />
           <MediaRow
             items={[
               { kind: "image", src: `${LIB}/combos/ultimate-snack-box-claims.webp`, alt: "Ultimate Snack Box claims panel", ratio: 1, caption: `A quick-commerce style combo. ${OFFICIAL}` },

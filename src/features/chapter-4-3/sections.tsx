@@ -7,7 +7,7 @@ import { Check, Circle, Factory, Gift, Handshake, MapPin, PackagePlus, Rocket, S
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
 import { GlossaryText } from "@/components/chapter/Glossary";
-import { BizCanvas, IconFlow, MediaRow, StatBand } from "@/components/rich";
+import { BizCanvas, IconFlow, MediaRow, StatBand, Zoomable } from "@/components/rich";
 import { LeafBulb } from "@/components/icons/EbIcons";
 import { MyWork } from "@/components/play/GameFrame";
 import { createActivityStore } from "@/lib/activities";
@@ -73,12 +73,14 @@ export function Funding() {
 
 const P_ICON: Record<PillarId, LucideIcon> = { portfolio: PackagePlus, qcom: Zap, b2b: Gift, infra: Factory };
 
-function Photo({ src, alt, ratio, caption, sizes = "(max-width: 640px) 100vw, 40vw" }: { src: string; alt: string; ratio: number; caption?: string; sizes?: string }) {
+function Photo({ src, alt, ratio, caption, sizes = "(max-width: 640px) 100vw, 40vw", className = "" }: { src: string; alt: string; ratio: number; caption?: string; sizes?: string; className?: string }) {
   return (
-    <figure className="min-w-0">
-      <div className="relative w-full overflow-hidden rounded-2xl border border-cocoa bg-cream shadow-[3px_3px_0_0_#2f1c1a]" style={{ aspectRatio: ratio }}>
-        <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />
-      </div>
+    <figure className={`min-w-0 ${className}`}>
+      <Zoomable src={src} alt={alt} ratio={ratio} className="w-full overflow-hidden rounded-2xl border border-cocoa bg-cream shadow-[3px_3px_0_0_#2f1c1a]">
+        <div className="relative w-full" style={{ aspectRatio: ratio }}>
+          <Image src={src} alt={alt} fill sizes={sizes} className="object-cover" />
+        </div>
+      </Zoomable>
       {caption && <figcaption className="mt-1.5 text-[0.88rem] leading-snug text-cocoa-2">{caption}</figcaption>}
     </figure>
   );
@@ -158,10 +160,10 @@ export function Pillars() {
       </div>
       <div className="grid gap-8 sm:gap-10">
         <PillarShell p={p1} tone="light">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Photo src={`${LIB}/chips-puffs/protein-chips-pudina-punch-front.webp`} alt="Protein Chips Pudina Punch pack" ratio={1} caption="Protein Chips: high-protein base" />
-            <Photo src={`${LIB}/chips-puffs/ragi-chips-achari-masti-front.webp`} alt="Ragi Chips Achari Masti pack" ratio={1} caption="Ragi Chips: an ancient-grain base" />
-            <Photo src={`${LIB}/chips-puffs/chickpea-puffs-imli-twist-front.webp`} alt="Chickpea Puffs Imli Twist pack" ratio={1} caption="Chickpea Puffs: a savory launch" />
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            <Photo src={`${LIB}/chips-puffs/protein-chips-pudina-punch-front.webp`} alt="Protein Chips Pudina Punch pack" ratio={1} sizes="(max-width: 768px) 50vw, 33vw" caption="Protein Chips: high-protein base" />
+            <Photo src={`${LIB}/chips-puffs/ragi-chips-achari-masti-front.webp`} alt="Ragi Chips Achari Masti pack" ratio={1} sizes="(max-width: 768px) 50vw, 33vw" caption="Ragi Chips: an ancient-grain base" />
+            <Photo src={`${LIB}/chips-puffs/chickpea-puffs-imli-twist-front.webp`} alt="Chickpea Puffs Imli Twist pack" ratio={1} sizes="(max-width: 768px) 50vw, 33vw" caption="Chickpea Puffs: a savory launch" />
           </div>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <Photo src={`${LIB}/site/home-banner-protein-bhujia-launch.webp`} alt="Website banner announcing the Protein Bhujia launch" ratio={1100 / 397} caption={`New launch banner: Protein Bhujia. ${OFFICIAL}`} />
@@ -204,10 +206,10 @@ export function Pillars() {
               { value: 2, prefix: "~", suffix: " lakh", label: "fulfilled orders a month (Chapter 4.1)", icon: Truck },
             ]}
           />
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <Photo src={`${LIB}/site/kitchen-prepping-dates.webp`} alt="Dates being prepared in the kitchen" ratio={930 / 850} caption={`Prepping in the kitchen. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/site/story-honest-processes-line.webp`} alt="A production line worker in hairnet, mask and gloves" ratio={828 / 918} caption={`The production line. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/site/story-philosophy-trays.webp`} alt="Trays of freshly made snacks" ratio={1100 / 467} caption={`Trays at scale. ${OFFICIAL}`} />
+          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+            <Photo src={`${LIB}/site/kitchen-prepping-dates.webp`} alt="Dates being prepared in the kitchen" ratio={930 / 850} sizes="(max-width: 768px) 50vw, 33vw" caption={`Prepping in the kitchen. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/site/story-honest-processes-line.webp`} alt="A production line worker in hairnet, mask and gloves" ratio={828 / 918} sizes="(max-width: 768px) 50vw, 33vw" caption={`The production line. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/site/story-philosophy-trays.webp`} alt="Trays of freshly made snacks" ratio={1100 / 467} className="col-span-2 md:col-span-1" caption={`Trays at scale. ${OFFICIAL}`} />
           </div>
         </PillarShell>
       </div>
