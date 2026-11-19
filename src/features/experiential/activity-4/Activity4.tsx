@@ -304,7 +304,8 @@ export default function Activity4() {
         </ol>
       </header>
 
-      <div className="fixed inset-0 z-0">
+      {/* phones and tablets: the 3D scene gets its own box above the panel, so the whole scene is in view (also inside an LMS iframe of any height); desktop keeps the full-screen scene behind the panel */}
+      <div className="relative z-0 mx-3 mt-3 h-[clamp(280px,52svh,480px)] overflow-hidden rounded-[22px] border border-cocoa/15 shadow-[0_18px_40px_-28px_rgba(47,28,26,0.6)] sm:mx-4 lg:fixed lg:inset-0 lg:m-0 lg:h-auto lg:rounded-none lg:border-0 lg:shadow-none">
         {webgl ? (
           <HQ3D
             focus={focus}
@@ -330,7 +331,7 @@ export default function Activity4() {
       </div>
 
       <div className={`pointer-events-none relative z-10 mx-auto grid w-full max-w-[1600px] flex-1 gap-3 p-3 sm:p-4 ${stage === 6 ? "lg:grid-cols-[minmax(0,0.75fr)_minmax(600px,1.25fr)]" : "lg:grid-cols-[minmax(0,1.25fr)_minmax(400px,0.85fr)]"}`}>
-        <div className="h-[42vh] lg:h-auto" aria-hidden />
+        <div className="hidden lg:block" aria-hidden />
         <section className="pointer-events-auto min-w-0 self-start rounded-[24px] border border-cocoa/15 bg-white/95 p-4 shadow-[0_24px_60px_-30px_rgba(47,28,26,0.55)] backdrop-blur sm:p-5 lg:max-h-[calc(100dvh-130px)] lg:overflow-y-auto">
           {/* ── 0 welcome ── */}
           {stage === 0 && (

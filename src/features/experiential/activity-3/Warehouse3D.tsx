@@ -602,11 +602,17 @@ function Rig({ focus }: { focus: DCFocus }) {
   const { size } = useThree();
   useEffect(() => {
     const v = VIEWS[focus];
-    const portrait = size.width < size.height;
+    // tall phone shape → step back further; near-square box → close to the desktop framing
+    const aspect = size.width / Math.max(1, size.height);
+    const portrait = aspect < 1;
+    const tall = Math.min(1, Math.max(0, (1 - aspect) / 0.54));
+    const mix = (wide: number, phone: number) => wide + (phone - wide) * tall;
+    // only desktop lays the task panel over the scene's right side
+    const covered = typeof window !== "undefined" && window.innerWidth >= 1024;
     const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(portrait ? 1.5 : 1.1);
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(mix(1.1, 1.5));
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
-    const shift = portrait ? 0 : dir.length() * 0.26;
+    const shift = !covered || portrait ? 0 : dir.length() * 0.26;
     const p = look.clone().add(dir).addScaledVector(right, shift);
     const l = look.clone().addScaledVector(right, shift);
     ref.current?.setLookAt(p.x, p.y, p.z, l.x, l.y, l.z, true);
