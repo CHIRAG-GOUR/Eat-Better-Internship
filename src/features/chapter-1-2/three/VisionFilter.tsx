@@ -14,6 +14,7 @@ import { makeKatori } from "@/features/packaging/three/geometry";
 import { GlossaryText } from "@/components/chapter/Glossary";
 import { FILTER_DECISIONS } from "../content";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * The Vision Filter. The brand's vision is a brass chalni (sieve). For each decision the student
@@ -284,6 +285,7 @@ export default function VisionFilter({ onComplete }: { onComplete: () => void })
         {visible && (
           <Canvas shadows="percentage" dpr={[1, 1.5]} camera={{ position: [0.6, 4.4, 6.4], fov: 38 }} onCreated={({ camera }) => camera.lookAt(0.4, 1, 0)}>
             <AsyncCompile />
+            <FitFov design={2} />
             <color attach="background" args={["#FBE6D3"]} />
             <ClockSync clockStart={clockStart} />
             <Scene

@@ -14,6 +14,7 @@ import { Neighbourhood, type Pending } from "./Neighbourhood";
 import { COLUMNS, Wall } from "./Wall";
 import { InspectObject, OBJECT_FRAME } from "./objects";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 const KEY = "ebc-1.4-expedition";
 const ROW = Object.fromEntries(FIT_TABLE.map((r) => [r.id, r])) as Record<ProblemId, (typeof FIT_TABLE)[number]>;
@@ -41,6 +42,7 @@ function InspectViewer({ c, lite }: { c: Consumer; lite: boolean }) {
     <div className="relative h-48 overflow-hidden rounded-xl border border-cocoa/15 bg-gradient-to-b from-peach to-cream">
       <Canvas {...liteCanvasProps(lite)} shadows={false} camera={{ position: [f.dist * 0.75, f.y + f.dist * 0.45, f.dist * 0.75], fov: 40 }}>
         <AsyncCompile />
+        <FitFov design={2} />
         <hemisphereLight args={["#FFF4E6", "#7A5A3A", 1.2]} />
         <directionalLight position={[2, 4, 3]} intensity={1.6} />
         <InspectObject kind={c.object.kind} />
@@ -211,6 +213,7 @@ export default function Expedition({ onComplete }: { onComplete: () => void }) {
         {visible && (
           <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 8.5, 14.5], fov: 45 }} frameloop={inspect ? "never" : "always"} style={{ touchAction: "none" }}>
             <AsyncCompile />
+            <FitFov design={2} />
             {phase === "studio" ? (
               <Wall cards={collected} placed={s.placed} selected={selected} strongest={s.strongest} lite={lite} onPlace={(id, p) => setS((x) => ({ ...x, placed: { ...x.placed, [id]: p } }))} onSelect={setSelected} />
             ) : (

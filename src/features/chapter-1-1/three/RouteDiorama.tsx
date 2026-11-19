@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { ContactShadows, Environment, Lightformer } from "@react-three/drei";
 import { RoundedBox } from "@/components/three/RoundedBox";
 import { useReducedMotion } from "motion/react";
@@ -25,6 +25,37 @@ const ROUTES: Record<RouteId, V3[]> = {
   traditional: [KITCHEN, [-1.7, 0, -1.9], [1.7, 0, -1.9], [5.2, 0, -1.9]],
   d2c: [KITCHEN, [-1.7, 0, 1.9], [1.7, 0, 1.9], [5.2, 0, 1.9]],
 };
+/**
+ * Camera for the board. Wide boxes (tablet, desktop) keep the designed front view and widen the lens only as much as
+ * needed to keep the whole 2.4 : 1 board in view. Tall phone boxes look along the board from behind the kitchen
+ * instead, so the two roads run up the screen side by side (back road on the left, front road on the right) and the
+ * whole board fills the box at a readable size.
+ */
+function DioramaCam() {
+  const get = useThree((s) => s.get);
+  const width = useThree((s) => s.size.width);
+  const height = useThree((s) => s.size.height);
+  useLayoutEffect(() => {
+    const { camera, invalidate } = get();
+    if (!(camera instanceof THREE.PerspectiveCamera)) return;
+    const aspect = width / Math.max(1, height);
+    if (aspect < 1.1) {
+      camera.fov = 40;
+      camera.position.set(-13.4, 15.6, 0);
+      camera.lookAt(0.2, 0, 0);
+    } else {
+      const design = 2.4;
+      const half = Math.tan(THREE.MathUtils.degToRad(18)) * Math.max(1, design / aspect);
+      camera.fov = THREE.MathUtils.radToDeg(2 * Math.atan(half));
+      camera.position.set(0, 8.2, 8.8);
+      camera.lookAt(0, 0.2, 0.2);
+    }
+    camera.updateProjectionMatrix();
+    invalidate();
+  }, [get, width, height]);
+  return null;
+}
+
 const CYCLE = 15; // seconds — slow enough to read each caption
 
 /** Plain-language narration for every moment of the loop. */
@@ -345,7 +376,10 @@ function LabelProjector({ labels }: { labels: React.RefObject<Record<string, HTM
       if (!el) continue;
       v.set(a[0], a[1], a[2]).project(camera);
       // labels are plain DOM nodes outside React's control here (positioned every frame)
-      el.style.setProperty("transform", `translate(${((v.x + 1) / 2) * size.width}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -100%)`);
+      // keep the whole label inside the box: on narrow phones a label near the edge slides inwards instead of running off
+      const half = el.offsetWidth / 2 + 4;
+      const x = THREE.MathUtils.clamp(((v.x + 1) / 2) * size.width, half, Math.max(half, size.width - half));
+      el.style.setProperty("transform", `translate(${x}px, ${((1 - v.y) / 2) * size.height}px) translate(-50%, -100%)`);
     }
   });
   return null;
@@ -511,10 +545,11 @@ export default function RouteDiorama({ highlight }: { highlight: RouteId | null 
 
   return (
     <div ref={host} className="relative">
-      <div className="relative h-[380px] overflow-hidden rounded-[24px] border border-cocoa bg-[#FBE6D3] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[460px]">
+      <div className="relative h-[440px] overflow-hidden rounded-[24px] border border-cocoa bg-[#FBE6D3] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[460px]">
         {visible && (
-          <Canvas shadows="percentage" dpr={[1, 1.5]} camera={{ position: [0, 8.2, 8.8], fov: 36 }} onCreated={({ camera }) => camera.lookAt(0, 0.2, 0.2)}>
+          <Canvas shadows="percentage" dpr={[1, 1.5]} camera={{ position: [0, 8.2, 8.8], fov: 36 }}>
             <AsyncCompile />
+            <DioramaCam />
             <color attach="background" args={["#FBE6D3"]} />
             <Scene highlight={highlight} onPick={setPick} reduced={reduced} onPhase={setPhase} labels={labels} />
           </Canvas>
@@ -551,10 +586,14 @@ export default function RouteDiorama({ highlight }: { highlight: RouteId | null 
           </div>
         )}
         {/* road legends */}
-        <div className="pointer-events-none absolute left-3 top-3 flex flex-col gap-1.5">
+        <div className="pointer-events-none absolute left-3 top-3 hidden flex-col gap-1.5 sm:flex">
           <span className="rounded-lg bg-cocoa/85 px-2.5 py-1 text-[0.85rem] font-bold text-cream">Back road · {D2C.routes.traditional.label}</span>
           <span className="rounded-lg bg-orange px-2.5 py-1 text-[0.85rem] font-bold text-white">Front road · {D2C.routes.d2c.label}</span>
         </div>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1.5 sm:hidden">
+        <span className="rounded-lg bg-cocoa/85 px-2.5 py-1 text-[0.8rem] font-bold leading-snug text-cream">Back road (left) · {D2C.routes.traditional.label}</span>
+        <span className="rounded-lg bg-orange px-2.5 py-1 text-[0.8rem] font-bold leading-snug text-white">Front road (right) · {D2C.routes.d2c.label}</span>
       </div>
 
       {/* live narration — what is happening right now on each road */}

@@ -7,6 +7,7 @@ import { CameraControls, ContactShadows, Environment, Lightformer } from "@react
 import { RoundedBox } from "@/components/three/RoundedBox";
 import { SHELF, STORY, type ShelfItem } from "./data";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * The 3D Eat Better Brand Studio. Every object has a job:
@@ -1083,14 +1084,12 @@ function Rig({ focus, interactive }: { focus: Focus; interactive: boolean }) {
       pos = world(s, s.cam);
       look = world(s, s.look);
     }
-    // tall phone shape → step back further; near-square box → close to the desktop framing
+    // narrow screens keep the desktop distance; <FitFov /> widens the lens so the full desktop width stays in view
     const aspect = size.width / Math.max(1, size.height);
     const portrait = aspect < 1;
-    const tall = Math.min(1, Math.max(0, (1 - aspect) / 0.54));
-    const mix = (wide: number, phone: number) => wide + (phone - wide) * tall;
     // only desktop lays the task panel over the scene's right side
     const covered = typeof window !== "undefined" && window.innerWidth >= 1024;
-    const dir = pos.clone().sub(look).multiplyScalar(focus === "overview" ? mix(1, 1.35) : mix(1, 1.5));
+    const dir = pos.clone().sub(look).multiplyScalar(1);
     // wide screens: the panel covers the right side, so slide the camera right and the station sits left of centre
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
     const shift = !covered || portrait ? 0 : dir.length() * (focus === "overview" ? 0.2 : (ST[focus].shift ?? 0.3));
@@ -1154,6 +1153,7 @@ export default function Studio3D(p: StudioProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: OVERVIEW.pos.toArray(), fov: 42, near: 0.05, far: 60 }} gl={{ antialias: true, preserveDrawingBuffer: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
       <AsyncCompile />
+      <FitFov />
       <color attach="background" args={["#EFE6DC"]} />
       <fog attach="fog" args={["#EFE6DC", 14, 30]} />
       <hemisphereLight args={["#FFF6EA", "#A88A6C", 0.75]} />

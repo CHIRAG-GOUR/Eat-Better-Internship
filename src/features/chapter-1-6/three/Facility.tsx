@@ -11,6 +11,7 @@ import { BATCH_ID, ORDER, REVIEW_X, STATION_INFO, STATION_X, type StationId } fr
 import { mistakesAt, useFacility } from "./facility/store";
 import { SIM_NOTE, StationPanel, inspectContent } from "./facility/Panels";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * Chapter 1.6 — The Virtual Quality & Packaging Facility (3D process simulation).
@@ -93,6 +94,7 @@ export default function Facility({ three = true, onComplete }: { three?: boolean
         {visible && three && (
           <Canvas {...liteCanvasProps(lite)} camera={{ position: [STATION_X.sourcing - 2.8, 4.2, 9.4], fov: 45 }}>
             <AsyncCompile />
+            <FitFov design={2} />
             <FacilityScene lite={lite} walker={walker} walkTo={walkTo} onArrive={onArrive} />
           </Canvas>
         )}

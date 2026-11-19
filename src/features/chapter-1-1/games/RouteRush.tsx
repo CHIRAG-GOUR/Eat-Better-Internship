@@ -629,7 +629,7 @@ export default function RouteRush({ onWin }: { onWin: () => void }) {
         tip: "Ask what the parcel needs: to reach someone with no shop nearby, to bring feedback back, to keep the brand's own story? Or a shopper who is already at a shop?",
       }}
     >
-      <Stage3D
+      <Stage3D design={2.2}
         label="A delivery map: the Eat Better kitchen on one side, a shop road through a distributor and a shop, and a D2C road through the brand website and a delivery van to homes and a far city."
         camera={{ position: [0, 9, 9], fov: 40 }}
         height={compact ? "480px" : "clamp(400px, 62vh, 560px)"}

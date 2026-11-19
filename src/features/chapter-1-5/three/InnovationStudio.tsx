@@ -25,6 +25,7 @@ import {
 import { StudioScene } from "./studio/StudioScene";
 import type { PackArt } from "./studio/packArt";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * The Eat Better Product Innovation Studio — role: Junior Product Developer.
@@ -286,6 +287,7 @@ export default function InnovationStudio({ onComplete, three = true }: { onCompl
           {visible && three && (
             <Canvas {...liteCanvasProps(lite)} gl={{ ...liteCanvasProps(lite).gl, preserveDrawingBuffer: true }} camera={{ position: [3, 5, 13], fov: 40 }}>
               <AsyncCompile />
+              <FitFov design={2} />
               <StudioScene
                 step={s.step}
                 focusZone={focusZone}

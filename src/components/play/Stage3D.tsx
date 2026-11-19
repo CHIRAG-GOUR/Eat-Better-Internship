@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useMediaQuery } from "@/lib/useClient";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * A 3D play area for activities (Module 4+). The WebGL canvas only exists while the stage is on screen, so a page
@@ -17,6 +18,7 @@ export function Stage3D({
   camera = { position: [0, 2.4, 6], fov: 42 },
   label,
   background = "linear-gradient(180deg,#FFF5EE 0%,#F6E3CF 100%)",
+  design,
 }: {
   children: ReactNode;
   overlay?: ReactNode;
@@ -25,6 +27,9 @@ export function Stage3D({
   /** what the scene shows, for screen readers */
   label: string;
   background?: string;
+  /** for games with a fixed camera: the stage shape the scene was framed for on desktop. Narrower stages (phones)
+   *  widen the lens so that whole width stays in view. Games that frame themselves with FitCam leave it out. */
+  design?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -43,6 +48,7 @@ export function Stage3D({
       {visible ? (
         <Canvas dpr={[1, compact ? 1.25 : 1.75]} shadows={!compact} camera={camera} gl={{ antialias: !compact, powerPreference: "high-performance" }} style={{ touchAction: "pan-y" }}>
           <AsyncCompile />
+          {design && <FitFov design={design} />}
           {children}
         </Canvas>
       ) : (

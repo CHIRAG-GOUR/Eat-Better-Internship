@@ -13,6 +13,7 @@ import { Person, still, type Pose } from "@/components/sim/Person";
 import { COLOUR_NOTE, HOTSPOTS, LAB_COLOURS, PERCEPTIONS, SHOPPERS, TONE_LINES } from "../content";
 import { useBrand21 } from "../store";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 const LAB_ORDER: [string, string][] = [["21-pack", "Match the pack to the moment"]];
 
@@ -287,14 +288,14 @@ function Shelf() {
 }
 
 function Rig({ x, far = false }: { x: number; far?: boolean }) {
-  const { camera, size } = useThree();
+  const { camera } = useThree();
   const look = useMemo(() => new THREE.Vector3(), []);
   const cur = useRef(x);
   useFrame((_, dt) => {
     cur.current = THREE.MathUtils.damp(cur.current, x, 3.5, dt);
-    const narrow = size.width / Math.max(1, size.height) < 1;
-    camera.position.set(cur.current, narrow ? 1.7 : 1.55, (narrow ? 5.6 : 4.3) + (far ? 1.6 : 0));
-    look.set(cur.current, narrow ? 1.05 : 1.0, 0);
+    // one framing for every screen; <FitFov design={2} /> keeps the full width in view on narrow ones
+    camera.position.set(cur.current, 1.55, 4.3 + (far ? 1.6 : 0));
+    look.set(cur.current, 1.0, 0);
     camera.lookAt(look);
   });
   return null;
@@ -474,6 +475,7 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
           {visible && (
             <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 1.6, 4.3], fov: 40 }}>
               <AsyncCompile />
+              <FitFov design={2} />
               <Rig x={STATION_X[step]} far={step === 3} />
               <Studio
                 s={s}

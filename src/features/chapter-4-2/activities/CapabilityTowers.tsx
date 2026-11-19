@@ -336,7 +336,7 @@ export default function CapabilityTowers({ onDone }: { onDone: (summary: string)
         </div>
       )}
 
-      <Stage3D
+      <Stage3D design={2.2}
         label="A board of pillars: six capability rows by four players. Pillar height shows Low, Medium or High."
         camera={{ position: [0, 6, 6], fov: 40 }}
         height={compact ? "420px" : "clamp(380px, 60vh, 540px)"}

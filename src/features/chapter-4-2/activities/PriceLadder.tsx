@@ -307,7 +307,7 @@ export default function PriceLadder({ onDone }: { onDone: (summary: string) => v
       feedback={feedback}
       note={{ real: "Price bands are the chapter's market table (how this chapter compares them). The four SKUs, prices and weights are Chapter 4.1's pricing table.", practice: "Which comparisons you are asked is drawn at random on every restart.", tip: "Price per gram = price ÷ grams. “How many times” = bigger ÷ smaller." }}
     >
-      <Stage3D
+      <Stage3D design={2.2}
         label="A vertical ruler from zero to two rupees per gram, with price bands for each kind of snack seller and Eat Better boxes placed at their price per gram."
         camera={{ position: [0, 2, 9], fov: 40 }}
         height={compact ? "460px" : "clamp(420px, 64vh, 580px)"}

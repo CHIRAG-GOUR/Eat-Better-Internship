@@ -28,6 +28,7 @@ import { LiteToggle, ObjectiveTracker, RoleBadge, SimReport, liteCanvasProps, us
 import { OFFERS } from "../content";
 import { usePractice22 } from "../practice";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * D2C Growth Desk — the student plays a Junior Digital Marketer running a FICTIONAL two-week launch of a
@@ -603,11 +604,11 @@ function Basket({ packs, margin }: { packs: number; margin: number }) {
 }
 
 function Rig({ lite }: { lite: boolean }) {
-  const { camera, size } = useThree();
+  const { camera } = useThree();
   const look = useMemo(() => new THREE.Vector3(0, 1.2, 0), []);
   useFrame(({ clock }) => {
-    const aspect = size.width / Math.max(1, size.height);
-    const dist = aspect < 1 ? 11 : aspect < 1.3 ? 9.2 : 7.8;
+    // one distance for every screen; <FitFov design={2} /> keeps the full width in view on narrow ones
+    const dist = 7.8;
     const sway = lite ? 0 : Math.sin(clock.elapsedTime * 0.2) * 0.4;
     camera.position.set(sway, 3.4 + dist * 0.08, dist);
     camera.lookAt(look);
@@ -742,6 +743,7 @@ export default function GrowthDesk({ onComplete }: { onComplete: () => void }) {
           {visible && (
             <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 3.5, 8], fov: 40 }}>
               <AsyncCompile />
+              <FitFov design={2} />
               <Scene chosen={chosen} toggle={toggle} step={step} review={review} reply={reply} packs={o.packs} margin={result ? result.margin : o.margin} result={result} lite={lite} />
             </Canvas>
           )}

@@ -8,6 +8,7 @@ import { RoundedBox } from "@/components/three/RoundedBox";
 import { Human, type HumanLook } from "@/components/world2/Human";
 import { CHANNELS, CH_IDS, SKUS, type ChId } from "./data";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * The 3D Eat Better distribution centre: receiving bay with stretch-wrapped inbound pallets and a scanning desk,
@@ -602,15 +603,13 @@ function Rig({ focus }: { focus: DCFocus }) {
   const { size } = useThree();
   useEffect(() => {
     const v = VIEWS[focus];
-    // tall phone shape → step back further; near-square box → close to the desktop framing
+    // narrow screens keep the desktop distance; <FitFov /> widens the lens so the full desktop width stays in view
     const aspect = size.width / Math.max(1, size.height);
     const portrait = aspect < 1;
-    const tall = Math.min(1, Math.max(0, (1 - aspect) / 0.54));
-    const mix = (wide: number, phone: number) => wide + (phone - wide) * tall;
     // only desktop lays the task panel over the scene's right side
     const covered = typeof window !== "undefined" && window.innerWidth >= 1024;
     const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(mix(1.1, 1.5));
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(1.1);
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
     const shift = !covered || portrait ? 0 : dir.length() * 0.26;
     const p = look.clone().add(dir).addScaledVector(right, shift);
@@ -638,6 +637,7 @@ export default function Warehouse3D(p: WarehouseProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
       <AsyncCompile />
+      <FitFov />
       <color attach="background" args={["#E9E6E1"]} />
       <fog attach="fog" args={["#E9E6E1", 24, 46]} />
       <hemisphereLight args={["#FFFFFF", "#8C8478", 1.0]} />

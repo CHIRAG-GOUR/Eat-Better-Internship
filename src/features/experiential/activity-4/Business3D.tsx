@@ -7,6 +7,7 @@ import { CameraControls } from "@react-three/drei";
 import { RoundedBox } from "@/components/three/RoundedBox";
 import { Human, type HumanLook, type HumanMode } from "@/components/world2/Human";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 import { COINS, DEPTS, FACILITY_CAP, KMATRIX, K_PLAYERS, LEVEL_IDX, ORDERS_NOW, PLAYER_COLORS, SKUS, bagOutcome, plNext, ppg, type DeptId, type Level, type Levers } from "./data";
 import { Desk, OfficeChair, PendantLamp, Plant, Room, mat } from "./Office3D";
 
@@ -889,15 +890,13 @@ function Rig({ focus }: { focus: HQFocus }) {
   const { size } = useThree();
   useEffect(() => {
     const v = VIEWS[focus];
-    // tall phone shape → step back further; near-square box → close to the desktop framing
+    // narrow screens keep the desktop distance; <FitFov /> widens the lens so the full desktop width stays in view
     const aspect = size.width / Math.max(1, size.height);
     const portrait = aspect < 1;
-    const tall = Math.min(1, Math.max(0, (1 - aspect) / 0.54));
-    const mix = (wide: number, phone: number) => wide + (phone - wide) * tall;
     // only desktop lays the task panel over the scene's right side
     const covered = typeof window !== "undefined" && window.innerWidth >= 1024;
     const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(mix(1.05, 1.55));
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(1.05);
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
     // on wide screens the task panel covers the right side, so the scene's subject sits left of centre
     const shift = !covered || portrait ? 0 : dir.length() * (focus === "overview" ? 0.18 : 0.27);
@@ -931,6 +930,7 @@ export default function HQ3D(p: HQProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
       <AsyncCompile />
+      <FitFov />
       <color attach="background" args={["#EFE6DA"]} />
       <fog attach="fog" args={["#EFE6DA", 30, 60]} />
       <hemisphereLight args={["#FFF6EA", "#B9A08A", 0.95]} />

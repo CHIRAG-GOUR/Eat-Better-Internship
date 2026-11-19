@@ -80,14 +80,13 @@ const TALL: Layout = {
 };
 
 function Rig({ layout }: { layout: Layout }) {
-  const { camera, size } = useThree();
+  const { camera } = useThree();
+  // one camera position for every screen; the stage's lens fit keeps all four shelves in view on narrow ones
   useEffect(() => {
-    const aspect = size.width / size.height;
-    const k = aspect < 1 ? 1 + (1 - aspect) * 0.55 : aspect < 1.6 ? 1.12 : 1;
-    camera.position.set(layout.cam[0] * k, layout.cam[1] * k, layout.cam[2] * k);
+    camera.position.set(...layout.cam);
     camera.lookAt(...layout.look);
     camera.updateProjectionMatrix();
-  }, [camera, size, layout]);
+  }, [camera, layout]);
   return null;
 }
 
@@ -328,7 +327,7 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
       feedback={feedback}
       note={{ real: "Every rating on the shelf cards is the chapter's K-Matrix (how this chapter compares the four kinds of seller).", practice: "The shoppers and their weights are made up and change on every restart.", tip: "Multiply first, add second. Only the shopper's three rows count." }}
     >
-      <Stage3D
+      <Stage3D design={2.2}
         label="A shop aisle with four shelves: Eat Better Co, traditional snack brands, gourmet health competitors and a local sweet outlet. A shopper stands in the middle."
         camera={{ position: layout.cam, fov: 42 }}
         height={compact ? "430px" : "clamp(380px, 60vh, 540px)"}

@@ -11,6 +11,7 @@ import { INGREDIENTS, ING } from "./data";
 import { IngredientIcon } from "./IngredientIcon";
 import { ForeignItem, IngredientPieces, OnePiece } from "./Pieces3D";
 import { AsyncCompile } from "@/components/three/AsyncCompile";
+import { FitFov } from "@/components/three/FitFov";
 
 /**
  * The 3D Product Innovation Lab: an ingredient wall (13 jars), a formulation bench with a mixing bowl, and six
@@ -682,15 +683,13 @@ function Rig({ focus, interactive }: { focus: Focus; interactive: boolean }) {
   const { size } = useThree();
   useEffect(() => {
     const v = VIEWS[focus];
-    // tall phone shape → step back further; near-square box → close to the desktop framing
+    // narrow screens keep the desktop distance; <FitFov /> widens the lens so the full desktop width stays in view
     const aspect = size.width / Math.max(1, size.height);
     const portrait = aspect < 1;
-    const tall = Math.min(1, Math.max(0, (1 - aspect) / 0.54));
-    const mix = (wide: number, phone: number) => wide + (phone - wide) * tall;
     // only desktop lays the task panel over the scene's right side
     const covered = typeof window !== "undefined" && window.innerWidth >= 1024;
     const look = new THREE.Vector3(...v.look);
-    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(focus === "shelf" ? mix(1, 1.9) : mix(1.15, 1.35)); // step back a little
+    const dir = new THREE.Vector3(...v.pos).sub(look).multiplyScalar(focus === "shelf" ? 1 : 1.15); // step back a little
     // wide screens: the panel covers the right side, so slide the camera right and the station sits left of centre
     const right = new THREE.Vector3().crossVectors(dir.clone().negate(), new THREE.Vector3(0, 1, 0)).normalize();
     const shift = !covered || portrait || focus === "overview" ? 0 : dir.length() * 0.28;
@@ -732,6 +731,7 @@ export default function Lab3D(p: LabProps) {
   return (
     <Canvas shadows dpr={[1, 1.6]} camera={{ position: VIEWS.overview.pos, fov: 45 }} gl={{ antialias: true, preserveDrawingBuffer: true }} onPointerMissed={() => (document.body.style.cursor = "")}>
       <AsyncCompile />
+      <FitFov />
       <color attach="background" args={["#F3ECE3"]} />
       <fog attach="fog" args={["#F3ECE3", 18, 34]} />
       <hemisphereLight args={["#FFF6EA", "#B9A08A", 0.9]} />
