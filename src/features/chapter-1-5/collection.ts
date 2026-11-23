@@ -1,0 +1,60 @@
+/**
+ * The official All Products collection on eatbetterco.com (captured November 2026): product names and photos
+ * as listed on the website. Prices are left out because the shop's sale prices change often.
+ */
+export type ShopCategory = "laddoos" | "namkeen" | "nuts" | "combos" | "gifts";
+
+export const SHOP_CATEGORIES: { id: ShopCategory; label: string }[] = [
+  { id: "laddoos", label: "Sweets & laddoos" },
+  { id: "namkeen", label: "Namkeen & chips" },
+  { id: "nuts", label: "Nut mixes" },
+  { id: "combos", label: "Combos" },
+  { id: "gifts", label: "Gift hampers & sets" },
+];
+
+export const SHOP_PRODUCTS: { slug: string; name: string; cat: ShopCategory }[] = [
+  { slug: "assorted-laddoo-box-24-laddoos-in-6-different-flavors", name: "Assorted Laddoo Box - 24 Laddoos in 6 Different Flavors", cat: "laddoos" },
+  { slug: "assorted-laddoo-box", name: "Assorted Laddoo Box - 42 Dry-Fruit Laddoos in 6 Delicious Flavors", cat: "laddoos" },
+  { slug: "chocolate-fudge-protein-laddoos", name: "Chocolate Fudge - Protein Laddoos", cat: "laddoos" },
+  { slug: "coffee-almond-laddoo", name: "Coffee Almond Laddoo", cat: "laddoos" },
+  { slug: "coffee-almond-laddoos-value-pack", name: "Coffee Almond Laddoos - Value Pack", cat: "laddoos" },
+  { slug: "coffee-chocolate-protein-laddoos-migrated", name: "Coffee Chocolate - Protein Laddoos", cat: "laddoos" },
+  { slug: "hazelnut-chocolate-laddoos", name: "Hazelnut Chocolate Laddoos", cat: "laddoos" },
+  { slug: "hazelnut-chocolate-laddoos-value-pack", name: "Hazelnut Chocolate Laddoos - Value Pack", cat: "laddoos" },
+  { slug: "orange-chocolate-laddoos", name: "Orange Chocolate Laddoos", cat: "laddoos" },
+  { slug: "orange-chocolate-laddoos-value-pack", name: "Orange Chocolate Laddoos - Value Pack", cat: "laddoos" },
+  { slug: "peanut-cranberry-protein-laddoos", name: "Orange Cranberry - Protein Laddoos", cat: "laddoos" },
+  { slug: "orange-ginger-laddoos-no-added-sugar-dates-dry-fruits-nuts-laddoo", name: "Orange Ginger Laddoos", cat: "laddoos" },
+  { slug: "orange-ginger-laddoos-value-pack", name: "Orange Ginger Laddoos - Value Pack", cat: "laddoos" },
+  { slug: "peanut-chocolate-laddoos", name: "Peanut Chocolate Laddoos", cat: "laddoos" },
+  { slug: "better-laddoos-peanut-chocolate-100g-1", name: "Peanut Chocolate Laddoos - Value Pack", cat: "laddoos" },
+  { slug: "chickpea-puffs-imly-twist", name: "Chickpea Puffs - Imli Twist", cat: "namkeen" },
+  { slug: "chickpea-puffs-lime-sriracha", name: "Chickpea Puffs - Lime Sriracha", cat: "namkeen" },
+  { slug: "millet-bhel-bombay-bundle", name: "Millet Bhel - Bombay Bhelpuri", cat: "namkeen" },
+  { slug: "millet-bhel-kolkata-bundle", name: "Millet Bhel - Kolkata Jhalmuri", cat: "namkeen" },
+  { slug: "millet-bhujia-pudina-masti-bundle", name: "Millet Bhujia - Pudina Masti", cat: "namkeen" },
+  { slug: "crispy-millet-mixture-healthy-namkeen-1", name: "Millet Namkeen - Desi Masala", cat: "namkeen" },
+  { slug: "crispy-millet-mixture-achaari-mango-healthy-namkeen-1", name: "Millet Namkeen - Mango Achaari", cat: "namkeen" },
+  { slug: "millet-namkeen-pudina-punch-pack-of-2-200-grams-1", name: "Millet Namkeen - Pudina Punch", cat: "namkeen" },
+  { slug: "protien-bhujia-chilli-lime", name: "Protein Bhujia - Chilli Lime", cat: "namkeen" },
+  { slug: "protien-chips-pizza-party", name: "Protein Chips - Pizza Party", cat: "namkeen" },
+  { slug: "protein-chips-pudina-punch", name: "Protein Chips - Pudina Punch", cat: "namkeen" },
+  { slug: "quinoa-chilli-lime-healthy-namkeen", name: "Quinoa Namkeen - Chilli Lime", cat: "namkeen" },
+  { slug: "ragi-chips-achari-masti-roasted-no-palm-oil-bundle", name: "Ragi Chips - Achari Masti", cat: "namkeen" },
+  { slug: "ragi-chips-thai-chilli-tadka-roasted-no-palm-oil-bundle", name: "Ragi Chips - Thai Chilli Tadka", cat: "namkeen" },
+  { slug: "better-trail-mix-100g", name: "Better Trail Mix - Nuts, Seeds, & Raisins", cat: "nuts" },
+  { slug: "chatpata-cranberry-desi-masala-1", name: "Masala Cranberry - Desi Masala", cat: "nuts" },
+  { slug: "premium-nut-mix-100g", name: "Premium Nut Mix - Jumbo Nuts & Raisins", cat: "nuts" },
+  { slug: "assorted-namkeen-combo", name: "Assorted Namkeen Combo of 4", cat: "combos" },
+  { slug: "assorted-laddoo-box-round-tin", name: "Assorted Dry-Fruit Chocolate Laddoos in Round Tin Box - Diwali Gift Hamper", cat: "gifts" },
+  { slug: "dhoom-gift-hamper", name: "Dhoom Diwali Gift Hamper", cat: "gifts" },
+  { slug: "diwali-in-a-box-hamper-orange", name: "Diwali Jumbo Diwali Gift Hamper", cat: "gifts" },
+  { slug: "nazar-tray-hamper", name: "Evil-Eye Diwali Gift Hamper in Jute Tray", cat: "gifts" },
+  { slug: "gajraj-gift-hamper", name: "Gajraj Diwali Gift Hamper", cat: "gifts" },
+  { slug: "happy-diwali-hamper", name: "Happy Diwali Hamper", cat: "gifts" },
+  { slug: "laxmi-gift-hamper", name: "Laxmi Diwali Gift Hamper", cat: "gifts" },
+  { slug: "marigold-hamper-jar-edition", name: "Marigold Diwali Gift Hamper", cat: "gifts" },
+  { slug: "marigold-gift-hamper", name: "Marigold Hexagon Diwali Gift Hamper", cat: "gifts" },
+  { slug: "the-new-mom-survival-kit", name: "New Mom Congratulations Kit", cat: "gifts" },
+  { slug: "pichwai-art-tray", name: "Pichwai Diwali Gift Hamper", cat: "gifts" },
+];

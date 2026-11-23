@@ -358,7 +358,7 @@ export function Compliance() {
             h264="/chapter-1-6/video/quality-packaging.mp4"
             poster="/chapter-1-6/video/quality-packaging-poster.jpg"
             title={VIDEO.title}
-            caption="Shark Tank India, Season 4 (Sony LIV) — Sharks interrogate product quality, clean-label claims & packaging (5:32 to 9:19)."
+            caption="Shark Tank India, Season 4 (Sony LIV) — Sharks interrogate product quality, clean-label claims & packaging."
             badge="Shark Tank India S4"
           />
           <div className="rounded-[22px] bg-cream/10 p-5 text-cream">

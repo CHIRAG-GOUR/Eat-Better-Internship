@@ -188,22 +188,3 @@ export const BRAND_CLAIMS = ["No palm oil", "No refined sugar", "No bad fats"];
 /* Key takeaway */
 export const TAKEAWAY =
   "Eat Better started as a family kitchen and became a national brand by selling online, which is why we call it an internet-first brand.";
-
-/* Think & Discuss */
-export const THINK = {
-  q1: "Why would a food brand choose to start online instead of in shops?",
-  q2: "Which of Eat Better's categories would you buy online, and which from a local shop? Why?",
-  /** Reasons students can weigh for Q1. The first three restate the chapter; the rest are general considerations. */
-  q1Reasons: [
-    { id: "feedback", text: "It can hear directly from customers and learn from their feedback.", fromChapter: true },
-    { id: "reach", text: "One kitchen can reach customers across India.", fromChapter: true },
-    { id: "control", text: "It controls its own pricing, packaging and brand story.", fromChapter: true },
-    { id: "nostock", text: "It doesn't need shops to agree to stock it before it can start selling.", fromChapter: false },
-    { id: "trust", text: "But: some shoppers like to see a product in person before trying a new brand.", fromChapter: false },
-    { id: "delivery", text: "But: every order has to be packed and delivered safely to the customer.", fromChapter: false },
-  ],
-  q2Reasons: {
-    online: ["More flavours to choose from", "Can be sent to someone far away", "I plan ahead / buy in bulk", "I can read about the product first"],
-    shop: ["I want it right now", "I like to see it before I buy", "A quick everyday snack", "I don't want to wait for delivery"],
-  },
-};

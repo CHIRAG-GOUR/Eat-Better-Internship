@@ -14,7 +14,6 @@ import { StoryVideo } from "./sections/StoryVideo";
 import { D2CJourney } from "./sections/D2CJourney";
 import { Products } from "./sections/Products";
 import { Takeaway } from "./sections/Takeaway";
-import { ThinkDiscuss } from "./sections/ThinkDiscuss";
 import { Conclusion } from "./sections/Conclusion";
 
 const SECTIONS: ProgressSection[] = [
@@ -25,7 +24,6 @@ const SECTIONS: ProgressSection[] = [
   { id: "d2c", label: "The internet-first (D2C) model" },
   { id: "products", label: "What Eat Better makes" },
   { id: "takeaway", label: "Key takeaway" },
-  { id: "think", label: "Think & Discuss" },
   { id: "wrap-up", label: "Wrap-up" },
 ];
 
@@ -48,7 +46,6 @@ export default function Chapter() {
         <D2CJourney />
         <Products focus={null} />
         <Takeaway />
-        <ThinkDiscuss />
         <Conclusion />
       </main>
       </GlossaryProvider>

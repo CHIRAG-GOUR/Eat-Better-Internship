@@ -1,6 +1,7 @@
 "use client";
+/* eslint-disable react-hooks/immutability -- Three.js objects/sim state are mutated in useFrame by design */
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { RoundedBox } from "@/components/three/RoundedBox";

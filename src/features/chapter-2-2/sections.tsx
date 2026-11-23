@@ -437,7 +437,7 @@ export function Markets() {
             h264="/chapter-2-2/video/marketplaces-quick-commerce.mp4"
             poster="/chapter-2-2/video/marketplaces-quick-commerce-poster.jpg"
             title="Eat Better Co on Shark Tank India S4 · Marketplaces & Quick Commerce"
-            caption="Shark Tank India, Season 4 (Sony LIV) — Discussing marketplace & quick-commerce channels (11:24 to 12:54)."
+            caption="Shark Tank India, Season 4 (Sony LIV) — Discussing marketplace & quick-commerce channels."
             badge="Shark Tank India S4"
           />
           <div className="space-y-4">

@@ -42,7 +42,6 @@ const ACTIVITIES: { id: ActivityId; label: string }[] = [
   { id: "keepChange", label: "Keep or change?" },
   { id: "routes", label: "Decision lab — three D2C advantages" },
   { id: "shelf", label: "Stock the shelves" },
-  { id: "reflect", label: "Think & Discuss" },
 ];
 
 export function Conclusion() {

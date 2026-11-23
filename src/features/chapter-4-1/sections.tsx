@@ -278,7 +278,7 @@ export function Financials() {
             h264="/chapter-4-1/video/financial-performance.mp4"
             poster="/chapter-4-1/video/financial-performance-poster.jpg"
             title="Eat Better Co on Shark Tank India S4 · Financial Performance & Scale Trajectory"
-            caption="Shark Tank India, Season 4 (Sony LIV) — Financial performance, revenues & growth metrics (9:19 to 11:24)."
+            caption="Shark Tank India, Season 4 (Sony LIV) — Financial performance, revenues & growth metrics."
             badge="Shark Tank India S4"
           />
           <MediaRow

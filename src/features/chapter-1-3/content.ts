@@ -17,7 +17,7 @@ export const CHAPTER = {
 export const VIDEOS = {
   sharkTank: {
     title: "Eat Better Co के Product पर क्यों हुआ Sharks को Doubt? | Shark Tank India S4 | 100 Crore Valuation",
-    caption: "Eat Better Co on Shark Tank India, Season 4 (Sony LIV) — The Pitch & Brand Origin (start to 5:31).",
+    caption: "Eat Better Co on Shark Tank India, Season 4 (Sony LIV) — The Pitch & Brand Origin.",
     h264: "/chapter-1-3/video/shark-tank-pitch.mp4",
     poster: "/chapter-1-3/video/shark-tank-pitch-poster.jpg",
   },
@@ -25,11 +25,11 @@ export const VIDEOS = {
     title: "Diwali Corporate Gifting, Done Thoughtfully | Inside Eat Better Co",
     h264: "/chapter-1-3/video/diwali-gifting-h264.mp4",
     poster: "/chapter-1-3/video/gifting-poster.jpg",
-    caption: "Inside Eat Better Co today — Handcrafted gifting and packaging operations (2:35 to 5:31).",
+    caption: "Inside Eat Better Co today — Handcrafted gifting and packaging operations.",
   },
   leadership: {
     title: "Eat Better Co Founders & Leadership Team | Shark Tank India S4",
-    caption: "Shark Tank India, Season 4 (Sony LIV) — The founders discuss executive roles and operations (12:55 to 14:06).",
+    caption: "Shark Tank India, Season 4 (Sony LIV) — The founders discuss executive roles and operations.",
     h264: "/chapter-1-3/video/leadership-team.mp4",
     poster: "/chapter-1-3/video/leadership-team-poster.jpg",
   },

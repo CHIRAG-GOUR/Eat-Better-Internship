@@ -265,8 +265,13 @@ export function Wall({
     });
     COLUMNS.forEach((p, ci) => {
       const ids = cards.filter((id) => placed[id] === p);
+      // spread the column over the room above the tray: no overlap for two cards, an even fan for more, so every
+      // card's name strip stays readable; a clear depth gap stops overlapping card faces flickering into each other
+      const top = BOARD.y + BOARD.h / 2 - 1.85;
+      const room = top - (TRAY_Y + CARD.h + 0.15);
+      const step = ids.length > 1 ? Math.min(CARD.h + 0.1, room / (ids.length - 1)) : 0;
       ids.forEach((id, k) => {
-        out[id] = new THREE.Vector3(colX(ci), BOARD.y + BOARD.h / 2 - 1.85 - k * 0.98, 0.12 + k * 0.02);
+        out[id] = new THREE.Vector3(colX(ci), top - k * step, 0.12 + k * 0.06);
       });
     });
     return out;

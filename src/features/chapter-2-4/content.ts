@@ -18,7 +18,7 @@ export const SHARK_TANK_VIDEO = {
   title: "Eat Better Co on Shark Tank India S4 · Deal Finalized with Namita Thapar",
   h264: "/chapter-2-4/video/shark-tank-deal.mp4",
   poster: "/chapter-2-4/video/shark-tank-deal-poster.jpg",
-  caption: "Shark Tank India, Season 4 (Sony LIV) — The Deal (18:16 to 20:44).",
+  caption: "Shark Tank India, Season 4 (Sony LIV) — The Deal.",
 };
 
 /* 1 · The Shark Tank India advantage */

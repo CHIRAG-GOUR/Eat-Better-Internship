@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { animate, motion, useInView, useMotionValue, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 import { BookOpen, Building2, Check, Circle, Factory, Globe, Handshake, Landmark, Lightbulb, MessagesSquare, PackageCheck, ShieldCheck, ShoppingCart, Sprout, Truck, Users, type LucideIcon } from "lucide-react";
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
@@ -149,14 +149,71 @@ export function KeyActivities() {
 /* ── 4 · Key Partners ─────────────────────────────────────────── */
 
 const PARTNER_ICON: Record<(typeof PARTNERS)[number]["id"], LucideIcon> = { suppliers: Sprout, platforms: ShoppingCart, logistics: Truck, investors: Landmark, corporate: Building2 };
-// cell centres in a 3×3 grid (viewBox 0..300): top-left, top-centre, top-right, bottom-left, bottom-right
-const SPOTS = [
-  { col: "1", row: "1", x: 50, y: 50 },
-  { col: "2", row: "1", x: 150, y: 50 },
-  { col: "3", row: "1", x: 250, y: 50 },
-  { col: "1", row: "3", x: 50, y: 250 },
-  { col: "3", row: "3", x: 250, y: 250 },
-];
+// the five partners sit evenly round a circle (degrees, 0 = right, clockwise): top, upper right, lower right, lower left, upper left
+const ANGLES = [-90, -18, 54, 126, 198];
+const RX = 36; // horizontal radius, % of the stage width
+const RY = 37; // vertical radius, % of the stage height
+const rad = (d: number) => (d * Math.PI) / 180;
+// position on the way out: v runs 0 → 1; the angle sweeps the last third of a turn while the radius eases out
+const orbitR = (v: number) => 1 - (1 - v) * (1 - v);
+const orbitX = (end: number, v: number) => 50 + RX * orbitR(v) * Math.cos(rad(end - 120 * (1 - v)));
+const orbitY = (end: number, v: number) => 50 + RY * orbitR(v) * Math.sin(rad(end - 120 * (1 - v)));
+
+/**
+ * One partner card flying out of the hub: it starts at the centre and swings along a circular arc (a third of a turn)
+ * while moving out to its place on the ring. The spoke from the hub follows the card the whole way.
+ */
+function OrbitCard({ p, i, t }: { p: (typeof PARTNERS)[number]; i: number; t: MotionValue<number> }) {
+  const left = useTransform(t, (v) => `${orbitX(ANGLES[i], v)}%`);
+  const top = useTransform(t, (v) => `${orbitY(ANGLES[i], v)}%`);
+  const scale = useTransform(t, [0, 1], [0.35, 1]);
+  const opacity = useTransform(t, [0, 0.25, 1], [0, 1, 1]);
+  return (
+    <motion.div className="absolute z-10 w-[15.5rem] -translate-x-1/2 -translate-y-1/2" style={{ left, top, scale, opacity }}>
+      <PartnerCard p={p} />
+    </motion.div>
+  );
+}
+
+function Spoke({ i, t }: { i: number; t: MotionValue<number> }) {
+  const x2 = useTransform(t, (v) => orbitX(ANGLES[i], v));
+  const y2 = useTransform(t, (v) => orbitY(ANGLES[i], v));
+  return <motion.line x1={50} y1={50} x2={x2} y2={y2} stroke="#FF5C00" strokeWidth={1.6} strokeDasharray="6 5" vectorEffect="non-scaling-stroke" />;
+}
+
+/** Desktop: the hub in the middle and the partners on a ring, each flying out of the hub when the section scrolls in. */
+function PartnerRing() {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-15% 0px" });
+  const reduced = useReducedMotion();
+  const t0 = useMotionValue(reduced ? 1 : 0);
+  const t1 = useMotionValue(reduced ? 1 : 0);
+  const t2 = useMotionValue(reduced ? 1 : 0);
+  const t3 = useMotionValue(reduced ? 1 : 0);
+  const t4 = useMotionValue(reduced ? 1 : 0);
+  const ts = [t0, t1, t2, t3, t4];
+  useEffect(() => {
+    if (!inView || reduced) return;
+    const runs = [t0, t1, t2, t3, t4].map((t, i) => animate(t, 1, { duration: 1.1, delay: 0.25 + i * 0.22, ease: [0.22, 1, 0.36, 1] }));
+    return () => runs.forEach((r) => r.stop());
+  }, [inView, reduced, t0, t1, t2, t3, t4]);
+  return (
+    <div ref={ref} className="relative mt-8 hidden h-[700px] lg:block">
+      <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden>
+        <ellipse cx={50} cy={50} rx={RX} ry={RY} fill="none" stroke="#2F1C1A" strokeOpacity={0.08} strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        {PARTNERS.map((p, i) => (
+          <Spoke key={p.id} i={i} t={ts[i]} />
+        ))}
+      </svg>
+      <div className="absolute left-1/2 top-1/2 z-20 grid size-44 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-orange bg-cocoa p-4 text-center shadow-[0_20px_40px_-20px_rgba(47,28,26,0.8)]">
+        <span className="font-display text-[1.4rem] font-semibold leading-tight text-cream">Eat Better Co</span>
+      </div>
+      {PARTNERS.map((p, i) => (
+        <OrbitCard key={p.id} p={p} i={i} t={ts[i]} />
+      ))}
+    </div>
+  );
+}
 
 function PartnerCard({ p }: { p: (typeof PARTNERS)[number] }) {
   const Icon = PARTNER_ICON[p.id];
@@ -190,28 +247,14 @@ export function Partners() {
     <section id="partners" className={sectionCls}>
       <Panel tone="peach" reveal="left" width="max-w-7xl">
         <SectionIntro index="4" kicker="Key Partners" title="Who Eat Better depends on" />
-        {/* network: Eat Better in the middle, partners around it */}
-        <div className="relative mt-8 hidden md:grid md:grid-cols-3 md:grid-rows-[auto_minmax(7rem,auto)_auto] md:gap-x-6 md:gap-y-4">
-          <svg className="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 300 300" preserveAspectRatio="none" aria-hidden>
-            {SPOTS.map((s, i) => (
-              <motion.line key={i} x1={150} y1={150} x2={s.x} y2={s.y} stroke="#FF5C00" strokeWidth={1.4} strokeDasharray="5 4" vectorEffect="non-scaling-stroke" initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 + i * 0.12, duration: 0.6 }} />
-            ))}
-          </svg>
+        {/* network: Eat Better in the middle, partners on a ring around it */}
+        <PartnerRing />
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:hidden">
+          <div className="rounded-[20px] bg-cocoa p-4 text-center font-display text-[1.2rem] font-semibold text-cream sm:col-span-2">Eat Better Co depends on…</div>
           {PARTNERS.map((p, i) => (
-            <motion.div key={p.id} initial={{ opacity: 0, scale: 0.94 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }} className="relative" style={{ gridColumn: SPOTS[i].col, gridRow: SPOTS[i].row }}>
+            <motion.div key={p.id} initial={{ opacity: 0, y: -40, scale: 0.6 }} whileInView={{ opacity: 1, y: 0, scale: 1 }} viewport={{ once: true, margin: "-40px" }} transition={{ delay: i * 0.1, type: "spring", stiffness: 160, damping: 18 }}>
               <PartnerCard p={p} />
             </motion.div>
-          ))}
-          <div className="relative grid place-items-center" style={{ gridColumn: "2", gridRow: "2 / 4" }}>
-            <div className="grid size-40 place-items-center rounded-full border-4 border-orange bg-cocoa p-4 text-center shadow-[0_20px_40px_-20px_rgba(47,28,26,0.8)]">
-              <span className="font-display text-[1.35rem] font-semibold leading-tight text-cream">Eat Better Co</span>
-            </div>
-          </div>
-        </div>
-        <div className="mt-6 grid gap-3 md:hidden">
-          <div className="rounded-[20px] bg-cocoa p-4 text-center font-display text-[1.2rem] font-semibold text-cream">Eat Better Co depends on…</div>
-          {PARTNERS.map((p) => (
-            <PartnerCard key={p.id} p={p} />
           ))}
         </div>
         <MediaRow

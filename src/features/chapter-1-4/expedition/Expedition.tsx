@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowLeft, BookOpen, Check, ChevronDown, ChevronUp, Circle, DoorOpen, Footprints, Hand, Lightbulb, MapPin, MessageCircle, Search } from "lucide-react";
+import { ArrowLeft, BookOpen, Check, ChevronDown, ChevronUp, Circle, DoorOpen, Footprints, Hand, Lightbulb, MapPin, Maximize, MessageCircle, Minimize, Search } from "lucide-react";
 import { InspectPanel, LiteToggle, ObjectiveTracker, RoleBadge, type Objective } from "@/components/sim/SimHud";
 import { SimReport, type ReportData } from "@/components/sim/SimReport";
 import { liteCanvasProps, useLiteMode } from "@/components/sim/useLiteMode";
@@ -68,6 +68,36 @@ export default function Expedition({ onComplete }: { onComplete: () => void }) {
   const [talk, setTalk] = useState<string | null>(null);
   const [inspect, setInspect] = useState<string | null>(null);
   const [notebook, setNotebook] = useState(false);
+  // fullscreen for the activity box; phones without element fullscreen (iPhone) get a full-window view instead
+  const [full, setFull] = useState(false);
+  const [pseudoFull, setPseudoFull] = useState(false);
+  useEffect(() => {
+    const sync = () => setFull(document.fullscreenElement === host.current);
+    document.addEventListener("fullscreenchange", sync);
+    return () => document.removeEventListener("fullscreenchange", sync);
+  }, []);
+  useEffect(() => {
+    if (!pseudoFull) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setPseudoFull(false);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [pseudoFull]);
+  const toggleFull = async () => {
+    if (pseudoFull) return setPseudoFull(false);
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else if (host.current?.requestFullscreen) await host.current.requestFullscreen();
+      else setPseudoFull(true);
+    } catch {
+      setPseudoFull(true);
+    }
+  };
+  const isFull = full || pseudoFull;
   const [near, setNear] = useState<string | null>(null);
   const [where, setWhere] = useState<LocationId | "studio" | null>(null);
   const [lastQ, setLastQ] = useState<string | null>(null);
@@ -209,7 +239,14 @@ export default function Expedition({ onComplete }: { onComplete: () => void }) {
 
   return (
     <div className="space-y-5">
-      <div ref={host} className="relative h-[560px] overflow-hidden rounded-[24px] border border-cocoa bg-[#F6D7B8] shadow-[3px_3px_0_0_#2f1c1a] sm:h-[600px] lg:h-[660px]">
+      <div
+        ref={host}
+        className={`overflow-hidden border-cocoa bg-[#F6D7B8] ${
+          pseudoFull
+            ? "fixed inset-0 z-[100] h-dvh rounded-none border-0"
+            : "relative h-[560px] rounded-[24px] border shadow-[3px_3px_0_0_#2f1c1a] sm:h-[600px] lg:h-[660px] [&:fullscreen]:h-dvh [&:fullscreen]:rounded-none [&:fullscreen]:border-0"
+        }`}
+      >
         {visible && (
           <Canvas {...liteCanvasProps(lite)} camera={{ position: [0, 8.5, 14.5], fov: 45 }} frameloop={inspect ? "never" : "always"} style={{ touchAction: "none" }}>
             <AsyncCompile />
@@ -237,6 +274,10 @@ export default function Expedition({ onComplete }: { onComplete: () => void }) {
           <RoleBadge role="Junior Consumer Researcher" icon={<Search className="size-4 text-haldi" />} />
           <div className="pointer-events-auto flex flex-wrap justify-end gap-2">
             <LiteToggle />
+            <button onClick={toggleFull} aria-pressed={isFull} aria-label={isFull ? "Exit fullscreen" : "Play fullscreen"} className="flex items-center gap-1.5 rounded-xl border border-cocoa/20 bg-cream/95 px-2.5 py-1.5 text-[0.8rem] font-bold text-cocoa hover:border-cocoa">
+              {isFull ? <Minimize className="size-4 text-orange" /> : <Maximize className="size-4 text-orange" />}
+              <span className="hidden sm:inline">{isFull ? "Exit fullscreen" : "Fullscreen"}</span>
+            </button>
             {phase !== "intro" && (
               <button onClick={() => setNotebook((v) => !v)} aria-pressed={notebook} className="flex items-center gap-1.5 rounded-xl border border-cocoa/20 bg-cream/95 px-2.5 py-1.5 text-[0.8rem] font-bold text-cocoa hover:border-cocoa">
                 <BookOpen className="size-4 text-orange" /> Notebook {collected.length}/{EVIDENCE_NEEDED}

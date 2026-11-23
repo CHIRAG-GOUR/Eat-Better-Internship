@@ -434,6 +434,20 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
     { id: "audit", label: "Sign your Brand Identity Audit", done: s.verdict.trim().length >= 12 },
   ];
   const stepDone = [objectives[0].done, objectives[1].done, objectives[2].done, objectives[3].done, objectives[4].done];
+  // what is still missing before each "next" button unlocks, written as plain instructions under the button
+  const who = (x: (typeof SHOPPERS)[number]) => x.who.replace(/^A /, "the ");
+  const shopTodo = SHOPPERS.filter((x) => s.shop[x.id] !== x.priority || !s.pred[x.id]?.buy || !s.pred[x.id]?.recall);
+  const listJoin = (a: string[]) => (a.length <= 1 ? a.join("") : `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}`);
+  const hints = [
+    `Find ${HOTSPOTS.length - s.found.length} more orange ring${HOTSPOTS.length - s.found.length === 1 ? "" : "s"} on the pack (drag to turn it).`,
+    [s.tried.length < 3 && `try ${3 - s.tried.length} more colour${3 - s.tried.length === 1 ? "" : "s"}`, !s.colour && "keep one colour", s.feel.length === 0 && "tag how it feels"].filter(Boolean).join(", then ") + ".",
+    `Sort ${TONE_LINES.length - Object.keys(s.tone).length} more line${TONE_LINES.length - Object.keys(s.tone).length === 1 ? "" : "s"}: on-brand or off-tone.`,
+    (() => {
+      const notWon = shopTodo.filter((x) => s.shop[x.id] !== x.priority).map(who);
+      const noPred = shopTodo.filter((x) => s.shop[x.id] === x.priority).map(who);
+      return [notWon.length && `pick what ${listJoin(notWon)} notice${notWon.length === 1 ? "s" : ""} first`, noPred.length && `answer both predictions (buy? remember?) for ${listJoin(noPred)}`].filter(Boolean).join(", and ") + ".";
+    })(),
+  ].map((h) => (h ? h[0].toUpperCase() + h.slice(1) : h));
   const doneKey = stepDone.slice(0, 4).join();
   useEffect(() => {
     (["pack", "colour", "tone", "perception"] as const).forEach((id, i) => stepDone[i] && onStation(id));
@@ -520,7 +534,7 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
                       </button>
                     ))}
                   </div>
-                  <Next disabled={!stepDone[0]} onClick={() => go(1)} label="To the colour lab" />
+                  <Next disabled={!stepDone[0]} onClick={() => go(1)} label="To the colour lab" hint={hints[0]} />
                 </>
               )}
 
@@ -561,7 +575,7 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
                     </>
                   )}
                   <p className="text-[0.85rem] text-cocoa-2">{s.tried.length}/3 colours tried</p>
-                  <Next disabled={!stepDone[1]} onClick={() => go(2)} label="To the voice booth" />
+                  <Next disabled={!stepDone[1]} onClick={() => go(2)} label="To the voice booth" hint={hints[1]} />
                 </>
               )}
 
@@ -604,7 +618,7 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
                       );
                     })}
                   </div>
-                  <Next disabled={!stepDone[2]} onClick={() => go(3)} label="To the shop floor" />
+                  <Next disabled={!stepDone[2]} onClick={() => go(3)} label="To the shop floor" hint={hints[2]} />
                 </>
               )}
 
@@ -658,7 +672,15 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
                                 {opts.map((o) => {
                                   const on = s.pred[x.id]?.[k] === o;
                                   return (
-                                    <button key={o} onClick={() => setS((v) => ({ ...v, pred: { ...v.pred, [x.id]: { ...v.pred[x.id], [k]: o } } }))} aria-pressed={on} className={`rounded-full border px-3 py-1 text-[0.85rem] font-bold ${on ? "border-cocoa bg-cocoa text-cream" : "border-cocoa/20 text-cocoa hover:border-cocoa"}`}>
+                                    <button key={o} onClick={() => {
+                                      setS((v) => ({ ...v, pred: { ...v.pred, [x.id]: { ...v.pred[x.id], [k]: o } } }));
+                                      // both predictions answered: move on to the next shopper who still needs work
+                                      const mine = { ...s.pred[x.id], [k]: o };
+                                      if (mine.buy && mine.recall) {
+                                        const nxt = SHOPPERS.find((y) => y.id !== x.id && shopTodo.includes(y));
+                                        if (nxt) window.setTimeout(() => setShopper(nxt.id), 700);
+                                      }
+                                    }} aria-pressed={on} className={`rounded-full border px-3 py-1 text-[0.85rem] font-bold ${on ? "border-cocoa bg-cocoa text-cream" : "border-cocoa/20 text-cocoa hover:border-cocoa"}`}>
                                       {o}
                                     </button>
                                   );
@@ -671,7 +693,13 @@ export default function IdentityLab({ onStation }: { onStation: (id: StationId) 
                       </>
                     );
                   })()}
-                  <Next disabled={!stepDone[3]} onClick={() => go(4)} label="Write the audit" />
+                  <Next
+                    disabled={!stepDone[3]}
+                    onClick={() => go(4)}
+                    label="Write the audit"
+                    hint={hints[3]}
+                    action={shopTodo[0] && shopTodo[0].id !== shopper ? { label: `Go to ${who(shopTodo[0]).replace(/^the /, "")}`, onClick: () => setShopper(shopTodo[0].id) } : undefined}
+                  />
                 </>
               )}
 
@@ -719,10 +747,26 @@ function StepHead({ icon, n, title, line }: { icon: React.ReactNode; n: number; 
   );
 }
 
-function Next({ disabled, onClick, label }: { disabled: boolean; onClick: () => void; label: string }) {
+function Next({ disabled, onClick, label, hint, action }: { disabled: boolean; onClick: () => void; label: string; hint?: string; action?: { label: string; onClick: () => void } }) {
   return (
-    <button disabled={disabled} onClick={onClick} className="eb-btn eb-btn-primary mt-auto self-start !py-2 !normal-case disabled:opacity-40">
-      {label} <ArrowRight className="size-4" />
-    </button>
+    <div className="mt-auto flex flex-col items-start gap-2">
+      <button disabled={disabled} onClick={onClick} className="eb-btn eb-btn-primary self-start !py-2 !normal-case disabled:opacity-40">
+        {label} <ArrowRight className="size-4" />
+      </button>
+      {/* when locked, say exactly what is left to do */}
+      {disabled && hint && (
+        <div className="flex w-full flex-wrap items-center gap-2 rounded-xl border border-orange/30 bg-orange/5 px-3 py-2 text-[0.88rem] font-semibold leading-snug text-cocoa" role="status">
+          <span className="min-w-0 flex-1">
+            <span className="font-extrabold text-orange">To unlock: </span>
+            {hint}
+          </span>
+          {action && (
+            <button onClick={action.onClick} className="shrink-0 rounded-full border border-cocoa bg-white px-3 py-1 text-[0.82rem] font-bold text-cocoa hover:bg-peach">
+              {action.label} <ArrowRight className="inline size-3.5" />
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
