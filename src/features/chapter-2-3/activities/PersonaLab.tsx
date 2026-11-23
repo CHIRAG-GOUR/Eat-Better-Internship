@@ -9,7 +9,8 @@ import { CheckRow, GameFrame, starsFor, type Feedback } from "@/components/play/
 import { Stage3D } from "@/components/play/Stage3D";
 import { RoundedBox } from "@/components/three/RoundedBox";
 import { AUDIENCE } from "../content";
-import { Burst, CAST, FitCam, Flyer, Label, Lights, Person, Room, TextCard, type Mood } from "./kit3d";
+import { Burst, FitCam, Flyer, Label, TextCard, type Mood } from "./kit3d";
+import { SmoothAvatar, AVATAR_SPECS, type AvatarId } from "./SmoothAvatar";
 
 /**
  * Activity 3 · The Persona Lab (3D).
@@ -109,7 +110,7 @@ const TARGET = AUDIENCE.rows.find((r) => r.audience === "Working professionals")
 
 /** The persona's character sheet: evidence bars for each trait, like a game character's stats. */
 function StatsBoard({ support, audience, row, position }: { support: Record<string, string[]>; audience: string | null; row: typeof TARGET | null; position: [number, number, number] }) {
-  const W = 3.5;
+  const W = 3.6;
   const H = row ? 2.7 : 2.05;
   const tex = useMemo(() => {
     const ppu = 240;
@@ -119,10 +120,16 @@ function StatsBoard({ support, audience, row, position }: { support: Record<stri
     const g = c.getContext("2d")!;
     const fam = getComputedStyle(document.body).fontFamily || "sans-serif";
     const s = ppu / 100;
-    g.fillStyle = "#2F1C1A";
+    // Sleek dark obsidian glass card
+    g.fillStyle = "#1E1311";
     g.beginPath();
     g.roundRect(0, 0, c.width, c.height, 26 * s);
     g.fill();
+    // Warm accent border
+    g.strokeStyle = "#FF5C00";
+    g.lineWidth = 3.5 * s;
+    g.stroke();
+
     g.fillStyle = "#FED300";
     g.font = `800 ${11 * s}px ${fam}`;
     g.fillText("PERSONA STATS · EVIDENCE FROM INTERVIEWS", 16 * s, 22 * s);
@@ -184,29 +191,58 @@ function StatsBoard({ support, audience, row, position }: { support: Record<stri
   }, [support, audience, row, H]);
   useEffect(() => () => tex.dispose(), [tex]);
   return (
-    <mesh position={position}>
-      <planeGeometry args={[W, H]} />
-      <meshBasicMaterial map={tex} toneMapped={false} transparent />
-    </mesh>
+    <group position={position}>
+      {/* Suspension cables connecting to studio ceiling */}
+      {[-1.4, 1.4].map((x) => (
+        <mesh key={x} position={[x, H / 2 + 0.65, 0]}>
+          <cylinderGeometry args={[0.008, 0.008, 1.3, 12]} />
+          <meshStandardMaterial color="#888888" metalness={0.9} roughness={0.2} />
+        </mesh>
+      ))}
+      <mesh castShadow receiveShadow>
+        <planeGeometry args={[W, H]} />
+        <meshBasicMaterial map={tex} toneMapped={false} transparent />
+      </mesh>
+    </group>
   );
 }
 
-/** Pedestal under the persona figure; it glows brighter with every confirmed trait. */
+/** Multi-tier illuminated podium under the persona figure; glows brighter with every confirmed trait. */
 function Pedestal({ level }: { level: number }) {
   const ring = useRef<THREE.Mesh>(null);
+  const glow = useRef<THREE.Mesh>(null);
   useFrame(({ clock }) => {
     const m = ring.current?.material as THREE.MeshStandardMaterial | undefined;
-    if (m) m.emissiveIntensity = 0.25 + level * 0.28 + Math.sin(clock.elapsedTime * 2.2) * 0.08 * (level > 0 ? 1 : 0);
+    if (m) m.emissiveIntensity = 0.35 + level * 0.3 + Math.sin(clock.elapsedTime * 2.2) * 0.1 * (level > 0 ? 1 : 0);
+    const g = glow.current?.material as THREE.MeshBasicMaterial | undefined;
+    if (g) g.opacity = 0.2 + level * 0.12 + Math.sin(clock.elapsedTime * 1.8) * 0.05;
   });
   return (
     <group position={[PERSONA_AT[0], 0, PERSONA_AT[2]]}>
-      <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.95, 1.05, 0.4, 48]} />
-        <meshStandardMaterial color="#2F1C1A" roughness={0.5} />
+      {/* Tier 1 base */}
+      <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[1.18, 1.25, 0.2, 48]} />
+        <meshStandardMaterial color="#1E1412" roughness={0.4} metalness={0.2} />
       </mesh>
-      <mesh ref={ring} position={[0, 0.405, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[0.72, 0.92, 48]} />
-        <meshStandardMaterial color="#FF5C00" emissive="#FF5C00" emissiveIntensity={0.3} />
+      {/* Tier 2 neon light ring */}
+      <mesh ref={ring} position={[0, 0.205, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.96, 1.15, 48]} />
+        <meshStandardMaterial color="#FF5C00" emissive="#FF5C00" emissiveIntensity={0.4} roughness={0.2} />
+      </mesh>
+      {/* Tier 3 frosted platform */}
+      <mesh position={[0, 0.31, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.95, 0.96, 0.2, 48]} />
+        <meshStandardMaterial color="#FFF5ED" roughness={0.35} />
+      </mesh>
+      {/* Gold metallic trim */}
+      <mesh position={[0, 0.412, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[0.91, 0.95, 48]} />
+        <meshStandardMaterial color="#D97706" metalness={0.85} roughness={0.2} />
+      </mesh>
+      {/* Floor glow halo */}
+      <mesh ref={glow} position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <ringGeometry args={[1.25, 1.65, 48]} />
+        <meshBasicMaterial color="#FF5C00" transparent opacity={0.25} />
       </mesh>
     </group>
   );
@@ -232,16 +268,79 @@ function TraitBadge({ id, i }: { id: string; i: number }) {
 function Pad({ f, armed, onClick }: { f: (typeof FIELDS)[number]; armed: boolean; onClick: () => void }) {
   const g = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
-    if (g.current) g.current.position.y = armed ? 0.06 + Math.sin(clock.elapsedTime * 4 + f.x) * 0.03 : 0.03;
+    if (g.current) g.current.position.y = armed ? 0.07 + Math.sin(clock.elapsedTime * 4 + f.x) * 0.03 : 0.03;
   });
   return (
     <group ref={g} position={[f.x, 0.03, PAD_Z]}>
-      <RoundedBox args={[1.7, 0.08, 1.0]} radius={0.04} onClick={(e) => (e.stopPropagation(), onClick())} castShadow receiveShadow>
-        <meshStandardMaterial color={armed ? f.color : "#FFF5EE"} roughness={0.5} emissive={armed ? f.color : "#000000"} emissiveIntensity={armed ? 0.25 : 0} />
+      <RoundedBox args={[1.72, 0.1, 1.05]} radius={0.06} onClick={(e) => (e.stopPropagation(), onClick())} castShadow receiveShadow>
+        <meshStandardMaterial
+          color={armed ? f.color : "#2F1C1A"}
+          roughness={0.4}
+          metalness={0.15}
+          emissive={armed ? f.color : "#000000"}
+          emissiveIntensity={armed ? 0.35 : 0}
+        />
       </RoundedBox>
-      <group position={[0, 0.06, 0]} rotation={[-Math.PI / 2.6, 0, 0]}>
-        <TextCard text={f.short} w={1.5} h={0.56} bg={armed ? "#ffffff" : "#FFF5EE"} fg="#2f1c1a" border={f.color} size={0.15} onClick={onClick} />
+      <mesh position={[0, 0.055, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[1.6, 0.94]} />
+        <meshBasicMaterial color={f.color} transparent opacity={armed ? 0.85 : 0.35} />
+      </mesh>
+      <group position={[0, 0.08, 0]} rotation={[-Math.PI / 2.6, 0, 0]}>
+        <TextCard text={f.short} w={1.5} h={0.58} bg={armed ? "#ffffff" : "#FFF5EE"} fg="#2f1c1a" border={f.color} size={0.155} onClick={onClick} />
       </group>
+    </group>
+  );
+}
+
+function StudioLighting() {
+  return (
+    <>
+      <ambientLight intensity={0.75} color="#FFF5EC" />
+      <directionalLight
+        position={[4, 8, 5]}
+        intensity={1.6}
+        color="#FFFBF5"
+        castShadow
+        shadow-mapSize={[1024, 1024]}
+        shadow-bias={-0.0001}
+      />
+      <directionalLight position={[-5, 5, 3]} intensity={0.65} color="#E2EEFF" />
+      {/* High-intensity golden rim light for cinematic silhouette highlights */}
+      <directionalLight position={[0, 2.5, -5]} intensity={2.2} color="#FFA500" />
+      {/* Hero stage spotlight */}
+      <spotLight
+        position={[0, 5.5, -1.0]}
+        intensity={1.3}
+        color="#FED300"
+        angle={0.55}
+        penumbra={0.75}
+      />
+    </>
+  );
+}
+
+function StudioRoom() {
+  return (
+    <group>
+      {/* Polished studio floor */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 2.6]} receiveShadow raycast={() => null}>
+        <planeGeometry args={[22, 14]} />
+        <meshStandardMaterial color="#E7D1BA" roughness={0.7} />
+      </mesh>
+      {/* Studio floor concentric rings around hero */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[PERSONA_AT[0], 0.005, PERSONA_AT[2]]} raycast={() => null}>
+        <ringGeometry args={[2.0, 2.05, 64]} />
+        <meshBasicMaterial color="#FF5C00" transparent opacity={0.35} />
+      </mesh>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[PERSONA_AT[0], 0.005, PERSONA_AT[2]]} raycast={() => null}>
+        <ringGeometry args={[2.8, 2.84, 64]} />
+        <meshBasicMaterial color="#2F1C1A" transparent opacity={0.2} />
+      </mesh>
+      {/* Curved studio cyclorama wall */}
+      <mesh position={[0, 3.4, -3.4]} raycast={() => null}>
+        <planeGeometry args={[22, 8]} />
+        <meshStandardMaterial color="#FFF5ED" roughness={0.9} />
+      </mesh>
     </group>
   );
 }
@@ -281,38 +380,43 @@ function Studio({
     <>
       <color attach="background" args={["#FFF1E4"]} />
       <FitCam width={11.2} height={6.4} cy={1.5} tilt={1.6} cz={0.4} />
-      <Lights />
-      <Room floor="#E8D2BC" wall="#FFF5EE" w={20} d={12} wallZ={-3.4} />
-      {/* studio wall sign */}
-      <group position={[0, 3.95, -3.35]}>
-        <TextCard text="PERSONA LAB · INTERVIEW STUDIO" w={4.6} h={0.42} bg="#FF5C00" fg="#ffffff" border="#FF5C00" size={0.2} />
+      <StudioLighting />
+      <StudioRoom />
+      {/* studio wall sign placed high on the cyclorama */}
+      <group position={[0, 5.65, -3.35]}>
+        <TextCard text="PERSONA LAB · INTERVIEW STUDIO" w={4.8} h={0.44} bg="#FF5C00" fg="#ffffff" border="#FF5C00" size={0.2} />
       </group>
-      {/* interviewees */}
+      {/* interviewees with smooth, expressive 3D styling */}
       {PEOPLE.map((p) => {
         const left = p.lines.filter((l) => !filedRef.current[l.id]).length;
+        const spec = AVATAR_SPECS[p.id as AvatarId];
         return (
-          <group key={p.id}>
-            <Person
-              look={CAST[p.look]}
-              to={p.at}
-              face={p.face}
-              react={moods[p.id]}
-              bubble={selPerson === p.id && selLine ? `“${selLine.text.length > 46 ? selLine.text.slice(0, 44) + "…" : selLine.text}”` : undefined}
-              onClick={() => onPerson(p.id)}
-              ring={selPerson === p.id ? "#FF5C00" : undefined}
-            />
-            <Label text={`${p.name} · ${p.who}`} position={[p.at[0], 0.12, p.at[2] + 0.75]} h={0.2} bg={selPerson === p.id ? "#FF5C00" : "#ffffff"} fg={selPerson === p.id ? "#ffffff" : "#2f1c1a"} />
-            <Label text={left ? `${left} quote${left === 1 ? "" : "s"} to file` : "all filed"} position={[p.at[0], 2.15, p.at[2]]} h={0.18} bg={left ? "#FED300" : "#E5F6EA"} />
-          </group>
+          <SmoothAvatar
+            key={p.id}
+            spec={spec}
+            position={p.at}
+            face={p.face}
+            selected={selPerson === p.id}
+            quoteCount={left}
+            mood={moods[p.id]}
+            bubble={selPerson === p.id && selLine ? `“${selLine.text.length > 46 ? selLine.text.slice(0, 44) + "…" : selLine.text}”` : undefined}
+            onClick={() => onPerson(p.id)}
+          />
         );
       })}
-      {/* the persona: a game figure on a pedestal with a stats board above */}
+      {/* the persona: sleek hero figure on multi-tier illuminated pedestal */}
       <Pedestal level={confirmed.length} />
-      <Person look={CAST[4]} to={PERSONA_AT} face={0} scale={1.18} react={cheer} />
+      <SmoothAvatar
+        spec={AVATAR_SPECS.persona}
+        position={PERSONA_AT}
+        face={0}
+        isHero
+        mood={cheer}
+      />
       {confirmed.map((id, i) => (
         <TraitBadge key={id} id={id} i={i} />
       ))}
-      <StatsBoard support={support} audience={audience} row={row} position={[0, row ? 3.7 : 3.4, -2.1]} />
+      <StatsBoard support={support} audience={audience} row={row} position={[0, row ? 4.35 : 4.15, -2.4]} />
       {message && (
         <group position={[0, 0.78, PAD_Z - 0.75]}>
           <TextCard text={`“${message}”`} w={5.4} h={0.5} bg="#FED300" fg="#2f1c1a" border="#2f1c1a" size={0.17} maxW={60} />
