@@ -35,7 +35,6 @@ export const COSTS = [
   { id: "team", name: "Team, kitchen and operating costs", img: `${L}/site/kitchen-prepping-dates.webp`, alt: "The Eat Better kitchen preparing dates" },
 ] as const;
 
-export const COST_NOTE = "Typical for a food D2C brand; Eat Better has not published its own breakdown.";
 
 export const PROFIT = {
   fy23: 5.5,

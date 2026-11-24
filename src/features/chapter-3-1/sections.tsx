@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { Building2, Check, Circle, Eye, FileCheck2, Gift, Globe, Heart, Home, Laptop, Lightbulb, MessageCircle, ShieldAlert, Smartphone, Smile, Store, Tag, TreePalm, Users, Zap, type LucideIcon } from "lucide-react";
+import { Building2, Check, Circle, Eye, FileCheck2, Gift, Globe, Heart, Home, Laptop, Lightbulb, Lock, MessageCircle, ShieldAlert, Smartphone, Smile, Store, Tag, TreePalm, Users, Zap, type LucideIcon } from "lucide-react";
 import { MyWork } from "@/components/play/GameFrame";
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
@@ -35,18 +35,20 @@ function Explainer({ children }: { children: string }) {
 
 /* ── the canvas graphic ───────────────────────────────────────── */
 
-type Block = { id: string; label: string; area: string; focus?: string };
+type Block = { id: string; label: string; area: string; focus?: string; unlock?: string };
 const BLOCKS: Block[] = [
-  { id: "partners", label: "Key Partners", area: "1 / 1 / 3 / 3" },
-  { id: "activities", label: "Key Activities", area: "1 / 3 / 2 / 5" },
-  { id: "resources", label: "Key Resources", area: "2 / 3 / 3 / 5" },
+  { id: "partners", label: "Key Partners", area: "1 / 1 / 3 / 3", unlock: "3.2" },
+  { id: "activities", label: "Key Activities", area: "1 / 3 / 2 / 5", unlock: "3.2" },
+  { id: "resources", label: "Key Resources", area: "2 / 3 / 3 / 5", unlock: "3.2" },
   { id: "value", label: "Value Propositions", area: "1 / 5 / 3 / 7", focus: "value" },
   { id: "relationships", label: "Customer Relationships", area: "1 / 7 / 2 / 9", focus: "relationships" },
   { id: "channels", label: "Channels", area: "2 / 7 / 3 / 9", focus: "channels" },
   { id: "segments", label: "Customer Segments", area: "1 / 9 / 3 / 11", focus: "segments" },
-  { id: "costs", label: "Cost Structure", area: "3 / 1 / 4 / 6" },
-  { id: "revenue", label: "Revenue Streams", area: "3 / 6 / 4 / 11" },
+  { id: "costs", label: "Cost Structure", area: "3 / 1 / 4 / 6", unlock: "3.3" },
+  { id: "revenue", label: "Revenue Streams", area: "3 / 6 / 4 / 11", unlock: "3.3" },
 ];
+// blocks a later chapter covers look locked, like a character still to unlock
+const LOCKED = "border-2 border-dashed border-cream/25 bg-gradient-to-br from-[#4A3631] to-[#241513] text-cream/45";
 
 function Canvas() {
   const focus = BLOCKS.filter((b) => b.focus);
@@ -60,8 +62,12 @@ function Canvas() {
               {b.label}
             </a>
           ) : (
-            <div key={b.id} style={{ gridArea: b.area }} className="flex items-center justify-center rounded-xl border border-cocoa/20 bg-cream p-2 text-center text-[0.9rem] font-bold leading-tight text-cocoa-2">
-              {b.label}
+            <div key={b.id} style={{ gridArea: b.area }} className={`flex flex-col items-center justify-center gap-1.5 rounded-xl p-2 text-center text-[0.9rem] font-bold leading-tight ${LOCKED}`}>
+              <span className="grid size-9 place-items-center rounded-full border-2 border-haldi/70 bg-black/30 text-haldi">
+                <Lock className="size-4" />
+              </span>
+              <span>{b.label}</span>
+              <span className="rounded-full bg-haldi px-2 py-0.5 text-[0.72rem] font-extrabold text-cocoa">Unlocks in Chapter {b.unlock}</span>
             </div>
           ),
         )}
@@ -76,8 +82,10 @@ function Canvas() {
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {rest.map((b) => (
-            <span key={b.id} className="rounded-full border border-cocoa/20 bg-cream px-2.5 py-1 text-[0.82rem] font-bold text-cocoa-2">
+            <span key={b.id} className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[0.82rem] font-bold ${LOCKED}`}>
+              <Lock className="size-3.5 text-haldi" />
               {b.label}
+              <span className="text-haldi">{`· ${b.unlock}`}</span>
             </span>
           ))}
         </div>

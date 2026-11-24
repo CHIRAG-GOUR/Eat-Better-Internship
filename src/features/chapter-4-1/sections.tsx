@@ -312,7 +312,7 @@ export function Activities() {
     <section id="activities" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro index="4" kicker="Activities" title="Put it into practice" />
-        <p className="mt-2 max-w-3xl text-[1.05rem] text-cocoa">Three 3D games built on Eat Better&apos;s real packs and this chapter. Each step opens only when your working is right. Practice numbers are always labelled.</p>
+        <p className="mt-2 max-w-3xl text-[1.05rem] text-cocoa">Two 3D games built on Eat Better&apos;s real packs and this chapter. Each step opens only when your working is right. Practice numbers are always labelled.</p>
         <div className="mt-6 grid gap-8">
           {ACTS_41.map((a) => (
             <ActivityRun key={a.id} id={a.id} Comp={a.Comp} />

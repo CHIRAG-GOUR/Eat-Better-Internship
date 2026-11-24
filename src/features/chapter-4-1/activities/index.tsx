@@ -10,12 +10,10 @@ export type Act41 = { id: string; label: string; Comp: ComponentType<{ onDone: (
 const Loading = () => <div className="h-[560px] animate-pulse rounded-[24px] bg-[#F6E3CF]" />;
 const PriceTagDetective = dynamic(() => import("./PriceTagDetective"), { ssr: false, loading: Loading });
 const MarginMachine = dynamic(() => import("./MarginMachine"), { ssr: false, loading: Loading });
-const BasketBuilder = dynamic(() => import("./BasketBuilder"), { ssr: false, loading: Loading });
 
 export const ACTS_41: Act41[] = [
   { id: "price", label: "Price Tag Detective", Comp: PriceTagDetective },
   { id: "margin", label: "Margin Machine", Comp: MarginMachine },
-  { id: "basket", label: "Basket Builder / AOV Rush", Comp: BasketBuilder },
 ];
 
 export const useWork41 = create<{ work: Record<string, string>; save: (k: string, v: string) => void }>((set) => ({

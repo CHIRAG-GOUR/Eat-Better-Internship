@@ -4,8 +4,8 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Boxes, Check, Clock, Info, Maximize, Minimize, Package, Play, RotateCcw, Star, Truck, Zap } from "lucide-react";
-import { CHANNELS, CH_IDS, EVENTS, MISSION, PACKS, ROUTES, SKUS, SKU, rng, type ChId, type PackId } from "./data";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Boxes, Check, Clock, Info, Lock, Maximize, Minimize, Minus, Package, Play, Plus, RotateCcw, Star, Truck, Wand2, Zap } from "lucide-react";
+import { CARTON_UNITS, CHANNELS, CH_IDS, EVENTS, MISSION, PACKS, ROUTES, SKUS, SKU, rng, type ChId, type PackId } from "./data";
 import { makeScenario, resolveEvent, rightChoice, runMission, runWeek, stockAfter, TOKENS, type ReceiveChoice } from "./sim";
 import { useDC } from "./store";
 import type { DCFocus } from "./Warehouse3D";
@@ -147,8 +147,28 @@ export default function Activity3() {
   /* ── stage 3: allocation ── */
   const allocOf = (sku: string, ch: ChId) => s.alloc[sku]?.[ch] ?? 0;
   const setAlloc = (sku: string, ch: ChId, v: number) => s.set({ alloc: { ...s.alloc, [sku]: { ...(s.alloc[sku] ?? ({} as Record<ChId, number>)), [ch]: Math.max(0, v) } } });
-  const matchForecast = (sku: string) => s.set({ alloc: { ...s.alloc, [sku]: { ...sc.forecast[sku] } } });
   const allocated = (sku: string) => CH_IDS.reduce((a, c) => a + allocOf(sku, c), 0);
+  // everything on this screen is counted in whole boxes (master cartons of 20 packs)
+  const BOX = CARTON_UNITS;
+  const lockedFor = (sku: string, c: ChId) => stock[sku].lifeLeft < CHANNELS[c].minLife;
+  const boxesLeft = (sku: string) => Math.floor((stock[sku].units - allocated(sku)) / BOX);
+  const stepBox = (sku: string, c: ChId, d: 1 | -1) => {
+    const next = allocOf(sku, c) + d * BOX;
+    if (next < 0) return;
+    if (d > 0 && (lockedFor(sku, c) || boxesLeft(sku) < 1)) return;
+    setAlloc(sku, c, next);
+  };
+  /** helper: give each open channel what it needs, biggest need first, until the shelf runs out */
+  const matchForecast = (sku: string) => {
+    let left = Math.floor(stock[sku].units / BOX) * BOX;
+    const out = {} as Record<ChId, number>;
+    for (const c of [...CH_IDS].sort((a, b) => sc.forecast[sku][b] - sc.forecast[sku][a])) {
+      const want = lockedFor(sku, c) ? 0 : sc.forecast[sku][c];
+      out[c] = Math.min(want, left);
+      left -= out[c];
+    }
+    s.set({ alloc: { ...s.alloc, [sku]: out } });
+  };
   const packsOk = CH_IDS.every((c) => s.packs[c] && (s.packs[c] === CHANNELS[c].need || CHANNELS[c].need === "basic"));
   const weekOk = s.weekRuns > 0 && week.overAllocated.length === 0 && week.fill >= 0.85 && week.waste <= 0.04 && packsOk;
   const runTheWeek = () => {
@@ -158,7 +178,7 @@ export default function Activity3() {
     const expiredRows = week.rows.filter((r) => r.expired > 0);
     if (expiredRows.length) probs.push(`${fmt(week.expired)} units expired, e.g. ${SKU[expiredRows[0].sku].short} sent to ${CHANNELS[expiredRows[0].ch].short} (needs ${CHANNELS[expiredRows[0].ch].minLife}+ days of shelf life, or sits too long in a dark store).`);
     if (!packsOk) probs.push("Some channels have no or too-light packaging: long journeys need protective or rigid packaging.");
-    if (week.fill < 0.85) probs.push(`Only ${pct(week.fill)} of forecast demand was delivered: check channels where you allocated less than the forecast.`);
+    if (week.fill < 0.85) probs.push(`Only ${pct(week.fill)} of the demand you could serve was delivered: look for channels marked "Short" and give them more boxes.`);
     setFb(probs.length ? { tone: "bad", text: probs.join(" ") } : { tone: "good", text: `Week simulated: ${pct(week.fill)} of demand delivered, ${pct(week.waste)} of stock wasted, and a safety reserve kept for surprises.` });
   };
 
@@ -437,33 +457,72 @@ export default function Activity3() {
             <div>
               <Kicker>Practise · channel allocation</Kicker>
               <h2 className="mt-1 font-display text-[1.45rem] font-semibold">Split the stock, pack it right, run the week</h2>
-              <p className="mt-1 text-[0.93rem] text-cocoa-2">Allocate each SKU against the simulated forecast. Whatever you don&apos;t allocate stays as a safety reserve for surprises.</p>
+              <p className="mt-1 text-[0.93rem] text-cocoa-2">
+                Each box holds {CARTON_UNITS} packs. Give every channel the boxes it needs (the faded boxes), using − and +. Boxes you don&apos;t give out stay on the shelf as a safety reserve.
+              </p>
               <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {SKUS.map((k) => (
-                  <SkuChip key={k.id} id={k.id} active={selSku === k.id} onClick={() => setSelSku(k.id)} mark={allocated(k.id) > stock[k.id].units ? <span className="text-[0.7rem] font-extrabold text-error">OVER</span> : allocated(k.id) ? <Check className="size-4 text-success" strokeWidth={3} /> : null} />
-                ))}
+                {SKUS.map((k) => {
+                  const short = CH_IDS.some((c) => !lockedFor(k.id, c) && allocOf(k.id, c) < sc.forecast[k.id][c]) && boxesLeft(k.id) > 0;
+                  return <SkuChip key={k.id} id={k.id} active={selSku === k.id} onClick={() => setSelSku(k.id)} mark={allocated(k.id) && !short ? <Check className="size-4 text-success" strokeWidth={3} /> : allocated(k.id) ? <span className="text-[0.7rem] font-extrabold text-[#9A7B00]">SHORT</span> : null} />;
+                })}
               </div>
               <div className="mt-3 rounded-2xl border border-cocoa/10 p-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="font-display text-[1.05rem] font-semibold">{SKU[selSku].name}</div>
-                  <button onClick={() => matchForecast(selSku)} className="rounded-full bg-cream px-3 py-1 text-[0.8rem] font-bold">
-                    Start from the forecast
+                  <button onClick={() => matchForecast(selSku)} className="flex items-center gap-1.5 rounded-full bg-cream px-3 py-1 text-[0.8rem] font-bold hover:bg-peach">
+                    <Wand2 className="size-3.5 text-orange" /> Fill to what each channel needs
                   </button>
                 </div>
-                <div className="mt-1 text-[0.85rem] text-cocoa-2">
-                  In stock {fmt(stock[selSku].units)} · allocated <strong className={allocated(selSku) > stock[selSku].units ? "text-error" : "text-cocoa"}>{fmt(allocated(selSku))}</strong> · reserve {fmt(Math.max(0, stock[selSku].units - allocated(selSku)))} · shelf life {stock[selSku].lifeLeft} days{stock[selSku].qcOnly ? " (quick commerce only)" : ""}
+                <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.88rem]">
+                  <span className="rounded-full bg-cocoa px-3 py-1 font-bold text-cream">
+                    Boxes left on the shelf: <span className="text-haldi">{boxesLeft(selSku)}</span>
+                  </span>
+                  <span className="text-cocoa-2">
+                    {Math.floor(stock[selSku].units / BOX)} boxes in stock · shelf life {stock[selSku].lifeLeft} days
+                  </span>
                 </div>
-                <div className="mt-2 grid gap-2">
-                  {CH_IDS.map((c) => (
-                    <label key={c} className="grid grid-cols-[minmax(0,7.5rem)_1fr_4.2rem] items-center gap-2 text-[0.88rem]">
-                      <span className="font-bold" style={{ color: CHANNELS[c].color }}>
-                        {CHANNELS[c].short}
-                        <span className="block text-[0.75rem] font-normal text-cocoa-2">forecast {sc.forecast[selSku][c]}</span>
-                      </span>
-                      <input type="range" min={0} max={Math.round(stock[selSku].units / 10) * 10} step={10} value={allocOf(selSku, c)} onChange={(e) => setAlloc(selSku, c, +e.target.value)} className="accent-orange" aria-label={`${CHANNELS[c].short} allocation`} />
-                      <span className="text-right tabular-nums">{allocOf(selSku, c)}</span>
-                    </label>
-                  ))}
+                <div className="mt-3 grid gap-2.5">
+                  {CH_IDS.map((c) => {
+                    const need = sc.forecast[selSku][c] / BOX;
+                    const have = allocOf(selSku, c) / BOX;
+                    const locked = lockedFor(selSku, c);
+                    if (locked)
+                      return (
+                        <div key={c} className="flex items-center gap-2 rounded-xl border border-dashed border-cocoa/25 bg-cream/60 px-3 py-2 text-[0.86rem] text-cocoa-2">
+                          <Lock className="size-4 shrink-0 text-cocoa-2" />
+                          <span>
+                            <strong style={{ color: CHANNELS[c].color }}>{CHANNELS[c].short}</strong>: locked. Only {stock[selSku].lifeLeft} days of shelf life left, and this channel needs {CHANNELS[c].minLife}+ days.
+                          </span>
+                        </div>
+                      );
+                    const status = have === need ? { t: "Just right", cls: "bg-success/15 text-success" } : have < need ? { t: `Short ${need - have}`, cls: "bg-haldi/30 text-cocoa" } : { t: `${have - need} extra`, cls: "bg-error/10 text-error" };
+                    return (
+                      <div key={c} className="rounded-xl border border-cocoa/10 bg-white px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <span className="min-w-0 flex-1 text-[0.9rem] font-bold" style={{ color: CHANNELS[c].color }}>
+                            {CHANNELS[c].short} <span className="font-semibold text-cocoa-2">needs {need} box{need === 1 ? "" : "es"}</span>
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[0.75rem] font-extrabold ${status.cls}`}>{status.t}</span>
+                        </div>
+                        <div className="mt-1.5 flex items-center gap-2">
+                          <button onClick={() => stepBox(selSku, c, -1)} disabled={have === 0} aria-label={`One box less for ${CHANNELS[c].short}`} className="grid size-9 shrink-0 place-items-center rounded-lg border border-cocoa/20 bg-cream disabled:opacity-40">
+                            <Minus className="size-4" />
+                          </button>
+                          <div className="flex min-w-0 flex-1 flex-wrap gap-1" aria-label={`${have} of ${need} boxes`}>
+                            {Array.from({ length: Math.max(need, have) }, (_, i) => (
+                              <span key={i} className={`size-4 rounded-[4px] border ${i < have ? (i < need ? "border-cocoa/40" : "border-error bg-error/60") : "border-dashed border-cocoa/30 bg-transparent"}`} style={i < have && i < need ? { background: CHANNELS[c].color } : undefined} />
+                            ))}
+                          </div>
+                          <span className="w-12 shrink-0 text-right text-[0.9rem] font-bold tabular-nums">
+                            {have}/{need}
+                          </span>
+                          <button onClick={() => stepBox(selSku, c, 1)} disabled={boxesLeft(selSku) < 1} aria-label={`One more box for ${CHANNELS[c].short}`} className="grid size-9 shrink-0 place-items-center rounded-lg border border-cocoa bg-orange text-white disabled:opacity-40">
+                            <Plus className="size-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
               <div className="mt-3 rounded-2xl border border-cocoa/10 p-3">

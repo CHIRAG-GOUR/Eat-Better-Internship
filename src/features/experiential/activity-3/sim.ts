@@ -39,7 +39,8 @@ export function makeScenario(seed: number): Scenario {
   for (const s of SKUS) {
     forecast[s.id] = {} as Record<ChId, number>;
     CH_IDS.forEach((c, k) => {
-      forecast[s.id][c] = Math.max(10, Math.round((s.demand * s.mix[k] * (0.85 + r() * 0.3)) / 10) * 10);
+      // whole master cartons (20 packs), so every channel needs a round number of boxes
+      forecast[s.id][c] = Math.max(20, Math.round((s.demand * s.mix[k] * (0.85 + r() * 0.3)) / 20) * 20);
     });
   }
   const events = EVENTS.map((e) => ({ id: e.id, n: Math.round((e.id === "dark" ? 60 + r() * 50 : e.id === "damage" ? 30 + r() * 30 : e.id === "gifting" ? 150 + r() * 100 : 80 + r() * 80) / 10) * 10 }));
@@ -78,6 +79,8 @@ export type Packs = Partial<Record<ChId, PackId>>;
 export type WeekResult = {
   rows: { sku: string; ch: ChId; forecast: number; alloc: number; delivered: number; missed: number; damaged: number; expired: number; excess: number }[];
   forecast: number;
+  /** demand that no plan can serve: channels the batch's shelf life rules out, or more than the stock on hand */
+  impossible: number;
   delivered: number;
   missed: number;
   damaged: number;
@@ -115,7 +118,13 @@ export function runWeek(sc: Scenario, stock: ReturnType<typeof stockAfter>, allo
   const forecast = sum("forecast");
   const delivered = sum("delivered");
   const totalStock = SKUS.reduce((a, s) => a + stock[s.id].units, 0);
-  return { rows, forecast, delivered, missed: sum("missed"), damaged: sum("damaged"), expired: sum("expired"), reserve, overAllocated, fill: forecast ? delivered / forecast : 0, waste: totalStock ? (sum("damaged") + sum("expired")) / totalStock : 0 };
+  // the fill rate is measured against what a good plan COULD deliver: demand in channels the shelf life allows,
+  // capped at the stock that is actually on the shelf
+  const possible = SKUS.reduce((a, s) => {
+    const open = CH_IDS.filter((c) => stock[s.id].lifeLeft >= CHANNELS[c].minLife).reduce((b, c) => b + sc.forecast[s.id][c], 0);
+    return a + Math.min(open, stock[s.id].units);
+  }, 0);
+  return { rows, forecast, impossible: forecast - possible, delivered, missed: sum("missed"), damaged: sum("damaged"), expired: sum("expired"), reserve, overAllocated, fill: possible ? Math.min(1, delivered / possible) : 0, waste: totalStock ? (sum("damaged") + sum("expired")) / totalStock : 0 };
 }
 
 /* ── stage 4: disruptions ──────────────────────────────────── */

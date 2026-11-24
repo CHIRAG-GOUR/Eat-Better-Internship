@@ -30,6 +30,8 @@ export function CanvasOverview() {
         <div className="mt-6">
           <BizCanvas
             highlight={["partners", "activities", "resources"]}
+            studied={{ value: "3.1", relationships: "3.1", channels: "3.1", segments: "3.1" }}
+            upcoming={{ costs: "3.3", revenue: "3.3" }}
             items={{
               partners: PARTNERS.map((p) => p.title),
               activities: ACTIVITIES.map((a) => a.title),

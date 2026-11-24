@@ -216,7 +216,7 @@ function RackBay({ skuId, cartons, x, highlight, onPick }: { skuId: string; cart
         );
       })}
       {/* bay label */}
-      <Sign text={sku.short.toUpperCase()} sub={`${cartons * 20} units in stock`} position={[0, 3.95, 0.5]} w={2.6} h={0.55} bg={highlight ? "#FF5C00" : "#2F1C1A"} fg={highlight ? "#FFFFFF" : "#FED300"} />
+      <Sign text={sku.short.toUpperCase()} sub={`${cartons} box${cartons === 1 ? "" : "es"} in stock`} position={[0, 3.95, 0.5]} w={2.6} h={0.55} bg={highlight ? "#FF5C00" : "#2F1C1A"} fg={highlight ? "#FFFFFF" : "#FED300"} />
     </group>
   );
 }

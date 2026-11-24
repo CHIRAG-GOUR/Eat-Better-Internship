@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Check } from "lucide-react";
+import { Check, ChevronDown, Lightbulb } from "lucide-react";
 import { Stage3D } from "@/components/play/Stage3D";
 import { GameFrame, starsFor, type Feedback } from "@/components/play/GameFrame";
 import { FitCam, Halo, Label, makeFace, Mover, NumIn, num, pick, Probe, rint, shuffle } from "./shared";
@@ -29,7 +29,8 @@ const INGS: Ing[] = [
 ];
 const BYID = Object.fromEntries(INGS.map((i) => [i.id, i]));
 const COLORS = ["#FFE0B2", "#FFCDD2", "#DCEDC8", "#B3E5FC", "#E1BEE7", "#FFF9C4", "#D7CCC8", "#C8E6C9", "#FFCCBC"];
-const BANDS: [number, number][] = [[30, 40], [35, 45], [40, 50], [45, 55]];
+// wide, friendly target bands
+const BANDS: [number, number][] = [[30, 45], [35, 50], [40, 55]];
 const SCOOP = 20;
 const MAX = 5;
 
@@ -37,7 +38,8 @@ type Setup = { price: Record<string, number>; color: Record<string, string>; pac
 const newSetup = (): Setup => {
   const cols = shuffle(COLORS);
   return {
-    price: Object.fromEntries(INGS.map((i) => [i.id, rint(i.lo, i.hi)])),
+    // prices per 100 g are multiples of ₹5, so one 20 g scoop always costs whole rupees (price ÷ 5)
+    price: Object.fromEntries(INGS.map((i) => [i.id, Math.max(5, Math.round(rint(i.lo, i.hi) / 5) * 5)])),
     color: Object.fromEntries(INGS.map((i, k) => [i.id, cols[k]])),
     pack: rint(5, 9),
     band: pick(BANDS),
@@ -196,6 +198,30 @@ function Scene({ setup, scoops, held, shake, step, cost, price, gm, onBlock, onH
   );
 }
 
+/** "Stuck?" box: the method for the current step, worked with the learner's own numbers. */
+function HowTo({ title, lines }: { title: string; lines: string[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-haldi bg-haldi/15">
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.92rem] font-bold text-cocoa">
+        <Lightbulb className="size-4 shrink-0 text-[#9A7B00]" />
+        <span className="flex-1">{title}</span>
+        <ChevronDown className={`size-4 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <ol className="grid gap-1 px-3 pb-3 text-[0.92rem] leading-snug text-cocoa">
+          {lines.map((l, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="grid size-5 shrink-0 place-items-center rounded-full bg-cocoa text-[0.72rem] font-bold text-cream">{i + 1}</span>
+              <span>{l}</span>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
 export default function MarginMachine({ onDone }: { onDone: (summary: string) => void }) {
   const [setup, setSetup] = useState<Setup>(newSetup);
   const [scoops, setScoops] = useState<string[]>([]);
@@ -291,7 +317,7 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
     const x = num(gmIn);
     const g = ((price - cost) / price) * 100;
     if (!Number.isFinite(x) || gmIn.trim() === "") return bad("Type the gross margin as a percentage.");
-    if (Math.abs(x - g) <= 0.7) {
+    if (Math.abs(x - g) <= 1) {
       setGm(g);
       setStep(4);
       setDone(true);
@@ -334,6 +360,7 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
               {Object.entries(counts).map(([k, v]) => (
                 <li key={k}>
                   {BYID[k].name} × {v} = {v * SCOOP} g at ₹{setup.price[k]} per 100 g
+                  {step >= 1 && <span className="text-cocoa-2"> (one 20 g scoop = ₹{setup.price[k] / 5})</span>}
                 </li>
               ))}
               {step >= 1 && <li className="font-bold">Pack, label and handling: ₹{setup.pack} per pack</li>}
@@ -361,6 +388,14 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
                   Check cost
                 </button>
               </div>
+              <HowTo
+                title="Stuck? See how to work out the cost"
+                lines={[
+                  "One scoop is 20 g, which is one fifth of 100 g. So one scoop costs the price per 100 g ÷ 5.",
+                  ...Object.entries(counts).map(([k, v]) => `${BYID[k].name}: ₹${setup.price[k]} ÷ 5 = ₹${setup.price[k] / 5} a scoop, × ${v} scoop${v > 1 ? "s" : ""} = ₹${(setup.price[k] / 5) * v}`),
+                  `Add those ingredient lines together, then add ₹${setup.pack} for the pack, label and handling. That total is the cost of one pack.`,
+                ]}
+              />
             </div>
           )}
           {step === 2 && (
@@ -374,6 +409,15 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
                   Stamp the price
                 </button>
               </div>
+              <HowTo
+                title="Stuck? See how to pick a price"
+                lines={[
+                  `Gross margin is the share of the price you keep. For ${setup.band[0]}% you keep ${setup.band[0]} out of every 100 rupees, so the cost is the other ${100 - setup.band[0]}%.`,
+                  `Lowest price: cost ÷ ${(100 - setup.band[0]) / 100} = ₹${cost.toFixed(0)} ÷ ${(100 - setup.band[0]) / 100} ≈ ₹${Math.ceil(cost / ((100 - setup.band[0]) / 100))}.`,
+                  `Highest price: cost ÷ ${(100 - setup.band[1]) / 100} = ₹${cost.toFixed(0)} ÷ ${(100 - setup.band[1]) / 100} ≈ ₹${Math.floor(cost / ((100 - setup.band[1]) / 100))}.`,
+                  "Pick any whole-rupee price between those two numbers and stamp it.",
+                ]}
+              />
             </div>
           )}
           {step === 3 && (
@@ -387,6 +431,16 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
                   Check margin
                 </button>
               </div>
+              {price !== null && (
+                <HowTo
+                  title="Stuck? See how to work out the margin"
+                  lines={[
+                    `Gross profit = price − cost = ₹${price} − ₹${cost.toFixed(0)} = ₹${(price - cost).toFixed(0)}.`,
+                    `Divide the profit by the PRICE (not the cost): ₹${(price - cost).toFixed(0)} ÷ ₹${price} = ${((price - cost) / price).toFixed(2)}.`,
+                    "Multiply by 100 to turn it into a percent, and type that number.",
+                  ]}
+                />
+              )}
             </div>
           )}
           {step === 4 && (

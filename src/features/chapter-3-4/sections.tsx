@@ -6,7 +6,8 @@ import { Boxes, Building2, Check, Circle, Clock3, Database, Gift, Globe, IndianR
 import { Panel } from "@/components/chapter/Panel";
 import { SectionIntro } from "@/components/chapter/SectionIntro";
 import { GlossaryText } from "@/components/chapter/Glossary";
-import { BizCanvas, MediaRow } from "@/components/rich";
+import { BizCanvas, MediaRow, Zoomable } from "@/components/rich";
+import { SyncIllustration } from "./SyncIllustration";
 import { LeafBulb } from "@/components/icons/EbIcons";
 import { MyWork } from "@/components/play/GameFrame";
 import { createActivityStore } from "@/lib/activities";
@@ -31,6 +32,7 @@ export function CanvasOverview() {
         <div className="mt-6">
           <BizCanvas
             highlight={["channels", "activities", "partners"]}
+            studied={{ value: "3.1", relationships: "3.1", channels: "3.1", segments: "3.1", partners: "3.2", activities: "3.2", resources: "3.2", costs: "3.3", revenue: "3.3" }}
             items={{
               channels: PILLARS.map((p) => p.short),
               activities: ["Packaging & fulfilment", "Inventory synchronisation", "Scaling for festive peaks"],
@@ -252,16 +254,31 @@ export function Challenges() {
                     ))}
                   </div>
                 </div>
-                <div className={`grid gap-2 bg-cream p-3 ${imgs.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
-                  {imgs.map((im) => (
-                    <figure key={im.src} className="flex min-w-0 flex-col">
-                      <div className="relative w-full overflow-hidden rounded-xl border border-cocoa/15 bg-white" style={{ aspectRatio: imgs.length > 1 ? 1 : im.ratio }}>
-                        <Image src={im.src} alt={im.alt} fill sizes="(max-width: 1024px) 50vw, 320px" className={im.ratio < 0.95 ? "object-contain" : "object-cover"} />
+                {c.id === "sync" ? (
+                  // a drawn illustration of the challenge itself, kept to a moderate size and centred beside the text
+                  <div className="grid place-items-center bg-cream p-4">
+                    <figure className="w-full max-w-[440px]">
+                      <div className="overflow-hidden rounded-xl border border-cocoa/15 bg-white">
+                        <SyncIllustration />
                       </div>
-                      <figcaption className="mt-1.5 text-[0.8rem] leading-snug text-cocoa-2">{im.caption}</figcaption>
+                      <figcaption className="mt-1.5 text-[0.8rem] leading-snug text-cocoa-2">Illustration: the same stock has to be shared out without any store running out or overfilling.</figcaption>
                     </figure>
-                  ))}
-                </div>
+                  </div>
+                ) : (
+                  <div className={`grid content-center gap-2 bg-cream p-3 ${imgs.length > 1 ? "grid-cols-2" : "grid-cols-1"}`}>
+                    {imgs.map((im) => (
+                      <figure key={im.src} className="flex min-w-0 flex-col">
+                        {/* tap any picture to enlarge and zoom it */}
+                        <Zoomable src={im.src} alt={im.alt} ratio={im.ratio} className="w-full overflow-hidden rounded-xl border border-cocoa/15 bg-white">
+                          <div className="relative w-full" style={{ aspectRatio: imgs.length > 1 ? 1 : im.ratio }}>
+                            <Image src={im.src} alt={im.alt} fill sizes="(max-width: 1024px) 50vw, 320px" className={im.ratio < 0.95 ? "object-contain" : "object-cover"} />
+                          </div>
+                        </Zoomable>
+                        <figcaption className="mt-1.5 text-[0.8rem] leading-snug text-cocoa-2">{im.caption}</figcaption>
+                      </figure>
+                    ))}
+                  </div>
+                )}
               </motion.article>
             );
           })}

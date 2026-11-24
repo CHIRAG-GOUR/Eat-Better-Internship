@@ -11,7 +11,7 @@ import { GlossaryText } from "@/components/chapter/Glossary";
 import { BizCanvas, MediaRow } from "@/components/rich";
 import { createActivityStore } from "@/lib/activities";
 import { ACTS_33, GrowthDesk, LeverLab, OrderDesk, useWork33 } from "./activities";
-import { CATEGORIES, COSTS, COST_NOTE, PROFIT, STREAMS, THINK } from "./content";
+import { CATEGORIES, COSTS, PROFIT, STREAMS, THINK } from "./content";
 
 export const ACTIVITY_IDS = ["order", "growth", "levers"] as const;
 export const useActivities33 = createActivityStore<string>(ACTIVITY_IDS);
@@ -43,6 +43,7 @@ export function CanvasOverview() {
         <div className="mt-5">
           <BizCanvas
             highlight={["revenue", "costs"]}
+            studied={{ value: "3.1", relationships: "3.1", channels: "3.1", segments: "3.1", partners: "3.2", activities: "3.2", resources: "3.2" }}
             items={{ revenue: ["Website", "Marketplaces and quick commerce", "Corporate gifting and bulk orders"], costs: ["Ingredients", "Packaging", "Logistics", "Marketing and commissions", "Team and kitchen"] }}
             caption="This chapter covers the two bottom blocks: Revenue Streams and Cost Structure."
           />
@@ -113,10 +114,6 @@ export function Costs() {
     <section id="costs" className={sectionCls}>
       <Panel tone="light" reveal="right" width="max-w-7xl">
         <SectionIntro index="3" kicker="Cost Structure" title="Where the money goes" />
-        <div className="mt-5 flex items-start gap-3 rounded-2xl border-2 border-haldi bg-haldi/25 p-4">
-          <Receipt className="mt-0.5 size-5 shrink-0 text-cocoa" />
-          <p className="text-[1rem] font-semibold leading-snug text-cocoa">{COST_NOTE}</p>
-        </div>
         <ol className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-5">
           {COSTS.map((c, i) => (
             <motion.li key={c.id} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.07 }} className={`${card} flex min-w-0 flex-col overflow-hidden ${i === 4 ? "col-span-2 md:col-span-1" : ""}`}>
