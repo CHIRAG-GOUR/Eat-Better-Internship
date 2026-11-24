@@ -60,7 +60,11 @@ export function buildTour(chapter: string, card: HTMLElement | null): TourStep[]
   if (!script) return [];
   const steps: TourStep[] = [];
   const anchor = card ?? document.body;
-  const hello = `Hi, I'm Laddoo! Let's go through Chapter ${chapter}, ${script.title}, together. I'll read each part with you, and then explain it.`;
+  // Laddoo introduces himself only in the very first chapter; after that he just announces the chapter
+  const hello =
+    chapter === "1.1"
+      ? `Hi, I'm Laddoo! Let's go through Chapter ${chapter}, ${script.title}, together. I'll read each part with you, and then explain it.`
+      : `Chapter ${chapter}: ${script.title}. Let's read it together, and I'll explain each part as we go.`;
   steps.push({ key: "intro", kind: "explain", el: anchor, text: hello, words: plainWords(hello), mood: "wave", section: "intro" });
 
   const sections = [...document.querySelectorAll<HTMLElement>("main section[id]")].filter((s) => s.id !== "wrap-up" && visible(s));

@@ -586,12 +586,12 @@ export default function RouteDiorama({ highlight }: { highlight: RouteId | null 
           </div>
         )}
         {/* road legends */}
-        <div className="pointer-events-none absolute left-3 top-3 hidden flex-col gap-1.5 sm:flex">
+        <div data-tour-skip className="pointer-events-none absolute left-3 top-3 hidden flex-col gap-1.5 sm:flex">
           <span className="rounded-lg bg-cocoa/85 px-2.5 py-1 text-[0.85rem] font-bold text-cream">Back road · {D2C.routes.traditional.label}</span>
           <span className="rounded-lg bg-orange px-2.5 py-1 text-[0.85rem] font-bold text-white">Front road · {D2C.routes.d2c.label}</span>
         </div>
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-1.5 sm:hidden">
+      <div data-tour-skip className="mt-2 grid grid-cols-2 gap-1.5 sm:hidden">
         <span className="rounded-lg bg-cocoa/85 px-2.5 py-1 text-[0.8rem] font-bold leading-snug text-cream">Back road (left) · {D2C.routes.traditional.label}</span>
         <span className="rounded-lg bg-orange px-2.5 py-1 text-[0.8rem] font-bold leading-snug text-white">Front road (right) · {D2C.routes.d2c.label}</span>
       </div>

@@ -16,7 +16,7 @@
  *   node scripts/generate-audio-chapters.mjs        # every chapter without audio yet
  *   node scripts/generate-audio-chapters.mjs 1.1 2.3 --force
  *
- * Voice: EeQEodFZVtBkjtgK3HBc (chosen for Eat Better). Emotion: the expressive eleven_v3 model is used with an emotion
+ * Voice: Charlie (IKne3meq5aSn9XLyUdCD) with an "[Indian English accent]" cue at the start of every audio file. Emotion: the expressive eleven_v3 model is used with an emotion
  * cue in front of every line, taken from Laddoo's mood at that moment (excited at numbers, curious at questions, warm
  * when explaining, cheerful hello and goodbye). Cues are not spoken and are left out of the word timings. If v3 cannot
  * return word timings, the script falls back to eleven_multilingual_v2 with livelier settings.
@@ -34,7 +34,8 @@ const outDir = path.join(root, "public/audio-chapters");
 fs.mkdirSync(outDir, { recursive: true });
 
 const KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE = process.env.ELEVENLABS_VOICE_ID || "EeQEodFZVtBkjtgK3HBc";
+const VOICE = process.env.ELEVENLABS_VOICE_ID || "IKne3meq5aSn9XLyUdCD"; // Charlie, with an Indian English accent cue
+const ACCENT = process.env.ELEVENLABS_ACCENT ?? "[Indian English accent]";
 let MODEL = process.env.ELEVENLABS_MODEL_ID || "eleven_v3";
 const FALLBACK_MODEL = "eleven_multilingual_v2";
 
@@ -80,7 +81,7 @@ async function tourOf(ch) {
 }
 
 async function speak(text) {
-  const settings = MODEL === "eleven_v3" ? { stability: 0.5, similarity_boost: 0.85, use_speaker_boost: true } : { stability: 0.35, similarity_boost: 0.85, style: 0.55, use_speaker_boost: true };
+  const settings = MODEL === "eleven_v3" ? { stability: 0.4, similarity_boost: 0.75, style: 0.5, use_speaker_boost: true } : { stability: 0.35, similarity_boost: 0.85, style: 0.55, use_speaker_boost: true };
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}/with-timestamps?output_format=mp3_44100_128`, {
     method: "POST",
     headers: { "xi-api-key": KEY, "Content-Type": "application/json" },
@@ -123,7 +124,7 @@ for (const ch of chapters) {
       const steps = groups[g];
       const build = () => {
         // each line: optional emotion cue, then the words; remember where each line's words start
-        let text = "";
+        let text = MODEL === "eleven_v3" && ACCENT ? ACCENT + " " : "";
         const starts = [];
         steps.forEach((s, i) => {
           if (i) text += "\n\n";

@@ -142,7 +142,7 @@ export function Products({ focus }: { focus: CategoryId | null }) {
                 <strong>{selCard.name}</strong> selected — now tap the shelf it belongs on.
               </span>
             ) : !done ? (
-              <span className="flex items-center gap-1.5 text-cocoa-2">
+              <span data-tour-skip className="flex items-center gap-1.5 text-cocoa-2">
                 <Hand className="size-4" /> {canDrag ? "Drag a product down to a shelf." : "Tap a product, then tap its shelf."}
               </span>
             ) : null}
