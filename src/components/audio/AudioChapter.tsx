@@ -86,7 +86,7 @@ export function AudioChapter({ chapter }: { chapter: string }) {
 
   // expose the tour so the audio generator can record exactly what Laddoo reads
   useEffect(() => {
-    (window as unknown as { __ebTour?: () => { key: string; kind: string; text: string }[] }).__ebTour = () => buildTour(chapter, card.current).map((s) => ({ key: s.key, kind: s.kind, text: s.text }));
+    (window as unknown as { __ebTour?: () => { key: string; kind: string; text: string; mood: string }[] }).__ebTour = () => buildTour(chapter, card.current).map((s) => ({ key: s.key, kind: s.kind, text: s.text, mood: s.mood }));
   }, [chapter]);
 
   /* ── where Laddoo stands: beside the line it is reading; the bubble goes where there is room ── */

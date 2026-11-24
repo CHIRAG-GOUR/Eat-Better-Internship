@@ -16,8 +16,13 @@
  *   node scripts/generate-audio-chapters.mjs        # every chapter without audio yet
  *   node scripts/generate-audio-chapters.mjs 1.1 2.3 --force
  *
- * Optional: $env:SITE_URL (default http://localhost:3000), $env:CHROME_PATH, $env:ELEVENLABS_VOICE_ID (default "Sarah",
- * warm and clear) and $env:ELEVENLABS_MODEL_ID (default eleven_multilingual_v2).
+ * Voice: EeQEodFZVtBkjtgK3HBc (chosen for Eat Better). Emotion: the expressive eleven_v3 model is used with an emotion
+ * cue in front of every line, taken from Laddoo's mood at that moment (excited at numbers, curious at questions, warm
+ * when explaining, cheerful hello and goodbye). Cues are not spoken and are left out of the word timings. If v3 cannot
+ * return word timings, the script falls back to eleven_multilingual_v2 with livelier settings.
+ *
+ * Optional: $env:SITE_URL (default http://localhost:3000), $env:CHROME_PATH, $env:ELEVENLABS_VOICE_ID and
+ * $env:ELEVENLABS_MODEL_ID to override.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -29,8 +34,13 @@ const outDir = path.join(root, "public/audio-chapters");
 fs.mkdirSync(outDir, { recursive: true });
 
 const KEY = process.env.ELEVENLABS_API_KEY;
-const VOICE = process.env.ELEVENLABS_VOICE_ID || "EXAVITQu4vr4xnSDxMaL";
-const MODEL = process.env.ELEVENLABS_MODEL_ID || "eleven_multilingual_v2";
+const VOICE = process.env.ELEVENLABS_VOICE_ID || "EeQEodFZVtBkjtgK3HBc";
+let MODEL = process.env.ELEVENLABS_MODEL_ID || "eleven_v3";
+const FALLBACK_MODEL = "eleven_multilingual_v2";
+
+// Laddoo's mood → an emotion cue for the voice (eleven_v3 audio tags)
+const CUE = { wave: "[cheerfully]", party: "[excited]", wow: "[amazed]", think: "[curious]", point: "[warmly]", cheer: "[encouragingly]", happy: "[warmly]", talk: "", cheeky: "[playfully]" };
+const cueFor = (s) => (MODEL === "eleven_v3" ? (s.kind === "explain" ? CUE[s.mood] || "[warmly]" : CUE[s.mood] || "") : "");
 const SITE = (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const CHUNK_CHARS = 4000;
@@ -70,12 +80,13 @@ async function tourOf(ch) {
 }
 
 async function speak(text) {
+  const settings = MODEL === "eleven_v3" ? { stability: 0.5, similarity_boost: 0.85, use_speaker_boost: true } : { stability: 0.35, similarity_boost: 0.85, style: 0.55, use_speaker_boost: true };
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE}/with-timestamps?output_format=mp3_44100_128`, {
     method: "POST",
     headers: { "xi-api-key": KEY, "Content-Type": "application/json" },
-    body: JSON.stringify({ text, model_id: MODEL, voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true } }),
+    body: JSON.stringify({ text, model_id: MODEL, voice_settings: settings }),
   });
-  if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) throw new Error(`ElevenLabs ${res.status}: ${(await res.text()).slice(0, 400)}`);
   return res.json();
 }
 
@@ -110,18 +121,39 @@ for (const ch of chapters) {
   try {
     for (let g = 0; g < groups.length; g++) {
       const steps = groups[g];
-      const text = steps.map((s) => s.text).join("\n\n");
-      const data = await speak(text);
+      const build = () => {
+        // each line: optional emotion cue, then the words; remember where each line's words start
+        let text = "";
+        const starts = [];
+        steps.forEach((s, i) => {
+          if (i) text += "\n\n";
+          const cue = cueFor(s);
+          if (cue) text += cue + " ";
+          starts.push(text.length);
+          text += s.text;
+        });
+        return { text, starts };
+      };
+      let { text, starts } = build();
+      let data;
+      try {
+        data = await speak(text);
+      } catch (e) {
+        if (MODEL !== FALLBACK_MODEL) {
+          console.warn(`${ch}: ${MODEL} failed (${e.message.slice(0, 160)}); using ${FALLBACK_MODEL}`);
+          MODEL = FALLBACK_MODEL;
+          ({ text, starts } = build());
+          data = await speak(text);
+        } else throw e;
+      }
       const al = data.alignment;
-      let offset = 0;
-      const out = steps.map((s) => {
+      const out = steps.map((s, i) => {
         const words = [];
         for (const m of s.text.matchAll(/\S+/g)) {
-          const a = offset + m.index;
+          const a = starts[i] + m.index;
           const b = Math.min(a + m[0].length - 1, al.character_end_times_seconds.length - 1);
           words.push([Number(al.character_start_times_seconds[a].toFixed(3)), Number(al.character_end_times_seconds[b].toFixed(3))]);
         }
-        offset += s.text.length + 2;
         return { key: s.key, text: s.text, words };
       });
       const file = `${ch}-${g + 1}.mp3`;
