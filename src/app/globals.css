@@ -221,3 +221,33 @@ input[type="range"].eb-range::-moz-range-thumb {
     scroll-behavior: auto !important;
   }
 }
+
+/* ── audio chapters: the section being read glows, its heading gets a marker sweep ── */
+.audio-reading {
+  position: relative;
+}
+.audio-reading::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 30px;
+  pointer-events: none;
+  box-shadow: 0 0 0 3px #ff5c00, 0 0 0 10px rgba(255, 92, 0, 0.16);
+  animation: audio-glow 2.2s ease-in-out infinite;
+}
+.audio-heading {
+  background-image: linear-gradient(transparent 58%, rgba(254, 211, 0, 0.6) 58%);
+  background-repeat: no-repeat;
+  animation: audio-mark 0.9s ease-out both;
+}
+@keyframes audio-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes audio-mark {
+  from { background-size: 0% 100%; }
+  to { background-size: 100% 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .audio-reading::after, .audio-heading { animation: none; }
+}

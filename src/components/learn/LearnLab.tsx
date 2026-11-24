@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowRight, ArrowUp, BookOpen, Check, CheckCircle2, Lightbulb, PenLine, RotateCcw, Star, Target, X } from "lucide-react";
 import { GoalFlag } from "@/components/icons/EbIcons";
+import { celebrate } from "@/components/celebrate/store";
 
 /**
  * LearnLab — a learnable activity: LEARN the rule → APPLY it to real material → CHECK with a diagnosis
@@ -137,7 +138,10 @@ export function LearnLab({ spec, onDone }: { spec: LabSpec; onDone?: (r: LabResu
   const finished = s.step === 3 && createOk;
 
   useEffect(() => {
-    if (finished) onDone?.({ score: s.score, attempts: s.attempts, created: s.created.trim(), mistakes: s.mistakes });
+    if (finished) {
+      onDone?.({ score: s.score, attempts: s.attempts, created: s.created.trim(), mistakes: s.mistakes });
+      celebrate({ score: s.score, max: 5 });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [finished]);
 

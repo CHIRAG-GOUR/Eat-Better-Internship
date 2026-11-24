@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowLeft, ArrowRight, Check, Coins, Landmark, Lightbulb, Maximize, Minimize, Minus, Plus, Radar, RotateCcw, Rocket, Scale, ShoppingBag, Star, Trophy, UserRound, X } from "lucide-react";
 import {
@@ -39,6 +39,7 @@ import { buildBusinessReport, downloadFinancialCsv, feedbackOf } from "./report"
 import type { HQFocus } from "./Business3D";
 import { ProjectReadyPopup, useStudent } from "../shared/ProjectReadyPopup";
 import { detectWebGL } from "@/lib/useClient";
+import { celebrate } from "@/components/celebrate/store";
 
 const HQ3D = dynamic(() => import("./Business3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Opening the head office…</div> });
 
@@ -259,6 +260,14 @@ export default function Activity4() {
 
   const starsAll = [rankStars, mStars, rivalStars, budgetStars, growStars];
   const total = starsAll.reduce((a, x) => a + x, 0);
+
+  // celebrate when the learner reaches the final screen (not when a finished attempt is reopened)
+  const prevStage = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevStage.current !== null && prevStage.current !== 6 && s.stage === 6) celebrate({ score: total, max: 15, title: "Run the Eat Better Business" });
+    prevStage.current = s.stage;
+  }, [hydrated, s.stage]); // eslint-disable-line react-hooks/exhaustive-deps -- only the move into the final stage matters
   const fb = stage === 6 ? feedbackOf(s) : null;
 
   const focus: HQFocus = (["overview", "pricing", "finance", "compete", "budget", presented ? "pitch" : "growth", "overview"] as HQFocus[])[stage] ?? "overview";

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { fredoka, figtree, madeTommy } from "@/lib/fonts";
 import "./globals.css";
 import { BackToTop } from "@/components/chapter/BackToTop";
+import { CelebrationHost } from "@/components/celebrate/CelebrationHost";
 
 export const metadata: Metadata = {
   title: "Eat Better Co Internship · SkilliZee",
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-dvh">
         {children}
         <BackToTop />
+        <CelebrationHost />
       </body>
     </html>
   );

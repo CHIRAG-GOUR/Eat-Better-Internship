@@ -7,6 +7,7 @@ import { useTexture } from "@react-three/drei";
 import { motion } from "motion/react";
 import { Flame, Heart, RotateCcw, Star, Timer, Trophy, ArrowRight, Frown } from "lucide-react";
 import { Human, type HumanLook } from "@/components/world2/Human";
+import { celebrate } from "@/components/celebrate/store";
 
 /**
  * Shared kit for the Module 2 games (2.1, 2.3, 2.4): helpers, camera fit, QA probe, WebGL text labels, movers,
@@ -558,6 +559,9 @@ export function Hud({ hearts, maxHearts, frac, timeLabel, score, combo, extra }:
 
 /** A short win / lose card over the stage, with stars and Restart / continue. */
 export function EndCard({ win, title, text, stars, onRestart, onNext, nextLabel = "Continue" }: { win: boolean; title: string; text: string; stars?: number; onRestart?: () => void; onNext?: () => void; nextLabel?: string }) {
+  useEffect(() => {
+    celebrate(win ? { score: stars ?? 3, max: 3, title } : { score: 0, max: 3, title, lost: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, when the end card appears
   return (
     <div className="absolute inset-0 grid place-items-center bg-cocoa/35 p-3 backdrop-blur-[2px]" data-testid={win ? "end-win" : "end-lose"}>
       <motion.div initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className={`w-full max-w-sm rounded-[22px] border-2 bg-white p-4 text-center shadow-[3px_3px_0_0_#2f1c1a] ${win ? "border-success" : "border-error"}`}>

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Check, Download, FileText, Image as ImageIcon, Maximize, Minimize, MonitorPlay, RotateCcw } from "lucide-react";
 import { useStudio } from "./store";
 import { AUD, CAT, LAUNCH_BUDGET, rupees } from "./data";
@@ -15,6 +15,8 @@ import { AdsPanel, BrandPanel, CanvasView, DiscoverPanel, Kicker, LaunchPanel, P
 import { downloadDataUrl } from "../shared/pdf";
 import { ProjectReadyPopup as ProjectReady, useStudent } from "../shared/ProjectReadyPopup";
 import { detectWebGL } from "@/lib/useClient";
+import { celebrate } from "@/components/celebrate/store";
+import { packQuality, postQuality } from "./ads";
 
 const Studio3D = dynamic(() => import("./Studio3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Setting up the studio…</div> });
 
@@ -139,6 +141,14 @@ export default function Activity2() {
       },
     },
   ];
+
+  // celebrate when the learner reaches the final screen (not when a finished attempt is reopened)
+  const prevStage = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevStage.current !== null && prevStage.current !== 6 && s.stage === 6) celebrate({ score: Math.round((postQuality(s.post, s.pack).score + packQuality(s.pack)) / 2), max: 100, title: "Brand Studio launch" });
+    prevStage.current = s.stage;
+  }, [hydrated, s.stage]); // eslint-disable-line react-hooks/exhaustive-deps -- only the move into the final stage matters
 
   if (!hydrated) return <div className="grid min-h-screen place-items-center bg-cream text-cocoa-2">Opening the studio…</div>;
   const stage = s.stage;

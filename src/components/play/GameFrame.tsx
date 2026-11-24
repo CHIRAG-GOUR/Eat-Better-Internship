@@ -1,9 +1,10 @@
 "use client";
 
 import { CalculatorButton } from "./Calculator";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BookOpenCheck, Check, Lightbulb, PencilLine, RotateCcw, Star } from "lucide-react";
+import { celebrate } from "@/components/celebrate/store";
 
 /**
  * Shared frame for the evidence-based activities (2.3, 2.4): a header with the mission, a step track
@@ -45,6 +46,12 @@ export function GameFrame({
   guide?: StepGuideInfo;
   children: ReactNode;
 }) {
+  // celebrate the moment the stars appear (the activity was just finished)
+  const hadStars = useRef(stars !== undefined);
+  useEffect(() => {
+    if (stars !== undefined && !hadStars.current) celebrate({ score: stars, max: 3, title });
+    hadStars.current = stars !== undefined;
+  }, [stars, title]);
   return (
     <div className="overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
       <div className="border-b border-cocoa/10 bg-cream px-4 py-4 sm:px-6">

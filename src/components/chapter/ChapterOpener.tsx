@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform, useReducedMotion } from "motion/react"
 import { useRef } from "react";
 import { ArrowDown } from "lucide-react";
 import { GlossaryText } from "./Glossary";
+import { AudioChapter } from "@/components/audio/AudioChapter";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -73,6 +74,8 @@ export function ChapterOpener({
             className="eb-squiggle !mt-4 !w-48"
             aria-hidden
           />
+          {/* audio chapter: listen to a read-along summary of this chapter */}
+          <AudioChapter chapter={number} />
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}

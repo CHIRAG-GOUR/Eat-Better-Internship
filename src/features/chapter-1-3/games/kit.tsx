@@ -5,6 +5,7 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { Heart, RotateCcw, Star } from "lucide-react";
 import type { HumanLook } from "@/components/world2/Human";
+import { celebrate } from "@/components/celebrate/store";
 
 /**
  * Small shared kit for the Chapter 1.3-1.6 games: re-exports the Chapter 4.1 3D helpers (camera fit, text sprites,
@@ -77,6 +78,9 @@ export function StarRow({ stars }: { stars: number }) {
 
 /** Win / lose card shown under the stage. */
 export function EndCard({ won, stars, title, body, onRestart, children }: { won: boolean; stars?: number; title: string; body: string; onRestart: () => void; children?: ReactNode }) {
+  useEffect(() => {
+    celebrate(won ? { score: stars ?? 3, max: 3, title } : { score: 0, max: 3, title, lost: true });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- once, when the end card appears
   return (
     <div data-testid={won ? "game-won" : "game-lost"} className={`mt-4 rounded-[20px] border-2 p-4 sm:p-5 ${won ? "border-success/50 bg-success/10" : "border-error/40 bg-error/5"}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">

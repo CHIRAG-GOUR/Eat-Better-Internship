@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Check, ChevronRight, Download, FlaskConical, Info, Maximize, Minimize, PackageCheck, RotateCcw, ShieldCheck, Star, TriangleAlert, X } from "lucide-react";
 import { CATEGORIES, CHECKPOINTS, CONSUMERS, FLAVOURS, ING, INGREDIENTS, REFERENCE, rng, type CheckpointId } from "./data";
@@ -13,6 +13,7 @@ import type { Focus, Lot, PackOption, TrayItem } from "./Lab3D";
 import { buildReport, downloadDataUrl, type ReportBlock } from "../shared/pdf";
 import { ProjectReady, useStudent } from "../shared/ProjectReady";
 import { detectWebGL } from "@/lib/useClient";
+import { celebrate } from "@/components/celebrate/store";
 
 const Lab3D = dynamic(() => import("./Lab3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Loading the lab…</div> });
 
@@ -325,6 +326,14 @@ export default function Activity1() {
   /* ── results ─────────────────────────────────────────────── */
   const checkMistakes = CHECKPOINTS.reduce((a, c) => a + (s.checks[c.id]?.mistakes ?? 0), 0);
   const score = Math.max(40, 100 - checkMistakes * 5);
+
+  // celebrate when the learner reaches the final screen (not when a finished attempt is reopened)
+  const prevStage = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevStage.current !== null && prevStage.current !== 5 && s.stage === 5) celebrate({ score, max: 100, title: "Product Innovation Lab" });
+    prevStage.current = s.stage;
+  }, [hydrated, s.stage]); // eslint-disable-line react-hooks/exhaustive-deps -- only the move into the final stage matters
 
   const report = async () => {
     const date = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });

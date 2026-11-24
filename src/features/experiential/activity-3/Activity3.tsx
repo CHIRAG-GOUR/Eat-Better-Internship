@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, BadgeCheck, Boxes, Check, Clock, Info, Lock, Maximize, Minimize, Minus, Package, Play, Plus, RotateCcw, Star, Truck, Wand2, Zap } from "lucide-react";
 import { CARTON_UNITS, CHANNELS, CH_IDS, EVENTS, MISSION, PACKS, ROUTES, SKUS, SKU, rng, type ChId, type PackId } from "./data";
@@ -12,6 +12,7 @@ import type { DCFocus } from "./Warehouse3D";
 import { buildReport, type ReportBlock } from "../shared/pdf";
 import { ProjectReadyPopup, useStudent } from "../shared/ProjectReadyPopup";
 import { detectWebGL } from "@/lib/useClient";
+import { celebrate } from "@/components/celebrate/store";
 
 const Warehouse3D = dynamic(() => import("./Warehouse3D"), { ssr: false, loading: () => <div className="grid h-full place-items-center text-cocoa-2">Loading the warehouse…</div> });
 
@@ -222,6 +223,14 @@ export default function Activity3() {
   const evScore = evN ? Math.round(((evTotals.rec + evTotals.late * 0.4) / evN) * 100) : 0;
   const missionScore = Math.round(mission.onTimeRate * 100);
   const overall = Math.round(routeScore * 0.1 + recvScore * 0.15 + weekScore * 0.3 + evScore * 0.2 + missionScore * 0.25);
+
+  // celebrate when the learner reaches the final screen (not when a finished attempt is reopened)
+  const prevStage = useRef<number | null>(null);
+  useEffect(() => {
+    if (!hydrated) return;
+    if (prevStage.current !== null && prevStage.current !== 6 && s.stage === 6) celebrate({ score: overall, max: 100, title: "Distribution Command Centre" });
+    prevStage.current = s.stage;
+  }, [hydrated, s.stage]); // eslint-disable-line react-hooks/exhaustive-deps -- only the move into the final stage matters
 
   const report = async () => {
     const date = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
