@@ -46,14 +46,7 @@ export const useDC = create<S>()(
       set: (p) => set(p),
       restart: () => set(fresh()),
     }),
-    // version 2: allocation is counted in whole boxes; keep routing and receiving work, redo allocation onwards
-    {
-      name: "eb-exp-3",
-      version: 2,
-      migrate: (old) => {
-        const o = (old ?? {}) as Partial<S>;
-        return { ...fresh(), seed: o.seed ?? fresh().seed, routes: o.routes ?? {}, routeMistakes: o.routeMistakes ?? 0, recv: o.recv ?? {}, recvMistakes: o.recvMistakes ?? 0, stage: Math.min(o.stage ?? 0, 3), reflection: o.reflection ?? "" } as unknown as S;
-      },
-    },
+    // version 2: allocation is counted in whole boxes; older saves simply start fresh
+    { name: "eb-exp-3", version: 2, migrate: () => fresh() as unknown as S },
   ),
 );

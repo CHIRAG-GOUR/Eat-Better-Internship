@@ -535,7 +535,7 @@ export default function Activity3() {
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {(Object.keys(PACKS) as PackId[]).map((pk) => (
-                          <button key={pk} title={PACKS[pk].desc} onClick={() => s.set({ packs: { ...s.packs, [c]: pk } })} className={`rounded-full border px-2.5 py-1 text-[0.78rem] font-bold ${s.packs[c] === pk ? "border-orange bg-orange text-white" : "border-cocoa/15 bg-white"}`}>
+                          <button key={pk} title={PACKS[pk].desc} onClick={() => s.set({ packs: { ...useDC.getState().packs, [c]: pk } })} className={`rounded-full border px-2.5 py-1 text-[0.78rem] font-bold ${s.packs[c] === pk ? "border-orange bg-orange text-white" : "border-cocoa/15 bg-white"}`}>
                             {pk === "basic" ? "Tote / single-wall" : pk === "protective" ? "5-ply + cushion" : "Rigid + pallet"}
                           </button>
                         ))}
