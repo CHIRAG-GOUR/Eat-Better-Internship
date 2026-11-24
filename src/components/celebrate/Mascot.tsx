@@ -7,19 +7,21 @@ import { motion, useReducedMotion } from "motion/react";
  * arms and legs and an orange headband. Hand-drawn SVG, so it stays crisp at any size.
  *
  * Moods: party (arms up, star eyes, party hat), happy, cheeky (wink + tongue, for a friendly roast), cheer (thumbs up,
- * encouraging), talk (mouth moves, for audio chapters). `walking` swings the legs and bobs the body.
+ * encouraging), talk (mouth moves, for audio chapters), wow (big eyes, "O" mouth), think (hand on chin, eyes up),
+ * point (arm out towards the text while talking) and wave (hello). `walking` swings the legs and bobs the body;
+ * `flip` makes Laddoo face the other way.
  */
-export type MascotMood = "party" | "happy" | "cheeky" | "cheer" | "talk";
+export type MascotMood = "party" | "happy" | "cheeky" | "cheer" | "talk" | "wow" | "think" | "point" | "wave";
 
-export function Mascot({ mood = "happy", walking = false, size = 120, className = "" }: { mood?: MascotMood; walking?: boolean; size?: number; className?: string }) {
+export function Mascot({ mood = "happy", walking = false, size = 120, className = "", flip = false }: { mood?: MascotMood; walking?: boolean; size?: number; className?: string; flip?: boolean }) {
   const reduced = useReducedMotion();
   const still = !!reduced;
-  const bob = walking ? { y: [0, -4, 0] } : mood === "party" ? { y: [0, -10, 0], rotate: [0, -4, 4, 0] } : { y: [0, -3, 0] };
+  const bob = walking ? { y: [0, -4, 0] } : mood === "party" ? { y: [0, -10, 0], rotate: [0, -4, 4, 0] } : mood === "wow" ? { y: [0, -8, 0] } : mood === "think" ? { rotate: [0, -3, 0] } : { y: [0, -3, 0] };
   const bobT = { duration: walking ? 0.45 : mood === "party" ? 0.7 : 2.4, repeat: Infinity, ease: "easeInOut" as const };
   const armsUp = mood === "party";
   const thumbs = mood === "cheer";
   return (
-    <motion.svg viewBox="0 0 140 160" width={size} height={(size * 160) / 140} className={className} role="img" aria-label="Laddoo, the Eat Better buddy" animate={still ? undefined : bob} transition={bobT}>
+    <motion.svg viewBox="0 0 140 160" width={size} height={(size * 160) / 140} className={className} style={flip ? { transform: "scaleX(-1)" } : undefined} role="img" aria-label="Laddoo, the Eat Better buddy" animate={still ? undefined : bob} transition={bobT}>
       <defs>
         <radialGradient id="mb-body" cx="40%" cy="35%" r="70%">
           <stop offset="0%" stopColor="#E9B16A" />
@@ -44,18 +46,35 @@ export function Mascot({ mood = "happy", walking = false, size = 120, className 
       </motion.g>
       {/* arms */}
       <motion.g animate={armsUp && !still ? { rotate: [-8, 8, -8] } : { rotate: 0 }} transition={{ duration: 0.5, repeat: Infinity }} style={{ originX: "30px", originY: "88px" }}>
-        <path d={armsUp ? "M32 86 Q18 64 14 46" : "M30 90 Q14 98 12 112"} stroke="#5A3418" strokeWidth="7" fill="none" strokeLinecap="round" />
-        <circle cx={armsUp ? 14 : 12} cy={armsUp ? 44 : 114} r="6.5" fill="#E9B16A" stroke="#5A3418" strokeWidth="2" />
+        <path d={armsUp ? "M32 86 Q18 64 14 46" : mood === "wow" ? "M30 86 Q14 78 6 70" : "M30 90 Q14 98 12 112"} stroke="#5A3418" strokeWidth="7" fill="none" strokeLinecap="round" />
+        <circle cx={armsUp ? 14 : mood === "wow" ? 6 : 12} cy={armsUp ? 44 : mood === "wow" ? 68 : 114} r="6.5" fill="#E9B16A" stroke="#5A3418" strokeWidth="2" />
       </motion.g>
-      <motion.g animate={(armsUp || mood === "talk") && !still ? { rotate: mood === "talk" ? [0, -10, 0] : [8, -8, 8] } : { rotate: 0 }} transition={{ duration: mood === "talk" ? 1.2 : 0.5, repeat: Infinity }} style={{ originX: "110px", originY: "88px" }}>
-        <path d={armsUp ? "M108 86 Q122 64 126 46" : thumbs ? "M110 88 Q124 80 126 66" : "M110 90 Q126 98 128 112"} stroke="#5A3418" strokeWidth="7" fill="none" strokeLinecap="round" />
+      <motion.g
+        animate={!still && (armsUp || mood === "talk" || mood === "wave" || mood === "point") ? { rotate: mood === "talk" ? [0, -10, 0] : mood === "wave" ? [0, -18, 6, -18, 0] : mood === "point" ? [0, -4, 0] : [8, -8, 8] } : { rotate: 0 }}
+        transition={{ duration: mood === "talk" ? 1.2 : mood === "wave" ? 1 : mood === "point" ? 1.4 : 0.5, repeat: Infinity }}
+        style={{ originX: "110px", originY: "88px" }}
+      >
+        <path
+          d={armsUp ? "M108 86 Q122 64 126 46" : thumbs ? "M110 88 Q124 80 126 66" : mood === "wave" ? "M110 86 Q124 70 124 50" : mood === "point" ? "M110 88 Q126 84 136 78" : mood === "think" ? "M108 94 Q104 114 88 114" : mood === "wow" ? "M110 86 Q126 78 134 70" : "M110 90 Q126 98 128 112"}
+          stroke="#5A3418"
+          strokeWidth="7"
+          fill="none"
+          strokeLinecap="round"
+        />
         {thumbs ? (
           <g>
             <rect x="119" y="54" width="14" height="13" rx="4" fill="#E9B16A" stroke="#5A3418" strokeWidth="2" />
             <rect x="122" y="44" width="6" height="13" rx="3" fill="#E9B16A" stroke="#5A3418" strokeWidth="2" />
           </g>
         ) : (
-          <circle cx={armsUp ? 126 : 128} cy={armsUp ? 44 : 114} r="6.5" fill="#E9B16A" stroke="#5A3418" strokeWidth="2" />
+          <circle
+            cx={armsUp ? 126 : mood === "wave" ? 124 : mood === "point" ? 137 : mood === "think" ? 84 : mood === "wow" ? 134 : 128}
+            cy={armsUp ? 44 : mood === "wave" ? 48 : mood === "point" ? 77 : mood === "think" ? 113 : mood === "wow" ? 68 : 114}
+            r="6.5"
+            fill="#E9B16A"
+            stroke="#5A3418"
+            strokeWidth="2"
+          />
         )}
       </motion.g>
       {/* body: the laddoo */}
@@ -90,6 +109,28 @@ export function Mascot({ mood = "happy", walking = false, size = 120, className 
           <path d="M54 80 l3 6 6 1 -4.5 4 1 6 -5.5 -3 -5.5 3 1 -6 -4.5 -4 6 -1 Z" />
           <path d="M86 80 l3 6 6 1 -4.5 4 1 6 -5.5 -3 -5.5 3 1 -6 -4.5 -4 6 -1 Z" />
         </g>
+      ) : mood === "wow" ? (
+        <g>
+          {[56, 86].map((x) => (
+            <g key={x}>
+              <ellipse cx={x} cy="86" rx="9" ry="10.5" fill="#fff" stroke="#5A3418" strokeWidth="2" />
+              <circle cx={x} cy="86" r="3.4" fill="#2F1C1A" />
+            </g>
+          ))}
+        </g>
+      ) : mood === "think" ? (
+        <g>
+          {[56, 86].map((x) => (
+            <g key={x}>
+              <ellipse cx={x} cy="88" rx="7" ry="8.5" fill="#fff" stroke="#5A3418" strokeWidth="2" />
+              <circle cx={x + 2.5} cy="84" r="4" fill="#2F1C1A" />
+            </g>
+          ))}
+          {/* thought dots */}
+          <circle cx="104" cy="44" r="3" fill="#fff" stroke="#5A3418" strokeWidth="1.5" />
+          <circle cx="114" cy="34" r="4.5" fill="#fff" stroke="#5A3418" strokeWidth="1.5" />
+          <circle cx="127" cy="22" r="6.5" fill="#fff" stroke="#5A3418" strokeWidth="1.5" />
+        </g>
       ) : mood === "cheeky" ? (
         <g>
           <ellipse cx="56" cy="88" rx="7" ry="8.5" fill="#fff" stroke="#5A3418" strokeWidth="2" />
@@ -114,7 +155,11 @@ export function Mascot({ mood = "happy", walking = false, size = 120, className 
       <circle cx="46" cy="102" r="7" fill="url(#mb-cheek)" />
       <circle cx="94" cy="102" r="7" fill="url(#mb-cheek)" />
       {/* mouth */}
-      {mood === "talk" ? (
+      {mood === "wow" ? (
+        <ellipse cx="70" cy="108" rx="6" ry="7.5" fill="#7A1E12" stroke="#2F1C1A" strokeWidth="2" />
+      ) : mood === "think" ? (
+        <path d="M60 106 Q65 103 70 106 Q75 109 80 106" stroke="#2F1C1A" strokeWidth="3" fill="none" strokeLinecap="round" />
+      ) : mood === "talk" || mood === "point" || mood === "wave" ? (
         <motion.ellipse cx="70" cy="106" rx="7" fill="#7A1E12" stroke="#2F1C1A" strokeWidth="2" animate={still ? { ry: 4 } : { ry: [2, 6, 3, 7, 2] }} transition={{ duration: 0.9, repeat: Infinity }} />
       ) : mood === "cheeky" ? (
         <g>

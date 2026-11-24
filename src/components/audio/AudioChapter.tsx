@@ -1,79 +1,156 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
-import { Headphones, ListMusic, LocateFixed, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
+import { Headphones, LocateFixed, Pause, Play, SkipBack, SkipForward, X } from "lucide-react";
 import { Mascot } from "@/components/celebrate/Mascot";
 import SCRIPTS from "@/features/audio-chapters/scripts.json";
+import { buildTour, type TourStep } from "./tour";
 
 /**
- * Audio chapter: a narrated summary of the chapter, read along on the page.
+ * Audio chapter with Laddoo as the guide. Press play and Laddoo walks onto the page: it goes to each heading,
+ * paragraph and list item in turn and reads it aloud (each word lights up in the chapter text itself), then turns to
+ * you with a speech bubble and explains that part in simple words. Laddoo reacts as it reads: wide-eyed at numbers,
+ * thinking at questions, pointing while it explains, and celebrating at the end. A small remote bar sits at the bottom.
  *
- *  - The card sits under the chapter title. Pressing play docks a mini player at the bottom of the screen.
- *  - As the narration plays, each word lights up in the mini player's transcript, the chapter section being described
- *    glows and scrolls into view (when "Follow" is on), and Laddoo walks along the progress track, talking.
- *  - Sound comes from, in order: a generated ElevenLabs file with word timings (public/audio-chapters/<n>.mp3 + .json,
- *    made by scripts/generate-audio-chapters.mjs), else the browser's own voice, else a silent read-along.
+ * Sound, in order: generated ElevenLabs files (public/audio-chapters/<n>.json + mp3 chunks, made by
+ * scripts/generate-audio-chapters.mjs from this exact tour), else the browser's voice, else a silent read-along.
  */
 
-type Seg = { section: string; text: string };
-type Script = { title: string; segments: Seg[] };
-type Word = { w: string; seg: number; char: number };
-type Timing = { audio: string; words: [number, number][] }; // [start, end] seconds per word, in script order
 type Mode = "file" | "speech" | "silent";
-
+type FileTour = { chunks: { audio: string; steps: { key: string; text: string; words: [number, number][] }[] }[] };
 const SPEEDS = [0.85, 1, 1.15];
+const titleOf = (n: string) => (SCRIPTS as Record<string, { title: string }>)[n]?.title;
 
-function wordsOf(script: Script): Word[] {
-  const out: Word[] = [];
-  script.segments.forEach((sg, seg) => {
-    for (const m of sg.text.matchAll(/\S+/g)) out.push({ w: m[0], seg, char: m.index ?? 0 });
-  });
-  return out;
+// in-place word highlighting via the CSS Custom Highlight API (no change to the page's own markup)
+type HL = { highlights: Map<string, unknown> };
+const hlApi = () => (typeof CSS !== "undefined" && "highlights" in CSS ? (CSS as unknown as HL).highlights : null);
+function paint(step: TourStep | undefined, wi: number) {
+  const api = hlApi();
+  if (!api) return;
+  api.delete("eb-read");
+  api.delete("eb-done");
+  if (!step || step.kind !== "read") return;
+  const w = step.words[wi];
+  const first = step.words[0];
+  try {
+    if (w?.node) {
+      const r = document.createRange();
+      r.setStart(w.node, w.start!);
+      r.setEnd(w.node, w.end!);
+      api.set("eb-read", new (window as unknown as { Highlight: new (...r: Range[]) => unknown }).Highlight(r));
+    }
+    const prev = step.words[wi - 1];
+    if (first?.node && prev?.node) {
+      const d = document.createRange();
+      d.setStart(first.node, first.start!);
+      d.setEnd(prev.node, prev.end!);
+      api.set("eb-done", new (window as unknown as { Highlight: new (...r: Range[]) => unknown }).Highlight(d));
+    }
+  } catch {
+    /* the text moved; skip this word */
+  }
 }
-
-/** clear page highlights */
-function unmark() {
-  document.querySelectorAll(".audio-reading").forEach((el) => el.classList.remove("audio-reading"));
-  document.querySelectorAll(".audio-heading").forEach((el) => el.classList.remove("audio-heading"));
+function unpaint() {
+  hlApi()?.delete("eb-read");
+  hlApi()?.delete("eb-done");
+  document.querySelectorAll(".tour-line").forEach((e) => e.classList.remove("tour-line"));
 }
 
 export function AudioChapter({ chapter }: { chapter: string }) {
-  const script = (SCRIPTS as Record<string, Script>)[chapter];
-  const words = useMemo(() => (script ? wordsOf(script) : []), [script]);
-  const segStart = useMemo(() => (script ? script.segments.map((_, i) => words.findIndex((w) => w.seg === i)) : []), [script, words]);
-  const minutes = Math.max(1, Math.round(words.length / 150));
-
-  const [open, setOpen] = useState(false); // mini player docked
+  const title = titleOf(chapter);
+  const card = useRef<HTMLDivElement>(null);
+  const [steps, setSteps] = useState<TourStep[]>([]);
+  const [si, setSi] = useState(0); // step
+  const [wi, setWi] = useState(0); // word within step
+  const [open, setOpen] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [idx, setIdx] = useState(0); // current word
   const [rate, setRate] = useState(1);
   const [follow, setFollow] = useState(true);
-  const [showAll, setShowAll] = useState(false);
   const [mode, setMode] = useState<Mode | null>(null);
+  const [pos, setPos] = useState<{ x: number; y: number; bx: number; by: number; bw: number; flip: boolean } | null>(null);
+  const [walking, setWalking] = useState(false);
 
-  const audio = useRef<HTMLAudioElement | null>(null);
-  const timing = useRef<Timing | null>(null);
+  const run = useRef(0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const raf = useRef(0);
-  const run = useRef(0); // invalidates stale speech callbacks
-  const lastSeg = useRef(-1);
-
-  const seg = words[idx]?.seg ?? 0;
-
-  /* ── page highlighting: the section being described glows, its heading gets a marker sweep ── */
+  const audio = useRef<HTMLAudioElement | null>(null);
+  const fileTour = useRef<FileTour | null>(null);
+  const stepsRef = useRef<TourStep[]>([]);
   useEffect(() => {
-    if (!open || !script) return;
-    if (seg === lastSeg.current) return;
-    lastSeg.current = seg;
-    unmark();
-    const el = document.getElementById(script.segments[seg].section);
-    if (!el) return;
-    el.classList.add("audio-reading");
-    el.querySelector("h2")?.classList.add("audio-heading");
-    if (follow) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, [seg, open, follow, script]);
+    stepsRef.current = steps;
+  }, [steps]);
+
+  const step = steps[si];
+
+  // expose the tour so the audio generator can record exactly what Laddoo reads
+  useEffect(() => {
+    (window as unknown as { __ebTour?: () => { key: string; kind: string; text: string }[] }).__ebTour = () => buildTour(chapter, card.current).map((s) => ({ key: s.key, kind: s.kind, text: s.text }));
+  }, [chapter]);
+
+  /* ── where Laddoo stands: beside the line it is reading; the bubble goes where there is room ── */
+  const place = useCallback(() => {
+    const s = stepsRef.current[si];
+    if (!s) return;
+    const r = s.el.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const size = vw < 640 ? 56 : 72;
+    // when explaining, stand to the right of where the words end (if there is room) so the bubble doesn't cover them
+    if (s.kind === "explain") {
+      const range = document.createRange();
+      range.selectNodeContents(s.el);
+      const t = range.getBoundingClientRect();
+      const bw = Math.min(330, vw - 24);
+      if (t.width > 0 && vw - t.right >= size + bw + 28) {
+        const x = t.right + 14;
+        const y = t.top + Math.min(t.height, 60) / 2 - size * 0.62;
+        setPos({ x: x + scrollX, y: y + scrollY, bx: x + size + 8 + scrollX, by: y - 8 + scrollY, bw, flip: false });
+        return;
+      }
+    }
+    const roomLeft = r.left > size + 12;
+    const x = roomLeft ? r.left - size - 6 : Math.max(6, r.left - 4);
+    const y = roomLeft ? r.top + Math.min(r.height, 60) / 2 - size * 0.62 : r.top - size - 4;
+    const bw = Math.min(330, vw - 24);
+    const rightRoom = vw - (x + size + 8);
+    const bx = rightRoom >= bw ? x + size + 8 : Math.max(12, Math.min(vw - bw - 12, x));
+    const by = rightRoom >= bw ? y - 8 : y + size * 1.15 + 6;
+    setPos({ x: x + scrollX, y: y + scrollY, bx: bx + scrollX, by: by + scrollY, bw, flip: false });
+  }, [si]);
+
+  useEffect(() => {
+    if (!open || !step) return;
+    // walk to the new line, keep the page following along
+    const t0 = setTimeout(() => setWalking(true), 0);
+    const t = setTimeout(() => setWalking(false), 850);
+    document.querySelectorAll(".tour-line").forEach((e) => e.classList.remove("tour-line"));
+    if (step.kind === "read") step.el.classList.add("tour-line");
+    if (follow) {
+      const r = step.el.getBoundingClientRect();
+      if (r.top < 90 || r.bottom > window.innerHeight - 230) window.scrollTo({ top: scrollY + r.top - window.innerHeight * 0.3, behavior: "smooth" });
+    }
+    return () => {
+      clearTimeout(t0);
+      clearTimeout(t);
+    };
+  }, [si, open, step, follow]);
+
+  // keep Laddoo glued to the line while the page scrolls or resizes
+  useEffect(() => {
+    if (!open) return;
+    let id = 0;
+    const loop = () => {
+      place();
+      id = requestAnimationFrame(loop);
+    };
+    id = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(id);
+  }, [open, place]);
+
+  useEffect(() => {
+    if (open) paint(step, wi);
+  }, [open, step, wi]);
 
   /* ── engines ── */
   const stopAll = useCallback(() => {
@@ -84,112 +161,118 @@ export function AudioChapter({ chapter }: { chapter: string }) {
     if (typeof window !== "undefined" && "speechSynthesis" in window) window.speechSynthesis.cancel();
   }, []);
 
-  // silent read-along: about 2.6 words a second, a little longer for long words and pauses after full stops
-  const silentFrom = useCallback(
-    (from: number, r: number) => {
-      const my = ++run.current;
-      const step = (i: number) => {
+  const wordMs = (w: string, r: number) => ((270 + w.length * 24 + (/[.!?]$/.test(w) ? 320 : /[,;:]$/.test(w) ? 150 : 0)) / r) | 0;
+
+  // silent read-along
+  const silentFrom = useCallback((from: number, r: number) => {
+    const my = ++run.current;
+    const go = (s: number, w: number) => {
+      if (my !== run.current) return;
+      const st = stepsRef.current[s];
+      if (!st) return setPlaying(false);
+      if (w >= st.words.length) {
+        timer.current = setTimeout(() => go(s + 1, 0), st.kind === "read" ? 250 : 600);
+        return;
+      }
+      setSi(s);
+      setWi(w);
+      timer.current = setTimeout(() => go(s, w + 1), wordMs(st.words[w].w, r));
+    };
+    go(from, 0);
+  }, []);
+
+  // browser voice: one utterance per step, word boundaries move the highlight (estimated if the voice sends none)
+  const speechFrom = useCallback((from: number, r: number) => {
+    const synth = window.speechSynthesis;
+    const my = ++run.current;
+    synth.cancel();
+    const voices = synth.getVoices();
+    const voice =
+      voices.find((v) => /en-IN/i.test(v.lang) && /female|google|neural|natural/i.test(v.name)) ||
+      voices.find((v) => /en-IN/i.test(v.lang)) ||
+      voices.find((v) => /en-GB/i.test(v.lang) && /google|neural|natural/i.test(v.name)) ||
+      voices.find((v) => /^en/i.test(v.lang));
+    const say = (s: number) => {
+      if (my !== run.current) return;
+      const st = stepsRef.current[s];
+      if (!st) return setPlaying(false);
+      setSi(s);
+      setWi(0);
+      const text = st.words.map((w) => w.w).join(" ");
+      const starts: number[] = [];
+      let c = 0;
+      st.words.forEach((w) => {
+        starts.push(c);
+        c += w.w.length + 1;
+      });
+      const u = new SpeechSynthesisUtterance(text);
+      if (voice) u.voice = voice;
+      u.rate = r;
+      u.pitch = st.kind === "explain" ? 1.12 : 1.04;
+      let got = false;
+      u.onboundary = (e) => {
+        if (my !== run.current || e.name !== "word") return;
+        got = true;
+        let k = 0;
+        while (k + 1 < starts.length && starts[k + 1] <= e.charIndex) k++;
+        setWi(k);
+      };
+      u.onend = () => {
         if (my !== run.current) return;
-        if (i >= words.length) {
-          setPlaying(false);
-          return;
-        }
-        setIdx(i);
-        const w = words[i].w;
-        const ms = ((260 + w.length * 22 + (/[.!?]$/.test(w) ? 320 : /[,;:]$/.test(w) ? 140 : 0)) / r) | 0;
-        timer.current = setTimeout(() => step(i + 1), ms);
+        timer.current = setTimeout(() => say(s + 1), st.kind === "read" ? 200 : 450);
       };
-      step(from);
-    },
-    [words],
-  );
-
-  // browser voice: one utterance per section; word boundary events move the highlight
-  const speechFrom = useCallback(
-    (from: number, r: number) => {
-      const synth = window.speechSynthesis;
-      const my = ++run.current;
-      synth.cancel();
-      const voices = synth.getVoices();
-      const voice =
-        voices.find((v) => /en-IN/i.test(v.lang) && /female|google|neural|natural/i.test(v.name)) ||
-        voices.find((v) => /en-IN/i.test(v.lang)) ||
-        voices.find((v) => /en-GB/i.test(v.lang) && /google|neural|natural/i.test(v.name)) ||
-        voices.find((v) => /^en/i.test(v.lang));
-      const speakSeg = (sg: number, fromWord: number) => {
-        if (my !== run.current || !script) return;
-        if (sg >= script.segments.length) {
-          setPlaying(false);
-          return;
-        }
-        const segWords = words.map((w, i) => ({ ...w, i })).filter((w) => w.seg === sg);
-        const startW = segWords.find((w) => w.i >= fromWord) ?? segWords[0];
-        const offset = startW.char;
-        const u = new SpeechSynthesisUtterance(script.segments[sg].text.slice(offset));
-        if (voice) u.voice = voice;
-        u.rate = r;
-        u.pitch = 1.05;
-        let gotBoundary = false;
-        setIdx(startW.i);
-        u.onboundary = (e) => {
-          if (my !== run.current || e.name !== "word") return;
-          gotBoundary = true;
-          const c = offset + e.charIndex;
-          const hit = [...segWords].reverse().find((w) => w.char <= c);
-          if (hit) setIdx(hit.i);
+      timer.current = setTimeout(() => {
+        if (got || my !== run.current) return;
+        let k = 0;
+        const tick = () => {
+          if (got || my !== run.current || k >= st.words.length) return;
+          setWi(k);
+          timer.current = setTimeout(tick, wordMs(st.words[k++].w, r));
         };
-        u.onend = () => {
-          if (my !== run.current) return;
-          speakSeg(sg + 1, -1);
-        };
-        // some voices never send word boundaries: estimate the highlight instead
-        timer.current = setTimeout(() => {
-          if (gotBoundary || my !== run.current) return;
-          let k = segWords.indexOf(startW);
-          const tick = () => {
-            if (my !== run.current || gotBoundary || k >= segWords.length) return;
-            setIdx(segWords[k].i);
-            const w = segWords[k].w;
-            k++;
-            timer.current = setTimeout(tick, ((300 + w.length * 25 + (/[.!?]$/.test(w) ? 250 : 0)) / r) | 0);
-          };
-          tick();
-        }, 900);
-        synth.speak(u);
-      };
-      speakSeg(words[from]?.seg ?? 0, from);
-    },
-    [script, words],
-  );
+        tick();
+      }, 900);
+      synth.speak(u);
+    };
+    say(from);
+  }, []);
 
-  // generated file: the highlight follows the audio clock
-  const fileFrom = useCallback(
-    (from: number, r: number) => {
-      const t = timing.current;
-      if (!t) return;
-      const my = ++run.current;
-      const a = (audio.current ??= new Audio(t.audio));
+  // generated files: one audio chunk at a time, the highlight follows the audio clock
+  const fileFrom = useCallback((from: number, r: number) => {
+    const ft = fileTour.current;
+    if (!ft) return;
+    const my = ++run.current;
+    // flatten: global step index → (chunk, step in chunk)
+    const map: { c: number; k: number }[] = [];
+    ft.chunks.forEach((ch, c) => ch.steps.forEach((_, k) => map.push({ c, k })));
+    const playChunk = (c: number, startStep: number) => {
+      if (my !== run.current) return;
+      const ch = ft.chunks[c];
+      if (!ch) return setPlaying(false);
+      const a = new Audio(ch.audio);
+      audio.current?.pause();
+      audio.current = a;
       a.playbackRate = r;
-      a.currentTime = t.words[from]?.[0] ?? 0;
-      a.onended = () => my === run.current && setPlaying(false);
+      const first = map.findIndex((m) => m.c === c);
+      const st0 = ch.steps[startStep - first]?.words[0]?.[0] ?? 0;
+      a.currentTime = st0;
+      a.onended = () => my === run.current && playChunk(c + 1, map.findIndex((m) => m.c === c + 1));
       void a.play().catch(() => setPlaying(false));
       const loop = () => {
         if (my !== run.current) return;
-        const now = a.currentTime;
-        let lo = 0;
-        let hi = t.words.length - 1;
-        while (lo < hi) {
-          const mid = (lo + hi + 1) >> 1;
-          if (t.words[mid][0] <= now) lo = mid;
-          else hi = mid - 1;
-        }
-        setIdx(lo);
+        const t = a.currentTime;
+        let s = first;
+        for (let k = 0; k < ch.steps.length; k++) if ((ch.steps[k].words[0]?.[0] ?? 0) <= t) s = first + k;
+        const ws = ch.steps[s - first].words;
+        let w = 0;
+        while (w + 1 < ws.length && ws[w + 1][0] <= t) w++;
+        setSi(s);
+        setWi(w);
         raf.current = requestAnimationFrame(loop);
       };
       raf.current = requestAnimationFrame(loop);
-    },
-    [],
-  );
+    };
+    playChunk(map[from]?.c ?? 0, from);
+  }, []);
 
   const startFrom = useCallback(
     (from: number, m: Mode, r: number) => {
@@ -202,136 +285,159 @@ export function AudioChapter({ chapter }: { chapter: string }) {
     [fileFrom, silentFrom, speechFrom, stopAll],
   );
 
-  /** decide where the sound comes from, once */
-  const pickMode = useCallback(async (): Promise<Mode> => {
-    if (mode) return mode;
+  const ensureTour = async (): Promise<{ tour: TourStep[]; m: Mode }> => {
+    let tour = stepsRef.current;
+    if (!tour.length) {
+      tour = buildTour(chapter, card.current);
+      stepsRef.current = tour;
+      setSteps(tour);
+    }
+    if (mode) return { tour, m: mode };
     let m: Mode = "silent";
     try {
       const res = await fetch(`/audio-chapters/${chapter}.json`, { cache: "no-store" });
       if (res.ok) {
-        const t = (await res.json()) as Timing;
-        if (t.words?.length === words.length) {
-          timing.current = t;
+        const ft = (await res.json()) as FileTour;
+        const flat = ft.chunks?.flatMap((c) => c.steps) ?? [];
+        // use the recording only if it was made from this exact tour
+        if (flat.length === tour.length && flat.every((s, i) => s.key === tour[i].key && s.text === tour[i].text)) {
+          fileTour.current = ft;
           m = "file";
         }
       }
     } catch {
-      /* no generated file yet */
+      /* no recording yet */
     }
-    if (m === "silent" && typeof window !== "undefined" && "speechSynthesis" in window) m = "speech";
+    if (m === "silent" && "speechSynthesis" in window) m = "speech";
     setMode(m);
-    return m;
-  }, [chapter, mode, words.length]);
+    return { tour, m };
+  };
 
   const play = async () => {
     setOpen(true);
-    const m = await pickMode();
-    startFrom(idx >= words.length - 1 ? 0 : idx, m, rate);
+    const { tour, m } = await ensureTour();
+    startFrom(si >= tour.length - 1 ? 0 : si, m, rate);
   };
   const pause = () => {
     stopAll();
     setPlaying(false);
   };
   const jump = (to: number) => {
-    const i = Math.max(0, Math.min(words.length - 1, to));
-    setIdx(i);
+    const i = Math.max(0, Math.min(steps.length - 1, to));
+    setSi(i);
+    setWi(0);
     if (playing && mode) startFrom(i, mode, rate);
   };
   const close = () => {
     pause();
     setOpen(false);
-    setIdx(0);
-    lastSeg.current = -1;
-    unmark();
+    setSi(0);
+    setWi(0);
+    unpaint();
   };
   const cycleRate = () => {
     const r = SPEEDS[(SPEEDS.indexOf(rate) + 1) % SPEEDS.length];
     setRate(r);
-    if (playing && mode) startFrom(idx, mode, r);
+    if (playing && mode) startFrom(si, mode, r);
   };
 
-  useEffect(() => () => {
-    stopAll();
-    unmark();
-  }, [stopAll]);
+  useEffect(
+    () => () => {
+      stopAll();
+      unpaint();
+    },
+    [stopAll],
+  );
 
-  if (!script) return null;
-  const progress = words.length > 1 ? idx / (words.length - 1) : 0;
-  const curSeg = script.segments[seg];
-  const segWords = words.map((w, i) => ({ ...w, i })).filter((w) => w.seg === seg);
+  if (!title) return null;
+  const progress = steps.length > 1 ? si / (steps.length - 1) : 0;
+  const reading = step?.kind === "read";
 
   return (
     <>
       {/* the card under the chapter title */}
-      <div className="pointer-events-auto mt-5 flex max-w-[38rem] items-center gap-3 rounded-2xl border border-cocoa bg-white/95 p-3 shadow-[3px_3px_0_0_#2f1c1a] sm:p-3.5">
+      <div ref={card} className="pointer-events-auto mt-5 flex max-w-[38rem] items-center gap-3 rounded-2xl border border-cocoa bg-white/95 p-3 shadow-[3px_3px_0_0_#2f1c1a] sm:p-3.5">
         <div className="hidden shrink-0 sm:block">
-          <Mascot mood={playing ? "talk" : "happy"} size={58} />
+          <Mascot mood={open ? "happy" : "wave"} size={58} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5 text-[0.75rem] font-extrabold uppercase tracking-[0.12em] text-orange">
-            <Headphones className="size-4" /> Audio chapter · about {minutes} min
+            <Headphones className="size-4" /> Audio chapter with Laddoo
           </div>
-          <div className="font-display text-[1.05rem] font-semibold leading-tight text-cocoa">Listen to this chapter</div>
-          <div className="text-[0.84rem] leading-snug text-cocoa-2">Words light up as they are read, and the page follows along.</div>
+          <div className="font-display text-[1.05rem] font-semibold leading-tight text-cocoa">Listen and read along</div>
+          <div className="text-[0.84rem] leading-snug text-cocoa-2">Laddoo walks through the chapter, reads every part with you and explains it.</div>
         </div>
         <button onClick={playing ? pause : play} aria-label={playing ? "Pause the audio chapter" : "Play the audio chapter"} className="grid size-12 shrink-0 place-items-center rounded-full border-2 border-cocoa bg-orange text-white shadow-[2px_2px_0_0_#2f1c1a] hover:bg-[#e04f00]">
           {playing ? <Pause className="size-5 fill-white" /> : <Play className="ml-0.5 size-5 fill-white" />}
         </button>
       </div>
 
-      {/* the docked mini player */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {open && pos && step && (
+              <motion.div key="guide" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                {/* Laddoo on the page, beside the line being read */}
+                <motion.div className="pointer-events-none absolute left-0 top-0 z-[58]" animate={{ x: pos.x, y: pos.y }} transition={{ type: "spring", stiffness: 70, damping: 16 }} aria-hidden>
+                  <Mascot mood={walking ? "happy" : step.mood} walking={walking} size={typeof window !== "undefined" && window.innerWidth < 640 ? 56 : 72} flip={pos.flip} />
+                </motion.div>
+                {/* the explanation bubble */}
+                <AnimatePresence>
+                  {!reading && !walking && (
+                    <motion.div
+                      key={step.key}
+                      initial={{ opacity: 0, scale: 0.85, y: 8 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 22 }}
+                      className="absolute z-[59] rounded-2xl border-2 border-cocoa bg-white p-3 text-[0.98rem] font-semibold leading-snug shadow-[3px_3px_0_0_#2f1c1a]"
+                      style={{ left: pos.bx, top: pos.by, width: pos.bw }}
+                      role="status"
+                    >
+                      <div className="mb-1 text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-orange">Laddoo explains</div>
+                      {step.words.map((w, i) => (
+                        <span key={i}>
+                          <span className={`rounded px-0.5 ${i === wi ? "bg-haldi text-cocoa" : i < wi ? "text-cocoa" : "text-cocoa/45"}`}>{w.w}</span>{" "}
+                        </span>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
+
       {typeof document !== "undefined" &&
         createPortal(
           <AnimatePresence>
             {open && (
               <motion.div
-                initial={{ y: 120, opacity: 0 }}
+                initial={{ y: 100, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 120, opacity: 0 }}
+                exit={{ y: 100, opacity: 0 }}
                 transition={{ type: "spring", stiffness: 260, damping: 26 }}
                 role="region"
-                aria-label={`Audio chapter ${chapter}: ${script.title}`}
-                className="fixed inset-x-2 bottom-[92px] z-[60] mx-auto max-w-2xl rounded-[22px] border-2 border-cocoa bg-cream p-2.5 shadow-[4px_4px_0_0_#2f1c1a] sm:bottom-4 sm:w-[min(42rem,calc(100vw-280px))] sm:p-3"
+                aria-label={`Audio chapter ${chapter}: ${title}`}
+                className="fixed inset-x-2 bottom-[92px] z-[60] mx-auto max-w-xl rounded-[20px] border-2 border-cocoa bg-cream p-2 shadow-[4px_4px_0_0_#2f1c1a] sm:bottom-4 sm:w-[min(36rem,calc(100vw-280px))]"
               >
-                {/* Laddoo walks along the progress track */}
-                <div className="relative h-[54px]">
-                  <div className="absolute inset-x-1 bottom-1.5 h-1.5 rounded-full bg-cocoa/10">
-                    <div className="h-full rounded-full bg-gradient-to-r from-orange to-haldi" style={{ width: `${progress * 100}%` }} />
-                  </div>
-                  {script.segments.map((_, i) => (
-                    <button key={i} onClick={() => jump(segStart[i])} aria-label={`Go to part ${i + 1}`} className={`absolute bottom-0 size-4 -translate-x-1/2 rounded-full border-2 border-cocoa ${i <= seg ? "bg-orange" : "bg-white"}`} style={{ left: `calc(4px + ${(segStart[i] / Math.max(1, words.length - 1)) * 100}% - ${(segStart[i] / Math.max(1, words.length - 1)) * 8}px)` }} />
-                  ))}
-                  <div className="absolute bottom-2 -translate-x-1/2 transition-[left] duration-300 ease-linear" style={{ left: `calc(4px + ${progress * 100}% - ${progress * 8}px)` }}>
-                    <Mascot mood={playing ? "talk" : "happy"} walking={playing} size={40} />
-                  </div>
+                <div className="mx-1 h-1.5 overflow-hidden rounded-full bg-cocoa/10">
+                  <div className="h-full rounded-full bg-gradient-to-r from-orange to-haldi transition-[width] duration-300" style={{ width: `${progress * 100}%` }} />
                 </div>
-
-                {/* the words being read, lit up one by one */}
-                <div className="mt-1 max-h-24 overflow-y-auto rounded-xl bg-white px-3 py-2 text-[0.98rem] leading-relaxed sm:text-[1.02rem]" aria-live="off">
-                  {(showAll ? words.map((w, i) => ({ ...w, i })) : segWords).map((w) => (
-                    <span key={w.i}>
-                      {showAll && w.i === segStart[w.seg] && w.i > 0 ? <br /> : null}
-                      <span className={`rounded px-0.5 transition-colors ${w.i === idx ? "bg-haldi text-cocoa" : w.i < idx ? "text-cocoa" : "text-cocoa/45"}`}>{w.w}</span>{" "}
-                    </span>
-                  ))}
-                </div>
-
-                {/* controls */}
-                <div className="mt-2 flex items-center gap-1.5">
-                  <button onClick={() => jump(segStart[Math.max(0, seg - (idx > segStart[seg] + 2 ? 0 : 1))])} aria-label="Previous part" className="grid size-9 place-items-center rounded-full bg-white text-cocoa hover:bg-peach">
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <button onClick={() => jump(si - 1)} aria-label="Previous line" className="grid size-9 place-items-center rounded-full bg-white text-cocoa hover:bg-peach">
                     <SkipBack className="size-4" />
                   </button>
                   <button onClick={playing ? pause : play} aria-label={playing ? "Pause" : "Play"} className="grid size-11 place-items-center rounded-full border-2 border-cocoa bg-orange text-white">
                     {playing ? <Pause className="size-5 fill-white" /> : <Play className="ml-0.5 size-5 fill-white" />}
                   </button>
-                  <button onClick={() => jump(segStart[Math.min(script.segments.length - 1, seg + 1)])} aria-label="Next part" className="grid size-9 place-items-center rounded-full bg-white text-cocoa hover:bg-peach">
+                  <button onClick={() => jump(si + 1)} aria-label="Next line" className="grid size-9 place-items-center rounded-full bg-white text-cocoa hover:bg-peach">
                     <SkipForward className="size-4" />
                   </button>
                   <div className="min-w-0 flex-1 px-1">
-                    <div className="truncate text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-orange">
-                      Part {seg + 1} of {script.segments.length}
-                    </div>
-                    <div className="truncate text-[0.85rem] font-bold text-cocoa">{script.title}</div>
+                    <div className="truncate text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-orange">{reading ? "Laddoo is reading" : "Laddoo explains"}</div>
+                    <div className="truncate text-[0.85rem] font-bold text-cocoa">{title}</div>
                   </div>
                   <button onClick={cycleRate} aria-label="Reading speed" className="h-9 rounded-full bg-white px-2.5 text-[0.82rem] font-bold text-cocoa hover:bg-peach">
                     {rate}×
@@ -339,15 +445,11 @@ export function AudioChapter({ chapter }: { chapter: string }) {
                   <button onClick={() => setFollow((f) => !f)} aria-pressed={follow} aria-label="Follow along on the page" title="Follow along on the page" className={`grid size-9 place-items-center rounded-full ${follow ? "bg-cocoa text-cream" : "bg-white text-cocoa"}`}>
                     <LocateFixed className="size-4" />
                   </button>
-                  <button onClick={() => setShowAll((v) => !v)} aria-pressed={showAll} aria-label="Show the whole transcript" title="Whole transcript" className={`hidden size-9 place-items-center rounded-full sm:grid ${showAll ? "bg-cocoa text-cream" : "bg-white text-cocoa"}`}>
-                    <ListMusic className="size-4" />
-                  </button>
                   <button onClick={close} aria-label="Close the audio chapter" className="grid size-9 place-items-center rounded-full bg-white text-cocoa hover:bg-peach">
                     <X className="size-4" />
                   </button>
                 </div>
                 {mode === "silent" && <div className="mt-1 text-center text-[0.75rem] text-cocoa-2">Read-along mode: this device has no voice, so the words light up without sound.</div>}
-                <span className="sr-only">{curSeg?.text}</span>
               </motion.div>
             )}
           </AnimatePresence>,

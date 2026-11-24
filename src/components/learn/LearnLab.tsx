@@ -159,7 +159,7 @@ export function LearnLab({ spec, onDone }: { spec: LabSpec; onDone?: (r: LabResu
   const ruleOf = (id?: string) => spec.rules.find((r) => r.id === id);
 
   return (
-    <div className="overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
+    <div data-tour-skip className="overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
       {/* header: skill + stepper */}
       <div className="border-b border-cocoa/10 bg-cream px-4 py-3 sm:px-5">
         <div className="flex flex-wrap items-center justify-end gap-2 empty:hidden">

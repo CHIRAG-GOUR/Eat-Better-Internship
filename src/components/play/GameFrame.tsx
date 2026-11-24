@@ -53,7 +53,7 @@ export function GameFrame({
     hadStars.current = stars !== undefined;
   }, [stars, title]);
   return (
-    <div className="overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
+    <div data-tour-skip className="overflow-hidden rounded-[24px] border border-cocoa bg-white shadow-[3px_3px_0_0_#2f1c1a]">
       <div className="border-b border-cocoa/10 bg-cream px-4 py-4 sm:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
