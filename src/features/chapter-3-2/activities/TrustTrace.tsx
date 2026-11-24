@@ -257,6 +257,7 @@ export default function TrustTrace({ onDone }: { onDone: (summary: string) => vo
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 3 · Trust Trace"
       title="Which key activity matters most for trust?"
       mission="Take one real pack, Quinoa Namkeen. For every promise, find the printed proof (or notice there is none), then trace it to the key activity that keeps it true. Your answer at the end has to come from what you found."

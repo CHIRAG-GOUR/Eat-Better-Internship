@@ -23,7 +23,7 @@ import { AsyncCompile } from "@/components/three/AsyncCompile";
  * 4.2 (golden hour, open air) circles the Snack Arena: four stall islands (Eat Better, traditional snack brands,
  *     direct health competitors, local sweet shops — generic packs by category, no competitor logos), shoppers
  *     moving between them, and the K-Matrix laid on the floor as tiles whose height and light show High/Medium/Low.
- * 4.3 (night) rides a glass elevator up a tower to a rooftop mission-control boardroom over a glowing map of
+ * 4.3 (daytime) rides a glass elevator up a tower to a rooftop mission-control boardroom over a glowing map of
  *     India: the Jaipur facility (50,000 sq. ft.), Tier-1/Tier-2 city pins lighting up as dark stores, gift-hamper
  *     trucks on the routes, and four pillar beacons for the growth strategy.
  * Each chapter renders only its own district. Wrap the chapter's World in <WorldShell>.
@@ -53,8 +53,8 @@ const LOOK: Record<Chapter4, Look> = {
   "4.1": { bg: "#F1ECE4", fog: "#EEE7DC", fogNear: 16, fogFar: 74, sun: "#FFF6EA", sunI: 1.5, sunDir: [0.25, 1, 0.35], hemiSky: "#FFFFFF", hemiGround: "#CDBFA8", hemi: 1.35, amb: 0.32, exposure: 1.0, night: 0, shadowBox: 26, fov: [50, 66], back: 1.2 },
   // golden hour over the open-air arena
   "4.2": { bg: "#F4C79A", fog: "#EFC9A4", fogNear: 50, fogFar: 230, sun: "#FFC27A", sunI: 2.7, sunDir: [-0.7, 0.42, -0.55], hemiSky: "#FBD9B4", hemiGround: "#6A4B3A", hemi: 0.85, amb: 0.2, exposure: 1.02, night: 0.15, shadowBox: 36, fov: [48, 62], back: 3 },
-  // night rooftop: moonlight + city glow, the map and beacons carry the light
-  "4.3": { bg: "#0B1026", fog: "#141B3D", fogNear: 70, fogFar: 300, sun: "#9DB4FF", sunI: 0.75, sunDir: [0.5, 0.8, -0.4], hemiSky: "#3A4A8C", hemiGround: "#120E1C", hemi: 0.55, amb: 0.14, exposure: 1.08, night: 1, shadowBox: 30, fov: [48, 64], back: 0 },
+  // bright daytime rooftop: clear blue sky, warm sun, light haze over the city
+  "4.3": { bg: "#BFE0F4", fog: "#DCEDF5", fogNear: 90, fogFar: 340, sun: "#FFF4DE", sunI: 2.5, sunDir: [0.45, 0.9, 0.35], hemiSky: "#E4F3FF", hemiGround: "#8C7D69", hemi: 1.15, amb: 0.26, exposure: 1.0, night: 0, shadowBox: 30, fov: [48, 64], back: 0 },
 };
 
 type Key = { pos: [number, number, number]; look: [number, number, number] };
@@ -86,7 +86,7 @@ const JOURNEY: Record<Chapter4, Key[]> = {
   "4.3": [
     { pos: [0, 3.2, 26.3], look: [3, 3.6, 70] }, // inside the glass elevator at street level
     { pos: [0, 20, 26.3], look: [14, 14, 80] }, // rising past the city
-    { pos: [0, 41, 26.3], look: [-24, 28, 80] }, // the skyline at night
+    { pos: [0, 41, 26.3], look: [-24, 28, 80] }, // the skyline by day
     { pos: [0, 53.5, 22.5], look: [0, 48.6, 2] }, // the rooftop: map + boardroom
     { pos: [5, 62, 14], look: [0, 48.5, -1] }, // high over the map of India
     { pos: [-6.5, 52.4, 2.5], look: [-3.4, 49, -3.8] }, // Jaipur: the 50,000 sq. ft. facility

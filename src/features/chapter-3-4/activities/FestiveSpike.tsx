@@ -106,6 +106,7 @@ export default function FestiveSpike({ onDone }: { onDone: (summary: string) => 
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Diwali Surge Planner"
       title="Scale packing, couriers and the promise"
       mission="Practice scenario: a Diwali order forecast lands on your desk. Work out the daily surge, how many packing shifts and courier pickups it needs, and the last day a customer can order and still get it by Diwali. Then write the plan."

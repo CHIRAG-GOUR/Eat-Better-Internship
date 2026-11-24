@@ -297,6 +297,7 @@ export default function PriceLadder({ onDone }: { onDone: (summary: string) => v
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 3 · 3D ladder"
       title="Price Ladder"
       mission="A ladder of rupees per gram, ₹0 to ₹2. Place each rival's price band from the chapter's table, then pick up each Eat Better box, work out its ₹/g and watch it climb to its rung. Finally, measure the distances that matter."
@@ -304,6 +305,17 @@ export default function PriceLadder({ onDone }: { onDone: (summary: string) => v
       step={step}
       stars={done ? starsFor(mistakes) : undefined}
       onReset={reset}
+      guide={
+        step === 0
+          ? { todo: "Pick a rival lane, copy its price range from the green table box into the two boxes, and press Place band. Do all three rivals.", hints: ["The smaller number goes in the first box, the bigger one in the second.", "Type just the numbers, for example 0.5 for ₹0.50."] }
+          : step === 1
+            ? { todo: "Tap an Eat Better box, work out its price per gram and send it up the ladder. Do all four boxes.", hints: ["Price per gram = price ÷ grams.", "Example with other numbers: ₹300 for 200 g → 300 ÷ 200 = ₹1.50 per gram.", "Use the Calculator button, and round to 2 decimal places."] }
+            : step === 2 || step === 3
+              ? { todo: "Answer the question about the ladder with a number.", hints: ["Read the two values the question asks about from the ladder.", "\"How many times\" means divide the bigger by the smaller; \"how much more\" means subtract."] }
+              : step === 4
+                ? { todo: "Explain Eat Better's price position in one line.", hints: ["Compare Eat Better's rung with the rivals' bands.", "Say what the customer gets for the higher price per gram."] }
+                : undefined
+      }
       feedback={feedback}
       note={{ real: "Price bands are the chapter's market table (how this chapter compares them). The four SKUs, prices and weights are Chapter 4.1's pricing table.", practice: "Which comparisons you are asked is drawn at random on every restart.", tip: "Price per gram = price ÷ grams. “How many times” = bigger ÷ smaller." }}
     >
@@ -380,7 +392,14 @@ export default function PriceLadder({ onDone }: { onDone: (summary: string) => v
           <div className="font-display text-[1.1rem] font-semibold text-cocoa">
             Band for <span className="text-orange">{MK[lane].name}</span>
           </div>
-          <div className="mt-1 text-[0.92rem] text-cocoa-2">Pricing tier from the market table: {MK[lane].tier}. Type its ₹-per-gram range.</div>
+          <div className="mt-1 text-[0.92rem] text-cocoa-2">Type the ₹-per-gram range from the chapter&apos;s market table.</div>
+          {/* the chapter's table row, on screen so nobody has to scroll back for it */}
+          <div className="mt-2 rounded-xl border border-success/40 bg-success/10 px-3 py-2 text-[0.92rem] text-cocoa">
+            <span className="text-[0.72rem] font-extrabold uppercase tracking-[0.1em] text-success">From the chapter&apos;s market table</span>
+            <div className="font-semibold">
+              {MK[lane].name}: {MK[lane].tier}, {MK[lane].rangeText}
+            </div>
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <NumIn label="Band bottom, rupees per gram" testId="pl-lo" prefix="₹" unit="/g" value={bandFor(lane).lo} onChange={(v) => setBand(lane, "lo", v)} w="w-20" />
             <span className="font-bold text-cocoa-2">to</span>

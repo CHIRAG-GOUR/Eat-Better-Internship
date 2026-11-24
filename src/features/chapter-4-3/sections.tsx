@@ -191,10 +191,11 @@ export function Pillars() {
 
         <PillarShell p={p3} tone="light">
           <SeasonBars />
-          <div className="mt-4 grid gap-4 md:grid-cols-3">
-            <Photo src={`${LIB}/site/corporate-gifting-banner-build-your-own.webp`} alt="Corporate gifting banner: build your own hamper" ratio={1100 / 414} caption={`Customized hampers. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/site/corporate-gifting-festive-extras.webp`} alt="Festive extras that can be added to a corporate gift hamper" ratio={1100 / 825} caption={`Festive extras for gifting. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/hampers/diwali-jumbo-orange-hero.webp`} alt="Diwali jumbo gift hamper" ratio={1} caption={`A jumbo hamper. ${OFFICIAL}`} />
+          {/* the wide banner on top at its own shape, the two photos side by side below it */}
+          <div className="mt-4 grid grid-cols-2 gap-3 md:gap-4">
+            <Photo src={`${LIB}/site/corporate-gifting-banner-build-your-own.webp`} alt="Corporate gifting banner: build your own hamper" ratio={1100 / 414} sizes="(max-width: 1280px) 100vw, 1200px" className="col-span-2" caption={`Customized hampers. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/site/corporate-gifting-festive-extras.webp`} alt="Festive extras that can be added to a corporate gift hamper" ratio={4 / 3} sizes="(max-width: 768px) 50vw, 600px" caption={`Festive extras for gifting. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/hampers/diwali-jumbo-orange-hero.webp`} alt="Diwali jumbo gift hamper" ratio={4 / 3} sizes="(max-width: 768px) 50vw, 600px" caption={`A jumbo hamper. ${OFFICIAL}`} />
           </div>
         </PillarShell>
 
@@ -208,8 +209,8 @@ export function Pillars() {
           />
           <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
             <Photo src={`${LIB}/site/kitchen-prepping-dates.webp`} alt="Dates being prepared in the kitchen" ratio={930 / 850} sizes="(max-width: 768px) 50vw, 33vw" caption={`Prepping in the kitchen. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/site/story-honest-processes-line.webp`} alt="A production line worker in hairnet, mask and gloves" ratio={828 / 918} sizes="(max-width: 768px) 50vw, 33vw" caption={`The production line. ${OFFICIAL}`} />
-            <Photo src={`${LIB}/site/story-philosophy-trays.webp`} alt="Trays of freshly made snacks" ratio={1100 / 467} className="col-span-2 md:col-span-1" caption={`Trays at scale. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/site/story-honest-processes-line.webp`} alt="A production line worker in hairnet, mask and gloves" ratio={930 / 850} sizes="(max-width: 768px) 50vw, 33vw" caption={`The production line. ${OFFICIAL}`} />
+            <Photo src={`${LIB}/site/kitchen-cooking-millets.webp`} alt="Millet namkeen turning in a large stainless-steel production mixer" ratio={930 / 850} sizes="(max-width: 768px) 50vw, 33vw" caption={`Mixing at production scale. ${OFFICIAL}`} />
           </div>
         </PillarShell>
       </div>
@@ -267,7 +268,7 @@ export function Activities() {
     <section id="activities" className={sectionCls}>
       <Panel tone="light" reveal="up" width="max-w-7xl">
         <SectionIntro index="4" kicker="Activities" title="Run the growth plan yourself">
-          Three 3D games, one for each of the plan&apos;s operational pillars. All numbers inside the games are practice numbers made up for learning. Each step opens only when your working is right.
+          Two 3D games, built on two of the plan&apos;s pillars: quick-commerce reach and production capacity. All numbers inside the games are practice numbers made up for learning. Each step opens only when your working is right.
         </SectionIntro>
         <div className="mt-6 grid gap-8">
           {ACTS_43.length ? ACTS_43.map((a) => <ActivityRun key={a.id} id={a.id} Comp={a.Comp} />) : <div className="h-[420px] animate-pulse rounded-[24px] bg-cocoa/10" aria-label="Activities loading" />}

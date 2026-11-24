@@ -111,6 +111,7 @@ export default function InventorySync({ onDone }: { onDone: (summary: string) =>
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Stock Sync Board"
       title="Load the truck without a stockout or an expiry"
       mission="Practice scenario: one snack, a central warehouse and three quick-commerce dark stores. Work out how long each store's stock lasts, then split one truck load so every store lasts until the next delivery and nothing expires. The numbers change every restart."

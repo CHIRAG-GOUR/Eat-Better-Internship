@@ -130,9 +130,8 @@ export function Drivers() {
         <SectionIntro index="2" kicker="Drivers of price variation" title="Three reasons a gram costs what it costs" />
         <div className="mt-6 grid gap-4 lg:grid-cols-3">
           <DriverCard n={0} icon={Wheat} title={DRIVERS.bom.title} text={DRIVERS.bom.text}>
-            <div className="grid grid-cols-2 gap-2">
+            <div>
               <Photo src={`${LIB}/nuts-seeds/premium-nut-mix-ingredients.webp`} alt="Ingredient grid for Premium Nut Mix: cashews, almonds, raisins, pistachios" />
-              <Photo src={`${LIB}/site/story-better-ingredients-almonds.webp`} alt="A gloved hand holding almonds above a tray of almonds" />
             </div>
             <div>
               <div className="mb-1 text-[0.78rem] font-extrabold uppercase tracking-[0.1em] text-success">Higher unit cost</div>

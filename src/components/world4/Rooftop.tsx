@@ -10,7 +10,7 @@ import { Box, Glow, Label, TextBoard } from "./bits";
 import { C } from "./kit";
 
 /**
- * 4.3 — the night rooftop "mission control". A glass elevator rides up the tower (x=0, z≈26) to a roof deck at
+ * 4.3 — the daytime rooftop "mission control". A glass elevator rides up the tower (x=0, z≈26) to a roof deck at
  * y≈48 with a glowing, stylised map of India: Jaipur and its 50,000 sq. ft. facility, Tier-1 and Tier-2 city pins
  * that light up in turn as dark stores, gift-hamper trucks running out from Jaipur, four pillar beacons for the
  * growth strategy, and a glass boardroom at the back looking over the map to the city.
@@ -314,7 +314,7 @@ function Boardroom({ compact }: { compact: boolean }) {
 export function Rooftop({ compact, reduced }: { compact: boolean; reduced: boolean }) {
   return (
     <group>
-      <City night compact={compact} clear={40} />
+      <City night={false} compact={compact} clear={40} />
       <Tower compact={compact} />
       <IndiaMap compact={compact} reduced={reduced} />
       <Pillars reduced={reduced} />

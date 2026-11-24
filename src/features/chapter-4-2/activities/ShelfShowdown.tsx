@@ -38,9 +38,10 @@ function totalsFor(prios: Prio[]) {
   return Object.fromEntries(IDS.map((id) => [id, prios.reduce((s, x) => s + LEVEL_SCORE[PARAM[x.p].v[id]] * x.w, 0)])) as Record<PlayerId, number>;
 }
 
-/** Four rounds: one Eat Better win, one traditional-brand win, two open — every round has a single clear winner. */
+/** Two rounds: one Eat Better win and one traditional-brand win — every round has a single clear winner. */
 function makeRounds(): Round[] {
-  const plan = shuffle(["eb", "trad", "any", "any"] as const);
+  // two shoppers: one Eat Better win and one traditional-brand win, so the lesson (weights pick the winner) stays
+  const plan = shuffle(["eb", "trad"] as const);
   const looks = shuffle(LOOKS);
   const seen = new Set<string>();
   return plan.map((target, i) => {
@@ -54,7 +55,7 @@ function makeRounds(): Round[] {
       const best = Math.max(...IDS.map((id) => totals[id]));
       const top = IDS.filter((id) => totals[id] === best);
       if (top.length !== 1) continue;
-      if (target !== "any" && top[0] !== target) continue;
+      if (top[0] !== target) continue;
       // keep the rounds interesting: the winner should not win by a mile every time
       seen.add(key);
       return { ...looks[i], prios, totals, winner: top[0] };
@@ -214,7 +215,8 @@ function Shopper({ look, target, faceCamera, onArrive }: { look: HumanLook; targ
 
 /* ── the game ─────────────────────────────────────────────────── */
 
-const STEPS = ["Shopper 1", "Shopper 2", "Shopper 3", "Shopper 4", "Debrief"];
+const STEPS = ["Shopper 1", "Shopper 2", "Debrief"];
+const ROUNDS = 2;
 type Phase = "arrive" | "score" | "walk" | "chosen";
 
 export default function ShelfShowdown({ onDone }: { onDone: (summary: string) => void }) {
@@ -234,9 +236,9 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
   const [done, setDone] = useState(false);
   const [explain, setExplain] = useState<PlayerId[]>([]);
 
-  const round = rounds[Math.min(r, 3)];
-  const debrief = r >= 4;
-  const step = debrief ? (done ? 5 : 4) : r;
+  const round = rounds[Math.min(r, ROUNDS - 1)];
+  const debrief = r >= ROUNDS;
+  const step = debrief ? (done ? ROUNDS + 1 : ROUNDS) : r;
 
   const reset = () => {
     setSeed((s) => s + 1);
@@ -309,7 +311,7 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
     if (!lineOk) return;
     setDone(true);
     setFeedback({ tone: "good", text: "Same matrix, different shoppers, different winners. A K-Matrix only picks a winner once you know what the customer weighs most." });
-    onDone(`Scored 4 practice shoppers on the K-Matrix: Eat Better won ${wins.eb}, Traditional Snack Brands won ${wins.trad}. Why the traditional shelf won once: ${line.trim()}`);
+    onDone(`Scored ${ROUNDS} practice shoppers on the K-Matrix: Eat Better won ${wins.eb}, Traditional Snack Brands won ${wins.trad}. Why the traditional shelf won once: ${line.trim()}`);
   };
 
   const card = inspected ? K_PLAYERS.find((p) => p.id === inspected)! : null;
@@ -317,10 +319,23 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · 3D aisle"
       title="Shelf Showdown"
-      mission="Four shelves, one per K-Matrix column. Each practice shopper walks in caring about three things, with weights. Read each shelf's K-Matrix card, score it (High = 3, Medium = 2, Low = 1, times the weight), and the shopper walks to the shelf you prove is best."
+      mission="Four shelves, one per K-Matrix column. Two practice shoppers walk in, each caring about three things, with weights. Read each shelf's K-Matrix card, score it (High = 3, Medium = 2, Low = 1, times the weight), and the shopper walks to the shelf you prove is best."
       steps={STEPS}
+      guide={
+        debrief
+          ? { todo: "Both shoppers are served. In one line, explain why the traditional shelf won for its shopper.", hints: ["Look back at that shopper's card: which row had the biggest weight (×3)?", "Say which rating the traditional shelf had on that row (High, Medium or Low).", "Use the words weight and rating in your sentence."] }
+          : phase === "arrive"
+            ? { todo: "Watch the shopper walk into the aisle. Their card appears at the top right." }
+            : phase === "score"
+              ? {
+                  todo: "Each score box shows the sum for that shelf. Work it out and type the total for all four shelves, then press Check.",
+                  hints: ["High = 3, Medium = 2, Low = 1.", "Multiply each rating number by the shopper's weight, then add the three answers.", "Example with other numbers: Medium (2) × 3 = 6, High (3) × 1 = 3, Low (1) × 2 = 2, so 6 + 3 + 2 = 11.", "Tap a shelf name to see its full card. The Calculator button can help."],
+                }
+              : { todo: "Watch the shopper walk to the winning shelf, then press the button to continue." }
+      }
       step={step}
       stars={done ? starsFor(mistakes) : undefined}
       onReset={reset}
@@ -334,7 +349,7 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
         overlay={
           <>
             <div className="absolute left-3 top-3 flex flex-wrap items-center gap-1.5">
-              <span className="rounded-full bg-cocoa/90 px-3 py-1 text-[0.8rem] font-extrabold text-cream">{debrief ? "All four shoppers served" : `Shopper ${r + 1} of 4`}</span>
+              <span className="rounded-full bg-cocoa/90 px-3 py-1 text-[0.8rem] font-extrabold text-cream">{debrief ? "Both shoppers served" : `Shopper ${r + 1} of ${ROUNDS}`}</span>
               <PracticeTag />
             </div>
             {!debrief && phase !== "arrive" && (
@@ -409,7 +424,13 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 {IDS.map((id) => (
                   <label key={id} className={`flex items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 ${round.winner === id && phase !== "score" ? "ring-2 ring-orange" : ""}`}>
-                    <span className="text-[0.95rem] font-bold text-cocoa">{PLAYER[id].name}</span>
+                    <span className="min-w-0">
+                      <span className="block text-[0.95rem] font-bold text-cocoa">{PLAYER[id].name}</span>
+                      {/* the sum to work out: each rating as a number times its weight (the total is left to the learner) */}
+                      <span className="block text-[0.8rem] font-semibold leading-snug text-cocoa-2">
+                        {round.prios.map((x) => `${PARAM[x.p].v[id]} (${LEVEL_SCORE[PARAM[x.p].v[id]]}) × ${x.w}`).join(" + ")} = ?
+                      </span>
+                    </span>
                     <NumIn label={`Weighted total for ${PLAYER[id].name}`} testId={`ss-in-${id}`} value={vals[id]} onChange={(v) => setVals((s) => ({ ...s, [id]: v }))} disabled={phase !== "score"} w="w-20" ok={bad.includes(id) ? false : undefined} />
                   </label>
                 ))}
@@ -438,7 +459,7 @@ export default function ShelfShowdown({ onDone }: { onDone: (summary: string) =>
                 )}
                 {phase === "chosen" && (
                   <button data-testid="ss-next" onClick={next} className="eb-btn eb-btn-primary inline-flex items-center gap-2">
-                    {r < 3 ? "Next shopper" : "Go to the debrief"} <ArrowRight className="size-4" />
+                    {r < ROUNDS - 1 ? "Next shopper" : "Go to the debrief"} <ArrowRight className="size-4" />
                   </button>
                 )}
                 {phase === "walk" && <span className="self-center text-[0.95rem] font-bold text-cocoa-2">The shopper is walking to {PLAYER[round.winner].name}…</span>}

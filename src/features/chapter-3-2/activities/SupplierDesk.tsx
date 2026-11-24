@@ -203,6 +203,7 @@ export default function SupplierDesk({ onDone }: { onDone: (summary: string) => 
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Supplier Failure Desk"
       title="One supplier fails. Now what?"
       mission="Practice scenario: the supplier that sends ragi flour for Ragi Chips can’t deliver. Read the real label, work out how long the kitchen can keep going, test the backups and write the plan. The practice numbers change every restart."

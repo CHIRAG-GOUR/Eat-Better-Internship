@@ -131,6 +131,7 @@ export default function DealRoom({ onDone }: { onDone: (summary: string) => void
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Deal Room"
       title="Do the deal maths yourself"
       mission="Every answer is a number you work out. Start with Eat Better's real pitch, then compare practice offers and model the royalty. The practice numbers change every time you restart."

@@ -167,6 +167,7 @@ export default function ChannelDesk({ onDone }: { onDone: (summary: string) => v
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Channel Data Desk"
       title="Which channel is best, and for whom?"
       mission="Here is a made-up log of 4 channels. Work out which channel brings the most first-time buyers and which keeps buyers coming back. The two answers are not the same, and the numbers change on every attempt."

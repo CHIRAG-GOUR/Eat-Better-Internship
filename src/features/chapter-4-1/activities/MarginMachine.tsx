@@ -198,7 +198,7 @@ function Scene({ setup, scoops, held, shake, step, cost, price, gm, onBlock, onH
   );
 }
 
-/** "Stuck?" box: the method for the current step, worked with the learner's own numbers. */
+/** "Stuck?" box: the method for the current step, with an example that uses other numbers (never the answer). */
 function HowTo({ title, lines }: { title: string; lines: string[] }) {
   const [open, setOpen] = useState(false);
   return (
@@ -331,6 +331,7 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Gross margin"
       title="Margin Machine"
       mission="Load the hopper with clean-label ingredients, cost the pack from its BOM, set a price that lands in the margin band, then work out the gross margin."
@@ -360,11 +361,22 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
               {Object.entries(counts).map(([k, v]) => (
                 <li key={k}>
                   {BYID[k].name} × {v} = {v * SCOOP} g at ₹{setup.price[k]} per 100 g
-                  {step >= 1 && <span className="text-cocoa-2"> (one 20 g scoop = ₹{setup.price[k] / 5})</span>}
                 </li>
               ))}
               {step >= 1 && <li className="font-bold">Pack, label and handling: ₹{setup.pack} per pack</li>}
             </ul>
+          )}
+          {step === 0 && (
+            <div className="mt-3">
+              <HowTo
+                title="Stuck? How to build the recipe"
+                lines={[
+                  "Tap an ingredient block to lift it, then tap the hopper to drop one 20 g scoop. Five scoops make 100 g.",
+                  "A clean-label laddoo needs at least one scoop of dates, one of nuts (almonds or cashews) and one of grain (millets or quinoa).",
+                  "Leave out anything the clean-label promise removes: refined flour, palm oil, refined sugar and artificial preservatives.",
+                ]}
+              />
+            </div>
           )}
           {step === 0 && (
             <div className="mt-3 flex flex-wrap gap-2">
@@ -377,10 +389,11 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
             </div>
           )}
         </div>
-        <div className="rounded-2xl bg-cream p-4">
+        <div className="rounded-2xl border-2 border-orange/30 bg-cream p-4">
           {step < 1 && <p className="text-[1rem] text-cocoa-2">Costing opens once the recipe is accepted.</p>}
           {step === 1 && (
             <div className="grid gap-2">
+              <div className="mb-1 flex items-center gap-2 text-[0.8rem] font-extrabold uppercase tracking-[0.1em] text-orange"><span className="grid size-6 place-items-center rounded-full bg-orange text-[0.8rem] text-white">2</span>Step 2 of 4 · Cost per pack</div>
               <p className="text-[1rem] text-cocoa">What does one 100 g pack cost to make? (BOM of the scoops + pack and handling)</p>
               <div className="flex flex-wrap items-center gap-3">
                 <NumIn value={costIn} onChange={setCostIn} label="Cost per pack in rupees" prefix="₹" unit="per pack" onEnter={checkCost} />
@@ -389,17 +402,19 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
                 </button>
               </div>
               <HowTo
-                title="Stuck? See how to work out the cost"
+                title="Stuck? How to work out the cost"
                 lines={[
-                  "One scoop is 20 g, which is one fifth of 100 g. So one scoop costs the price per 100 g ÷ 5.",
-                  ...Object.entries(counts).map(([k, v]) => `${BYID[k].name}: ₹${setup.price[k]} ÷ 5 = ₹${setup.price[k] / 5} a scoop, × ${v} scoop${v > 1 ? "s" : ""} = ₹${(setup.price[k] / 5) * v}`),
-                  `Add those ingredient lines together, then add ₹${setup.pack} for the pack, label and handling. That total is the cost of one pack.`,
+                  "A scoop is 20 g. 20 g is one fifth of 100 g, so one scoop costs the price per 100 g ÷ 5.",
+                  "Example with other numbers: if raisins cost ₹60 per 100 g, one scoop costs ₹60 ÷ 5 = ₹12, and 3 scoops cost ₹12 × 3 = ₹36.",
+                  "Do that for every line on your recipe ticket, then add the lines together.",
+                  "Finally add the pack, label and handling cost from the ticket. Use the Calculator if you like.",
                 ]}
               />
             </div>
           )}
           {step === 2 && (
             <div className="grid gap-2">
+              <div className="mb-1 flex items-center gap-2 text-[0.8rem] font-extrabold uppercase tracking-[0.1em] text-orange"><span className="grid size-6 place-items-center rounded-full bg-orange text-[0.8rem] text-white">3</span>Step 3 of 4 · Set the price</div>
               <p className="text-[1rem] text-cocoa">
                 Cost per pack ₹{cost.toFixed(2)}. Set a selling price so the gross margin lands in the green band: <strong>{setup.band[0]}–{setup.band[1]}%</strong>.
               </p>
@@ -410,18 +425,19 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
                 </button>
               </div>
               <HowTo
-                title="Stuck? See how to pick a price"
+                title="Stuck? How to pick a price"
                 lines={[
-                  `Gross margin is the share of the price you keep. For ${setup.band[0]}% you keep ${setup.band[0]} out of every 100 rupees, so the cost is the other ${100 - setup.band[0]}%.`,
-                  `Lowest price: cost ÷ ${(100 - setup.band[0]) / 100} = ₹${cost.toFixed(0)} ÷ ${(100 - setup.band[0]) / 100} ≈ ₹${Math.ceil(cost / ((100 - setup.band[0]) / 100))}.`,
-                  `Highest price: cost ÷ ${(100 - setup.band[1]) / 100} = ₹${cost.toFixed(0)} ÷ ${(100 - setup.band[1]) / 100} ≈ ₹${Math.floor(cost / ((100 - setup.band[1]) / 100))}.`,
-                  "Pick any whole-rupee price between those two numbers and stamp it.",
+                  "Gross margin is the part of the price you keep. If the margin is 40%, the cost is the other 60% of the price.",
+                  "So price = cost ÷ (1 − margin). Example with other numbers: a ₹30 pack at a 40% margin → ₹30 ÷ 0.60 = ₹50.",
+                  "Work out the price for the low end of your band and for the high end.",
+                  "Any whole-rupee price between those two numbers lands in the band.",
                 ]}
               />
             </div>
           )}
           {step === 3 && (
             <div className="grid gap-2">
+              <div className="mb-1 flex items-center gap-2 text-[0.8rem] font-extrabold uppercase tracking-[0.1em] text-orange"><span className="grid size-6 place-items-center rounded-full bg-orange text-[0.8rem] text-white">4</span>Step 4 of 4 · Gross margin %</div>
               <p className="text-[1rem] text-cocoa">
                 Cost ₹{cost.toFixed(2)}, price ₹{price}. What is the gross margin?
               </p>
@@ -433,11 +449,12 @@ export default function MarginMachine({ onDone }: { onDone: (summary: string) =>
               </div>
               {price !== null && (
                 <HowTo
-                  title="Stuck? See how to work out the margin"
+                  title="Stuck? How to work out the margin"
                   lines={[
-                    `Gross profit = price − cost = ₹${price} − ₹${cost.toFixed(0)} = ₹${(price - cost).toFixed(0)}.`,
-                    `Divide the profit by the PRICE (not the cost): ₹${(price - cost).toFixed(0)} ÷ ₹${price} = ${((price - cost) / price).toFixed(2)}.`,
-                    "Multiply by 100 to turn it into a percent, and type that number.",
+                    "Step 1: gross profit = selling price − cost.",
+                    "Step 2: divide the profit by the SELLING PRICE (not by the cost).",
+                    "Step 3: multiply by 100 to make it a percent.",
+                    "Example with other numbers: price ₹50, cost ₹30 → profit ₹20 → 20 ÷ 50 = 0.4 → 40%.",
                   ]}
                 />
               )}

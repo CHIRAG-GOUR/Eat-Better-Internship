@@ -6,9 +6,24 @@ import { Instanced, type Inst } from "@/components/world3/parts";
 import { boxGeo, canvasTexture, glowMat, mat, rng, windowTex } from "./kit";
 import { useTex } from "./bits";
 
-/** Sky dome for the outdoor chapters: golden hour (4.2) or night with stars and a moon (4.3). */
+// soft clouds for the daytime sky: each one a few overlapping glow puffs
+const CLOUDS = (() => {
+  const r = rng(77);
+  return Array.from({ length: 14 }, (_, i) => {
+    const a = (i / 14) * Math.PI * 2 + r() * 0.3;
+    const d = 300 + r() * 120;
+    const y = 110 + r() * 120;
+    return {
+      p: [Math.cos(a) * d, y, Math.sin(a) * d] as [number, number, number],
+      puffs: Array.from({ length: 4 + Math.floor(r() * 3) }, (_, k) => ({ p: [(k - 2) * 16 + r() * 8, r() * 6, r() * 6] as [number, number, number], s: 40 + r() * 30 })),
+    };
+  });
+})();
+
+/** Sky dome for the outdoor chapters: golden hour (4.2) or a clear daytime sky with soft clouds (4.3). */
 export function Sky({ chapter, compact }: { chapter: "4.2" | "4.3"; compact: boolean }) {
-  const night = chapter === "4.3";
+  const night = false;
+  const day = chapter === "4.3";
   const tex = useTex(() =>
     canvasTexture(4, 512, (g) => {
       const grd = g.createLinearGradient(0, 0, 0, 512);
@@ -18,6 +33,12 @@ export function Sky({ chapter, compact }: { chapter: "4.2" | "4.3"; compact: boo
         grd.addColorStop(0.5, "#27285A");
         grd.addColorStop(0.53, "#3B2D5E");
         grd.addColorStop(1, "#0C0F22");
+      } else if (day) {
+        grd.addColorStop(0, "#3F8FD8");
+        grd.addColorStop(0.3, "#86C1EE");
+        grd.addColorStop(0.47, "#CFE9F8");
+        grd.addColorStop(0.52, "#EEF6F4");
+        grd.addColorStop(1, "#DCE7D8");
       } else {
         grd.addColorStop(0, "#4F7CC0");
         grd.addColorStop(0.3, "#93A9D4");
@@ -64,6 +85,22 @@ export function Sky({ chapter, compact }: { chapter: "4.2" | "4.3"; compact: boo
             <meshBasicMaterial color="#F4F1E6" fog={false} />
           </mesh>
           <sprite position={[-160, 210, -299]} scale={[70, 70, 1]} material={glowMat("#AFC4FF", 0.35)} />
+        </>
+      ) : day ? (
+        <>
+          {/* a high, bright sun and soft clouds */}
+          <mesh position={[-180, 300, -260]} lookAt={[0, 0, 0]}>
+            <circleGeometry args={[12, 32]} />
+            <meshBasicMaterial color="#FFFBE8" fog={false} />
+          </mesh>
+          <sprite position={[-178, 298, -258]} scale={[150, 150, 1]} material={glowMat("#FFF3C4", 0.5)} />
+          {CLOUDS.map((c, i) => (
+            <group key={i} position={c.p}>
+              {c.puffs.map((q, k) => (
+                <sprite key={k} position={q.p} scale={[q.s, q.s * 0.55, 1]} material={glowMat("#FFFFFF", 0.75)} />
+              ))}
+            </group>
+          ))}
         </>
       ) : (
         <>

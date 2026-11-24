@@ -312,6 +312,7 @@ export default function PriceTagDetective({ onDone }: { onDone: (summary: string
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Price per gram"
       title="Price Tag Detective"
       mission="Weigh every pack on the 3D scale, work out its price per gram, line the shelf up from cheapest to dearest per gram, then explain what looks odd."

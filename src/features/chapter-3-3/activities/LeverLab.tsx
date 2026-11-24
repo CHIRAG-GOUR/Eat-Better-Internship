@@ -190,6 +190,7 @@ export default function LeverLab({ onDone }: { onDone: (summary: string) => void
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 3 · Profit Lever Lab"
       title="Close the gap without raising prices"
       mission="A practice brand loses money every month. Find the loss, choose three legitimate levers, calculate what each one is worth, and write the plan. The numbers change every attempt."

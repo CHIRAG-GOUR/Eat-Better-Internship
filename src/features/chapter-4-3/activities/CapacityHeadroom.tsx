@@ -319,10 +319,22 @@ export default function CapacityHeadroom({ onDone }: { onDone: (summary: string)
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Pillar 4"
       title="Capacity Headroom"
       mission="Plan the 50,000 sq. ft. Jaipur floor: size the lines for a growth target, build them in 3D, and keep quality control."
       steps={["Orders per day", "Size the equipment", "Build the floor", "Floor and headroom"]}
+      guide={
+        step === 0
+          ? { todo: "Turn the chapter's monthly orders into orders per day and type it.", hints: ["2 lakh = 2,00,000.", "A month here has 30 days, so divide the month's orders by 30.", "Round to a whole number of orders. The Calculator button can help."] }
+          : step === 1
+            ? { todo: "Work out the four numbers in order, top to bottom, then press Check all four.", hints: ["Start with the target: it is today's orders a day times the growth number.", "Round UP means any part over a whole number becomes the next whole number: 4.2 lines → 5 lines.", "Example with other numbers: a target of 9,000 with lines of 2,000 a day → 9,000 ÷ 2,000 = 4.5 → 5 lines."] }
+            : step === 2
+              ? { todo: "Build the floor: pick an item from the tray, tap a free tile to place it, and place every line, packing station and quality-check station you worked out. Then press Run a test shift.", hints: ["Tap a placed item (with nothing picked) to pick it back up.", "Use the rotate button if an item does not fit the space.", "Keep some floor free: do not add spare equipment."] }
+              : step === 3
+                ? { todo: "Measure your floor: type the floor used and the headroom, then press Check.", hints: ["The numbers you need are written in each row.", "Headroom is how many more orders a day your lines can make than today's orders."] }
+                : undefined
+      }
       step={step}
       stars={done ? starsFor(mistakes) : undefined}
       onReset={restart}
@@ -372,14 +384,30 @@ export default function CapacityHeadroom({ onDone }: { onDone: (summary: string)
         )}
         {step === 1 && (
           <div className="grid gap-3">
-            <p className="text-[1rem] text-cocoa">Practice growth target: <strong>{R.g}×</strong> today&apos;s orders a day. One production line makes <strong>{fmt(R.lineCap)}</strong> orders a day, one packing station packs <strong>{fmt(R.packCap)}</strong>. Quality-check stations: <strong>1 for every 2 lines</strong>, rounded up.</p>
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.95rem] font-bold text-cocoa">
-              <label className="flex items-center gap-2">Target {F("tgt", "Target orders per day", "per day", 1)}</label>
-              <label className="flex items-center gap-2">Lines {F("L", "Production lines needed", "", 1)}</label>
-              <label className="flex items-center gap-2">Packing {F("P", "Packing stations needed", "", 1)}</label>
-              <label className="flex items-center gap-2">Quality-check {F("Q", "Quality-check stations needed", "", 1)}</label>
-              <button onClick={checkEq} className="eb-btn eb-btn-primary !py-2 !text-[0.9rem]">Check</button>
+            <p className="text-[1rem] text-cocoa">
+              Practice growth target: <strong>{R.g}×</strong> today&apos;s orders a day. One production line makes <strong>{fmt(R.lineCap)}</strong> orders a day; one packing station packs <strong>{fmt(R.packCap)}</strong>.
+            </p>
+            {/* one row per answer, each with the method beside it */}
+            <div className="grid gap-2">
+              {(
+                [
+                  ["tgt", "Target orders a day", "per day", `today's orders a day × ${R.g}`],
+                  ["L", "Production lines", "", `target ÷ ${fmt(R.lineCap)}, then round UP`],
+                  ["P", "Packing stations", "", `target ÷ ${fmt(R.packCap)}, then round UP`],
+                  ["Q", "Quality-check stations", "", "lines ÷ 2, then round UP"],
+                ] as const
+              ).map(([k, label, unit, how], i) => (
+                <div key={k} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-white px-3 py-2">
+                  <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange text-[0.8rem] font-bold text-white">{i + 1}</span>
+                  <span className="min-w-[10rem] flex-1">
+                    <span className="block text-[0.98rem] font-bold text-cocoa">{label}</span>
+                    <span className="block text-[0.82rem] text-cocoa-2">How: {how}</span>
+                  </span>
+                  {F(k, label, unit, 1)}
+                </div>
+              ))}
             </div>
+            <button onClick={checkEq} className="eb-btn eb-btn-primary self-start !py-2 !text-[0.9rem]">Check all four</button>
           </div>
         )}
         {step === 2 && (
@@ -389,10 +417,28 @@ export default function CapacityHeadroom({ onDone }: { onDone: (summary: string)
           </div>
         )}
         {step === 3 && (
-          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[0.95rem] font-bold text-cocoa">
-            <label className="flex items-center gap-2">Floor used {F("used", "Percent of the floor used", "%", 3)}</label>
-            <label className="flex items-center gap-2">Headroom {F("head", "Orders per day of headroom above today", "per day", 3)}</label>
-            <button onClick={checkEnd} className="eb-btn eb-btn-primary !py-2 !text-[0.9rem]">Check</button>
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-white px-3 py-2">
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange text-[0.8rem] font-bold text-white">1</span>
+              <span className="min-w-[12rem] flex-1">
+                <span className="block text-[0.98rem] font-bold text-cocoa">Floor used (%)</span>
+                <span className="block text-[0.82rem] text-cocoa-2">
+                  Fixed tiles {FIXED_TILES} + your equipment tiles {tiles}, out of {COLS * ROWS} tiles. How: (fixed + equipment) ÷ total × 100
+                </span>
+              </span>
+              {F("used", "Percent of the floor used", "%", 3)}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl bg-white px-3 py-2">
+              <span className="grid size-6 shrink-0 place-items-center rounded-full bg-orange text-[0.8rem] font-bold text-white">2</span>
+              <span className="min-w-[12rem] flex-1">
+                <span className="block text-[0.98rem] font-bold text-cocoa">Headroom (orders a day)</span>
+                <span className="block text-[0.82rem] text-cocoa-2">
+                  You placed {cnt("line")} lines of {fmt(R.lineCap)} orders a day each. How: (lines × orders per line) − today&apos;s orders a day
+                </span>
+              </span>
+              {F("head", "Orders per day of headroom above today", "per day", 3)}
+            </div>
+            <button onClick={checkEnd} className="eb-btn eb-btn-primary self-start !py-2 !text-[0.9rem]">Check</button>
           </div>
         )}
         {step === 4 && <p className="text-[1rem] font-bold text-success">Floor plan locked. Restart for a new growth target.</p>}

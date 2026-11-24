@@ -168,6 +168,7 @@ export default function OrderDesk({ onDone }: { onDone: (summary: string) => voi
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Order Desk"
       title="Same pack, same price, different earnings"
       mission="One practice pack is sold for the same price on the brand's website and on a quick-commerce app. Work out what each sale really earns, then explain the gap."

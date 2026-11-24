@@ -1,6 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { CalculatorButton } from "./Calculator";
+import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { BookOpenCheck, Check, Lightbulb, PencilLine, RotateCcw, Star } from "lucide-react";
 
@@ -25,6 +26,8 @@ export function GameFrame({
   onReset,
   feedback,
   note,
+  calculator = false,
+  guide,
   children,
 }: {
   kicker: string;
@@ -36,6 +39,10 @@ export function GameFrame({
   onReset?: () => void;
   feedback?: Feedback;
   note?: string | SourceNote;
+  /** maths activities: show a Calculator button that opens a floating calculator */
+  calculator?: boolean;
+  /** "What to do now" for the current step, plus optional method hints that never give the answer */
+  guide?: StepGuideInfo;
   children: ReactNode;
 }) {
   return (
@@ -47,7 +54,8 @@ export function GameFrame({
             <h3 className="font-display text-[clamp(1.35rem,2.6vw,1.75rem)] font-semibold leading-tight text-cocoa">{title}</h3>
             <p className="mt-1 max-w-3xl text-[1rem] leading-snug text-cocoa-2">{mission}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            {calculator && <CalculatorButton />}
             {stars !== undefined && (
               <span className="flex gap-0.5" aria-label={`${stars} of 3 stars`}>
                 {[0, 1, 2].map((i) => (
@@ -74,10 +82,41 @@ export function GameFrame({
             );
           })}
         </ol>
+        {guide && <StepGuide key={step} guide={guide} />}
       </div>
       <div className="p-4 sm:p-6">{children}</div>
       <FeedbackStrip feedback={feedback} className="mx-4 mb-4 sm:mx-6" />
       {note && <SourceFooter note={note} />}
+    </div>
+  );
+}
+
+export type StepGuideInfo = { todo: string; hints?: string[] };
+
+/** Plain instructions for the step the learner is on, and a "Stuck?" box with method hints (never the answer). */
+function StepGuide({ guide }: { guide: StepGuideInfo }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-3 rounded-2xl border-2 border-orange/30 bg-white px-3.5 py-2.5">
+      <div className="flex flex-wrap items-start gap-2">
+        <span className="mt-0.5 shrink-0 rounded-full bg-orange px-2.5 py-0.5 text-[0.75rem] font-extrabold uppercase tracking-[0.08em] text-white">What to do now</span>
+        <p className="min-w-0 flex-1 text-[0.98rem] font-semibold leading-snug text-cocoa">{guide.todo}</p>
+        {guide.hints?.length ? (
+          <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex shrink-0 items-center gap-1 rounded-full border border-haldi bg-haldi/20 px-3 py-1 text-[0.82rem] font-bold text-cocoa hover:bg-haldi/35">
+            <Lightbulb className="size-3.5 text-[#9A7B00]" /> {open ? "Hide hint" : "Stuck? Show a hint"}
+          </button>
+        ) : null}
+      </div>
+      {open && guide.hints?.length ? (
+        <ul className="mt-2 grid gap-1 border-t border-cocoa/10 pt-2 text-[0.92rem] leading-snug text-cocoa">
+          {guide.hints.map((h, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="mt-[0.45em] size-1.5 shrink-0 rounded-full bg-orange" />
+              <span>{h}</span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

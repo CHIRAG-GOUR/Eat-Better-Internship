@@ -267,6 +267,7 @@ export default function ExpansionCommand({ onDone }: { onDone: (summary: string)
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Pillar 2"
       title="Expansion Command"
       mission="Place dark stores on the map of India so the network serves the practice forecast, without spending more than your budget."

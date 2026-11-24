@@ -33,7 +33,7 @@ type Card = { kind: "row"; row: ParamId; order: PlayerId[] } | { kind: "decoy"; 
 function makeDeck(): Card[] {
   const rows: Card[] = ROWS.map((row) => ({ kind: "row", row, order: shuffle(PIDS) }));
   const decoys: Card[] = shuffle(MARKET)
-    .slice(0, 2)
+    .slice(0, 1) // one decoy card: still teaches "a price tier is not a K-Matrix rating", with less to do
     .map((m) => ({ kind: "decoy", player: m.id, text: `${m.name}${m.id === "trad" ? " (Haldiram's, Bikaji)" : m.id === "local" ? " (Mithai Outlets)" : m.id === "health" ? " (Farmley, True Elements)" : ""} · Pricing Tier: ${m.tier} (${m.rangeText})` }));
   // never open with a decoy, so the first card teaches the move
   const deck = shuffle([...rows, ...decoys]);
@@ -306,6 +306,19 @@ export default function CapabilityTowers({ onDone }: { onDone: (summary: string)
       step={step}
       stars={done ? starsFor(mistakes) : undefined}
       onReset={reset}
+      guide={
+        step === 0
+          ? card?.kind === "decoy"
+            ? { todo: "Read this card. Is it a High / Medium / Low rating for one row? If not, press Bin it.", hints: ["A K-Matrix card rates every player High, Medium or Low on ONE capability.", "A price tier (Mass-Market, Premium...) with ₹ per gram comes from a different table."] }
+            : { todo: "Set each player's pillar to the rating on the card (use the Low / Medium / High buttons on the card, or tap the pillars in 3D), then press Lock this card.", hints: ["Only change the row named on the card.", "Each player has its own rating on the card: copy them one by one."] }
+          : step === 1
+            ? { todo: "Tap the pillar that shows Eat Better's unique edge.", hints: ["Look only at Eat Better's column (the orange one).", "An edge is a row where Eat Better is High and NO other player is High."] }
+            : step === 3
+              ? { todo: "Tap the pillar that shows Eat Better's capability gap.", hints: ["Stay in Eat Better's column.", "A gap is a row where Eat Better is LOWER than its rivals."] }
+              : step === 2 || step === 4
+                ? { todo: "Explain what you found in one line, using the ratings.", hints: ["Name the capability (the row).", "Say Eat Better's rating and how the other players compare."] }
+                : undefined
+      }
       feedback={feedback}
       note={{ real: "Every row card and price-tier card quotes the chapter's own tables (how this chapter compares the four kinds of seller).", practice: "The order of the cards, and which price-tier decoys appear, change on every restart.", tip: "Columns are players, rows are what customers choose by. An edge or a gap only shows up when you compare across a row." }}
     >
@@ -322,12 +335,24 @@ export default function CapabilityTowers({ onDone }: { onDone: (summary: string)
             <>
               <div className="mt-2 font-display text-[1.15rem] font-semibold leading-snug text-cocoa">{RNAME[card.row]}</div>
               <ul className="mt-2 grid gap-1 sm:grid-cols-2">
-                {card.order.map((p) => (
-                  <li key={p} className="flex items-baseline justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-[0.95rem] text-cocoa">
-                    <span>{PNAME[p]}</span>
-                    <strong>{KMATRIX.find((x) => x.id === card.row)!.v[p]}</strong>
-                  </li>
-                ))}
+                {card.order.map((p) => {
+                  const k = key(card.row, p);
+                  return (
+                    <li key={p} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-1.5 text-[0.95rem] text-cocoa">
+                      <span className="min-w-0">
+                        {PNAME[p]}: <strong>{KMATRIX.find((x) => x.id === card.row)!.v[p]}</strong>
+                      </span>
+                      {/* set the pillar here, or tap it in 3D */}
+                      <span className="flex gap-1" role="group" aria-label={`Set ${PNAME[p]}'s pillar`}>
+                        {(["Low", "Medium", "High"] as Level[]).map((lv) => (
+                          <button key={lv} onClick={() => !locked[k] && setCells((st) => ({ ...st, [k]: lv }))} aria-pressed={cells[k] === lv} className={`rounded-full border px-2.5 py-0.5 text-[0.78rem] font-bold ${cells[k] === lv ? "border-cocoa bg-cocoa text-cream" : "border-cocoa/20 bg-cream text-cocoa hover:border-cocoa"}`}>
+                            {lv}
+                          </button>
+                        ))}
+                      </span>
+                    </li>
+                  );
+                })}
               </ul>
             </>
           ) : (

@@ -109,6 +109,7 @@ export default function LastMileDesk({ onDone }: { onDone: (summary: string) => 
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 3 · Last-Mile Cost Desk"
       title="Find the money leaking out of small orders"
       mission="Practice scenario: three orders land, the courier charges the same for each, and some cash-on-delivery parcels come back unopened. Measure shipping against order value, price the returns, then design a fix with numbers that work."

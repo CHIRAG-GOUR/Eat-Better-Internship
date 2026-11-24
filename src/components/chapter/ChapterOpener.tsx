@@ -8,6 +8,9 @@ import { GlossaryText } from "./Glossary";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Masked line reveal for the chapter title. */
+/** letters in the longest unbreakable piece of the title (lines may break at spaces and dashes) */
+const longestWord = (title: readonly string[]) => Math.max(8, ...title.join(" ").split(/[\s\-–—]+/).map((w) => w.length));
+
 function TitleLine({ text, delay, accent }: { text: string; delay: number; accent?: boolean }) {
   return (
     <span className="block overflow-hidden pb-[0.06em]">
@@ -52,10 +55,16 @@ export function ChapterOpener({
             <span className="rounded-lg border border-cocoa bg-orange px-3 py-1.5 text-[0.95rem] font-bold uppercase tracking-[0.08em] text-white shadow-[2px_2px_0_0_#2f1c1a]">Chapter {number}</span>
           </motion.div>
 
-          <h1 className="mt-6 font-display text-[clamp(3rem,9vw,7rem)] font-semibold uppercase leading-[0.92] tracking-[-0.01em] text-cocoa [text-shadow:0_2px_0_rgba(255,245,238,0.6)]">
-            <TitleLine text={title[0]} delay={0.45} />
-            <TitleLine text={title[1]} delay={0.6} accent />
-          </h1>
+          {/* the title sizes itself to its column so the longest word (e.g. PERFORMANCE) is never cut off */}
+          <div className="[container-type:inline-size]">
+            <h1
+              className="mt-6 font-display font-semibold uppercase leading-[0.92] tracking-[-0.01em] text-cocoa [text-shadow:0_2px_0_rgba(255,245,238,0.6)]"
+              style={{ fontSize: `clamp(1.9rem, min(9vw, ${(100 / (0.74 * longestWord(title))).toFixed(2)}cqw), 7rem)` }}
+            >
+              <TitleLine text={title[0]} delay={0.45} />
+              <TitleLine text={title[1]} delay={0.6} accent />
+            </h1>
+          </div>
           <motion.span
             initial={{ scaleX: 0, opacity: 0 }}
             animate={{ scaleX: 1, opacity: 1 }}

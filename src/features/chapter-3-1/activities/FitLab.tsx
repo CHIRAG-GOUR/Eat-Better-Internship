@@ -329,6 +329,7 @@ export default function FitLab({ onDone }: { onDone: (summary: string) => void }
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 1 · Fit Lab"
       title="Do the customers and the promise fit?"
       mission="You have just interviewed five customers. Sort what they said, count what is really shared, then match each real need to an Eat Better promise and prove it on a real image."

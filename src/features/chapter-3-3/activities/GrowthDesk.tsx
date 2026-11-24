@@ -153,6 +153,7 @@ export default function GrowthDesk({ onDone }: { onDone: (summary: string) => vo
 
   return (
     <GameFrame
+      calculator
       kicker="Activity 2 · Growth Desk"
       title="Growing fast, still losing money"
       mission="Work out the chapter's growth and net loss from the reported figures, then see the same pattern in a practice brand."
