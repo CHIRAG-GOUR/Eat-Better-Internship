@@ -35,7 +35,7 @@ import {
   type DeptId,
 } from "./data";
 import { useBiz } from "./store";
-import { buildBusinessReport, downloadFinancialCsv } from "./report";
+import { buildBusinessReport, downloadFinancialCsv, feedbackOf } from "./report";
 import type { HQFocus } from "./Business3D";
 import { ProjectReadyPopup, useStudent } from "../shared/ProjectReadyPopup";
 import { detectWebGL } from "@/lib/useClient";
@@ -259,6 +259,7 @@ export default function Activity4() {
 
   const starsAll = [rankStars, mStars, rivalStars, budgetStars, growStars];
   const total = starsAll.reduce((a, x) => a + x, 0);
+  const fb = stage === 6 ? feedbackOf(s) : null;
 
   const focus: HQFocus = (["overview", "pricing", "finance", "compete", "budget", presented ? "pitch" : "growth", "overview"] as HQFocus[])[stage] ?? "overview";
   const leadTitle = PILLARS.find((p) => p.id === s.lead)?.short ?? "";
@@ -713,19 +714,32 @@ export default function Activity4() {
                   <Trophy className="size-9 text-orange" />
                 </div>
                 <div>
-                  <div className="font-display text-[1.45rem] font-semibold leading-tight">Business run like a pro!</div>
+                  <div className="font-display text-[1.45rem] font-semibold leading-tight">{fb?.headline}</div>
                   <div className="mt-0.5 flex items-center gap-1.5 text-[1.05rem] font-bold">
                     <Star className="size-5 fill-haldi text-[#C9A400]" /> {total} of 15 stars
                   </div>
                 </div>
               </div>
-              <div className="mt-3 grid gap-1.5">
-                {["Price detective", "Money machine", "Rival radar", "Budget coins", "Grow & pitch"].map((m, i) => (
-                  <div key={m} className="flex items-center justify-between rounded-2xl bg-cream px-3 py-2">
-                    <span className="font-bold">
-                      {i + 1}. {m}
-                    </span>
-                    <Stars n={starsAll[i]} size="size-5" />
+              {/* feedback from us: why each mission earned its stars, and what would earn more */}
+              <div className="mt-3 rounded-2xl border-2 border-orange/30 bg-white p-3">
+                <div className="text-[0.75rem] font-extrabold uppercase tracking-[0.12em] text-orange">Feedback from Eat Better × SkilliZee</div>
+                <p className="mt-1 text-[0.98rem] leading-snug text-cocoa">{fb?.summary}</p>
+              </div>
+              <div className="mt-3 grid gap-2">
+                {fb?.missions.map((m, i) => (
+                  <div key={m.name} className="rounded-2xl bg-cream px-3 py-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-bold">
+                        {i + 1}. {m.name}
+                      </span>
+                      <Stars n={m.stars} size="size-5" />
+                    </div>
+                    <p className="mt-1 text-[0.92rem] leading-snug text-cocoa">
+                      <strong>Why:</strong> {m.why}
+                    </p>
+                    <p className="mt-0.5 text-[0.92rem] leading-snug text-cocoa-2">
+                      <strong className={m.stars === 3 ? "text-success" : "text-orange"}>{m.stars === 3 ? "Full marks:" : "Next time:"}</strong> {m.next}
+                    </p>
                   </div>
                 ))}
               </div>

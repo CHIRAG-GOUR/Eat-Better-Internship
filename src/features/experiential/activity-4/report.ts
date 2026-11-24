@@ -52,6 +52,108 @@ export function starsOf(s: St) {
   ];
 }
 
+/* ── feedback from Eat Better × SkilliZee ───────────────────────── */
+
+export type MissionFeedback = { name: string; stars: number; why: string; next: string };
+
+/** Why the learner earned each mission's stars, what would earn more, and an overall message for their total. */
+export function feedbackOf(s: St) {
+  const stars = starsOf(s);
+  const total = stars.reduce((a, x) => a + x, 0);
+  const pl = plNext(s.levers);
+  const bo = budgetOutcome(s.coins);
+  const supported = supportedOrders(bo.served);
+  const g = s.levers.growth;
+  const served = Math.round(bo.served);
+
+  const m: MissionFeedback[] = [
+    {
+      name: "Price detective",
+      stars: stars[0],
+      why: !s.rankDone
+        ? "The podium was not finished, so this mission has no stars yet."
+        : s.rankTries === 0
+          ? "You ranked all four boxes by price per gram on your very first try."
+          : `You got the order right after ${s.rankTries} wrong ${s.rankTries === 1 ? "try" : "tries"}.`,
+      next: stars[0] === 3 ? "Perfect. Price per gram (price divided by grams) is how smart shoppers compare packs." : "Work out price divided by grams for every box before you place any. Getting it right first time earns 3 stars.",
+    },
+    {
+      name: "Money machine",
+      stars: stars[1],
+      why:
+        pl.net < 0
+          ? "Next year's plan made a loss: money out was bigger than money in."
+          : g < GROWTH_GOAL
+            ? `You stayed in profit, but sales grew only ${g}%, below the ${GROWTH_GOAL}% goal.`
+            : `You stayed in profit while growing sales ${g}%.`,
+      next:
+        stars[1] === 3
+          ? "Brilliant: fast growth AND a profit is the hardest balance in business."
+          : pl.net < 0
+            ? "Spend a little less on ads or use smarter buying until money in beats money out."
+            : g < 45
+              ? "Keep the profit and push growth to 45% for 2 stars, or 60% for 3."
+              : "Keep the profit and push growth to 60% for 3 stars.",
+    },
+    {
+      name: "Rival radar",
+      stars: stars[2],
+      why: !K_PLAYERS.every((p) => s.grid[p.id]?.x && s.grid[p.id]?.y)
+        ? "Not every rival was placed on the map yet."
+        : s.gridMistakes === 0
+          ? "You placed every rival on the right square without a single mistake."
+          : `You placed every rival correctly, with ${s.gridMistakes} wrong ${s.gridMistakes === 1 ? "try" : "tries"} on the way.`,
+      next: stars[2] === 3 ? "Great reading of the K-Matrix: you know where each rival stands." : "Read each rival's two K-Matrix rows (price for everyone and natural sweetening) before you place it.",
+    },
+    {
+      name: "Budget coins",
+      stars: stars[3],
+      why: !bo.ok
+        ? bo.used < COINS
+          ? `You shared out ${bo.used} of the ${COINS} coins, so the budget was not finished.`
+          : `The budget had a problem: ${bo.warnings.join(" ")}`
+        : `Your teams could serve about ${served}% more customers.`,
+      next:
+        stars[3] === 3
+          ? "Excellent balance between finding customers and making the snacks for them."
+          : !bo.ok
+            ? "Use every coin, give the kitchen and tech at least 2 coins each, and keep customers and kitchen in balance."
+            : `Balance the coins that bring customers (marketing, shops) with the kitchen that makes the snacks: ${served >= 45 ? "55%" : "45%"} or more earns the next star.`,
+    },
+    {
+      name: "Grow & pitch",
+      stars: stars[4],
+      why:
+        s.target <= ORDERS_NOW
+          ? `Your target of ${s.target} lakh orders is not more than today's ~${ORDERS_NOW} lakh, so it is not growth.`
+          : s.target > FACILITY_CAP
+            ? `Your target of ${s.target} lakh is more than the ${FACILITY_CAP} lakh the kitchen can make in a month.`
+            : s.target > supported
+              ? `Your target of ${s.target} lakh is more than your budget supports (about ${supported} lakh).`
+              : `You aimed for ${s.target} lakh orders a month, a target your kitchen and budget can really deliver.`,
+      next:
+        stars[4] === 3
+          ? "A bold target that is still realistic: exactly what investors want to see."
+          : stars[4] === 0
+            ? "Pick a target above today's orders that your budget and kitchen can support."
+            : `A bigger but still realistic target earns more: ${s.target >= 3 ? "4" : "3"} lakh or more, as long as your budget supports it.`,
+    },
+  ];
+
+  const best = m.reduce((a, x) => (x.stars > a.stars ? x : a), m[0]);
+  const gap = m.reduce((a, x) => (x.stars < a.stars ? x : a), m[0]);
+  const headline =
+    total === 15 ? "A perfect run: 15 of 15 stars!" : total >= 12 ? "Excellent manager!" : total >= 8 ? "Good work, with room to grow" : total >= 4 ? "A solid start" : total >= 1 ? "You have made a start" : "Let's give it another go";
+  const even = m.every((x) => x.stars === m[0].stars);
+  const summary =
+    total === 15
+      ? "Every mission earned full stars. You priced, planned, compared rivals, budgeted and pitched like a real business manager."
+      : even
+        ? `Every mission earned ${m[0].stars} of 3 stars, so each one has more to win. A good place to start: ${m[0].name}. ${m[0].next}`
+        : `Your strongest mission was ${best.name} (${best.stars} of 3). The most stars to win next time are in ${gap.name} (${gap.stars} of 3): ${gap.next}`;
+  return { total, headline, summary, missions: m };
+}
+
 export async function buildBusinessReport(s: St, student: Student) {
   const date = new Date().toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
   const bag = bagOutcome(s.bag);
@@ -60,11 +162,15 @@ export async function buildBusinessReport(s: St, student: Student) {
   const supported = supportedOrders(bo.served);
   const qs = investorQuestions({ levers: s.levers, coins: s.coins, target: s.target, lead: s.lead });
   const stars = starsOf(s);
+  const fb = feedbackOf(s);
   const lead = PILLARS.find((p) => p.id === s.lead);
   const blocks: ReportBlock[] = [
     { kind: "h", text: "What I did" },
     { kind: "p", text: "I ran Eat Better's head office for a day in a 3D game: I ranked the snack boxes by price per gram, packed a profitable delivery order, balanced the money machine, mapped the rivals, shared a budget between six teams, and pitched a growth plan to pretend investors." },
     { kind: "kv", rows: [["Stars collected", `${stars.reduce((a, x) => a + x, 0)} of 15`], ...(["Price detective", "Money machine", "Rival radar", "Budget coins", "Grow & pitch"].map((m, i) => [m, `${stars[i]} of 3 stars`]) as [string, string][])] },
+    { kind: "h", text: "Feedback from Eat Better × SkilliZee" },
+    { kind: "p", text: `${fb.headline} ${fb.summary}` },
+    { kind: "table", head: ["Mission", "Stars", "Why", "Next time"], rows: fb.missions.map((x) => [x.name, `${x.stars} of 3`, x.why, x.next]), widths: [30, 18, 66, 66] },
     { kind: "callout", tone: "info", text: "REAL figures (from the Module 4 chapters): the four box prices and weights, FY23 ~Rs 5.5 crore and FY24 ~Rs 14.7 crore sales, FY24 loss ~Rs 63 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. Jaipur facility. Every cost, fee, budget, capacity figure and game reaction is a PRACTICE number for learning." },
 
     { kind: "h", text: "Mission 1 · Price detective" },
