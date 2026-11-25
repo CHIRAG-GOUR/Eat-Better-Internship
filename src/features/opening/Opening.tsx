@@ -230,12 +230,36 @@ export function Opening() {
     if (el) window.scrollTo({ top: el.offsetTop, behavior: "smooth" });
   }, []);
 
+  const userMuted = useRef(false); // the student switched sound off themselves: never turn it back on for them
   const toggleSound = () => {
     if (!video) return;
     video.muted = !video.muted;
+    userMuted.current = video.muted;
     setMuted(video.muted);
     setSoundBlocked(false);
   };
+
+  // Sound is on by default. If the browser forced the film muted (the intro began with a mouse-wheel scroll, which
+  // browsers don't count as permission for sound), turn the sound on at the student's first click, tap or key.
+  useEffect(() => {
+    if (!video || !soundBlocked || phase === "explore" || phase === "travel") return;
+    const unmute = (e: Event) => {
+      if (userMuted.current || (e.target as HTMLElement)?.closest?.("[data-sound-toggle]")) return;
+      video.muted = false;
+      setMuted(false);
+      setSoundBlocked(false);
+      if (video.paused && rig.current.phase === "film") void video.play().catch(() => undefined);
+    };
+    const opts = { capture: true };
+    window.addEventListener("pointerdown", unmute, opts);
+    window.addEventListener("keydown", unmute, opts);
+    window.addEventListener("touchend", unmute, opts);
+    return () => {
+      window.removeEventListener("pointerdown", unmute, opts);
+      window.removeEventListener("keydown", unmute, opts);
+      window.removeEventListener("touchend", unmute, opts);
+    };
+  }, [video, soundBlocked, phase]);
 
   const showControls = phase === "ready" || phase === "entry" || phase === "film" || phase === "hold";
   const exploring = phase === "explore";
@@ -277,6 +301,7 @@ export function Opening() {
               e.stopPropagation();
               toggleSound();
             }}
+            data-sound-toggle
             aria-label={muted ? "Turn sound on" : "Turn sound off"}
             aria-pressed={!muted}
             className={`fixed z-50 flex h-12 items-center gap-2 rounded-full border border-cocoa px-4 text-[0.85rem] font-bold shadow-[2px_2px_0_0_#2f1c1a] transition-colors ${soundBlocked ? "bg-orange text-white hover:bg-[#e04f00]" : "bg-cream text-cocoa hover:bg-orange hover:text-white"}`}
