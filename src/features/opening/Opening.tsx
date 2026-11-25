@@ -4,11 +4,12 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, ChevronDown, Play, Sparkles, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, ChevronDown, Info, Play, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { FullscreenToggle } from "@/components/chapter/FullscreenToggle";
 import { getMediaUrl } from "@/lib/media";
 import { useMediaQuery } from "@/lib/useClient";
 import { MODULES } from "./modules";
+import { Welcome } from "./Welcome";
 import { ENTRY_S, FILM_PLAY_AT_S, type Phase, type Rig } from "./Scene";
 
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
@@ -36,11 +37,13 @@ export function Opening() {
   const [buffered, setBuffered] = useState(0);
   const [active, setActive] = useState(-1);
   const filmStarted = useRef(false); // the sound unlock plays the film for an instant; only the real start counts
-  // sound needs one click, tap or key first (browsers don't count a scroll); "Begin" gives it, then a scroll starts the intro
+  // sound needs one click, tap or key first (browsers don't count a scroll); the "Begin the chapter" click gives it, then a scroll starts the intro
   const [primed, setPrimed] = useState(false);
   const [nudge, setNudge] = useState(0); // a scroll before Begin: give the button a little bounce
   const userMuted = useRef(false); // the student switched sound off themselves: never turn it back on for them
   const [openInfo, setOpenInfo] = useState<string | null>(null); // the chapter or activity whose info line is showing
+  const [welcome, setWelcome] = useState(false); // the welcome note: opens on arrival at the worlds, and from the i button
+  const closeWelcome = useCallback(() => setWelcome(false), []);
 
   const setPhase = useCallback((p: Phase) => {
     rig.current.phase = p;
@@ -284,14 +287,19 @@ export function Opening() {
     };
   }, [video, soundBlocked, phase]);
 
-  const showControls = phase === "ready" || phase === "entry" || phase === "film" || phase === "hold";
+  const showControls = phase === "entry" || phase === "film" || phase === "hold"; // not at the door: the first click there quietly turns the sound on
   const exploring = phase === "explore";
 
   return (
     <div className="relative bg-[#F3E3CF]">
+      {/* a full-screen experience: nothing may make the page wider than the screen (phones would zoom out) */}
+      <style>{"html, body { overflow-x: clip; }"}</style>
       {/* the 3D world, fixed behind everything; on the title, a tap on it continues */}
       <div className="fixed inset-0" onClick={continueOn} role="img" aria-label="The Eat Better warehouse, where the opening film plays on a big screen, and the path to the five worlds of the internship">
-        <Scene rig={rig} video={video} live={live} compact={compact} active={active} onReady={() => setSceneReady(true)} onTravelDone={() => setPhase("explore")} onPick={exploring ? goTo : undefined} />
+        <Scene rig={rig} video={video} live={live} compact={compact} active={active} onReady={() => setSceneReady(true)} onTravelDone={() => {
+            setPhase("explore");
+            setWelcome(true);
+          }} onPick={exploring ? goTo : undefined} />
       </div>
 
       <FullscreenToggle />
@@ -343,7 +351,7 @@ export function Opening() {
             e.stopPropagation();
             startFilm();
           }}
-          className="fixed left-1/2 top-1/2 z-50 flex -translate-x-1/2 -translate-y-1/2 items-center gap-2 rounded-full border-2 border-cocoa bg-orange px-6 py-3 font-bold text-white shadow-[3px_3px_0_0_#2f1c1a]"
+          className="fixed inset-x-0 top-1/2 z-50 mx-auto flex w-fit -translate-y-1/2 items-center gap-2 rounded-full border-2 border-cocoa bg-orange px-6 py-3 font-bold text-white shadow-[3px_3px_0_0_#2f1c1a]"
         >
           <Play className="size-5 fill-white" /> Play the film
         </button>
@@ -352,7 +360,7 @@ export function Opening() {
       {/* at the door: Begin (turns the sound on), then a scroll starts the intro */}
       <AnimatePresence>
         {phase === "ready" && !primed && (
-          <motion.div key="begin-wrap" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.6 }} className="fixed left-1/2 z-40 -translate-x-1/2" style={{ bottom: "max(30px, env(safe-area-inset-bottom))" }}>
+          <motion.div key="begin-wrap" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.6 }} className="fixed inset-x-0 z-40 mx-auto w-fit" style={{ bottom: "max(30px, env(safe-area-inset-bottom))" }}>
             <motion.button
               key={nudge}
               initial={nudge ? { scale: 1.14 } : false}
@@ -365,9 +373,9 @@ export function Opening() {
               className="flex flex-col items-center gap-1"
             >
               <span className="flex items-center gap-2.5 rounded-full border-2 border-cocoa bg-orange px-8 py-3 font-display text-[1.2rem] font-semibold text-white shadow-[3px_3px_0_0_#2f1c1a] transition-colors hover:bg-[#e04f00]">
-                <Volume2 className="size-5" /> Begin
+                Begin the chapter
               </span>
-              <span className="rounded-full bg-cream/90 px-3 py-0.5 text-[0.78rem] font-semibold text-cocoa-2">Turns the sound on</span>
+              <span className="rounded-full bg-cream/90 px-3 py-0.5 text-[0.78rem] font-semibold text-cocoa-2">Click here</span>
             </motion.button>
           </motion.div>
         )}
@@ -384,7 +392,7 @@ export function Opening() {
               e.stopPropagation();
               begin();
             }}
-            className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-5 py-2 text-[0.95rem] font-bold text-cocoa"
+            className="fixed inset-x-0 z-40 mx-auto flex w-fit max-w-[calc(100vw-24px)] flex-col items-center gap-1 rounded-full px-5 py-2 text-[0.95rem] font-bold text-cocoa"
             style={{ bottom: "max(26px, env(safe-area-inset-bottom))" }}
           >
             <span className="rounded-full border-2 border-cocoa bg-orange px-5 py-2 text-white shadow-[3px_3px_0_0_#2f1c1a]">{compact ? "Swipe up or tap to enter" : "Scroll to enter the warehouse"}</span>
@@ -408,7 +416,7 @@ export function Opening() {
               e.stopPropagation();
               continueOn();
             }}
-            className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-5 py-2 text-[0.9rem] font-bold text-cocoa"
+            className="fixed inset-x-0 z-40 mx-auto flex w-fit max-w-[calc(100vw-24px)] flex-col items-center gap-1 rounded-full px-5 py-2 text-[0.9rem] font-bold text-cocoa"
             style={{ bottom: "max(22px, env(safe-area-inset-bottom))" }}
           >
             <span className="rounded-full bg-cream/90 px-4 py-1.5 shadow-[2px_2px_0_0_#2f1c1a] ring-1 ring-cocoa">{compact ? "Swipe up or tap to explore" : "Scroll or click to explore"}</span>
@@ -435,10 +443,14 @@ export function Opening() {
                 {m.n}
               </button>
             ))}
+            <button onClick={() => setWelcome(true)} aria-label="About the internship and the certificate" title="About the internship" className="grid size-[30px] place-items-center self-center rounded-full border border-cocoa bg-cream/95 text-cocoa shadow-[2px_2px_0_0_#2f1c1a] hover:bg-peach">
+              <Info className="size-4" />
+            </button>
           </nav>
+          <Welcome open={welcome} onClose={closeWelcome} />
           <main className="relative z-10">
             <Section>
-              <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ amount: 0.5 }} transition={{ duration: 0.6 }} className="pointer-events-auto max-w-[31rem] rounded-[24px] border-2 border-cocoa bg-cream/95 p-5 shadow-[4px_4px_0_0_#2f1c1a] backdrop-blur sm:p-6">
+              <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ amount: 0.5 }} transition={{ duration: 0.6 }} className="pointer-events-auto w-full min-w-0 max-w-[31rem] rounded-[24px] border-2 border-cocoa bg-cream/95 p-5 shadow-[4px_4px_0_0_#2f1c1a] backdrop-blur sm:p-6">
                 <div className="text-[0.75rem] font-extrabold uppercase tracking-[0.14em] text-orange">Eat Better Co Internship</div>
                 <h1 className="mt-1 font-display text-[1.8rem] font-semibold leading-tight text-cocoa sm:text-[2.2rem]">Five worlds, one journey</h1>
                 <p className="mt-2 text-[0.98rem] leading-snug text-cocoa-2">Scroll to walk the path, or pick a world to see its chapters and activity.</p>
