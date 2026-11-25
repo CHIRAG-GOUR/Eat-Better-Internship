@@ -40,7 +40,7 @@ export const C = {
 
 /* ── small helpers ── */
 
-type Place = { p: [number, number, number]; s?: [number, number, number]; r?: [number, number, number] };
+export type Place = { p: [number, number, number]; s?: [number, number, number]; r?: [number, number, number]; c?: string };
 
 /** many copies of one mesh in one draw call */
 export function Instances({ geometry, material, items, castShadow = true, receiveShadow = true }: { geometry: THREE.BufferGeometry; material: THREE.Material; items: Place[]; castShadow?: boolean; receiveShadow?: boolean }) {
@@ -49,14 +49,18 @@ export function Instances({ geometry, material, items, castShadow = true, receiv
     const m = ref.current;
     if (!m) return;
     const o = new THREE.Object3D();
+    const col = new THREE.Color();
     items.forEach((it, i) => {
       o.position.set(...it.p);
       o.rotation.set(...(it.r ?? [0, 0, 0]));
       o.scale.set(...(it.s ?? [1, 1, 1]));
       o.updateMatrix();
       m.setMatrixAt(i, o.matrix);
+      // optional per-instance colour (multiplies the material colour, so use a white material for exact colours)
+      if (it.c) m.setColorAt(i, col.set(it.c));
     });
     m.instanceMatrix.needsUpdate = true;
+    if (m.instanceColor) m.instanceColor.needsUpdate = true;
     m.computeBoundingSphere();
   }, [items]);
   return <instancedMesh ref={ref} args={[geometry, material, items.length]} castShadow={castShadow} receiveShadow={receiveShadow} frustumCulled={false} />;

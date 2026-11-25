@@ -1,196 +1,31 @@
 "use client";
-/* eslint-disable react-hooks/immutability -- three.js objects, textures and the camera rig are updated in place by design */
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import * as THREE from "three";
 import { useFrame, useLoader, type ThreeEvent } from "@react-three/fiber";
-import { C, CONVEYOR, Instances, useCanvasTexture, useLogo } from "./Warehouse";
+import { C, Instances, useCanvasTexture, useLogo, type Place } from "./Warehouse";
 import { MODULES } from "./modules";
+import { WORLDS } from "./layout";
+import { Nature } from "./Nature";
+import { Crowd, Scooter, Van, Walkers, type PersonSpot } from "./Life";
+
+export { WORLDS, PATH } from "./layout";
 
 /**
- * Outside the warehouse: warm daylight terrain and the path that continues from the conveyor belt to the five worlds
- * of the internship (01 Discover … 05 Build). Each world is a plaza on the path with props that say what the module is
- * about; clicking a world selects that module.
+ * Outside the warehouse: the countryside (Nature), people and traffic on the path (Life), and the five worlds of the
+ * internship (01 Discover … 05 Build). Each world is a paved plaza on the path with a scene that says what the module
+ * is about, full of people at work; clicking a world selects that module. Worlds face +z, towards the path.
  */
-
-export const WORLDS: [number, number][] = [
-  [46, -4],
-  [70, -27],
-  [96, -10],
-  [120, -33],
-  [145, -14],
-];
-
-export const PATH = new THREE.CatmullRomCurve3(
-  [
-    [CONVEYOR.to - 1, CONVEYOR.z],
-    [36, -4],
-    ...WORLDS.flatMap(([x, z], i) => {
-      // the path runs along the front of each plaza (worlds face +z), with a bend between them
-      const front: [number, number] = [x, z + 7];
-      const next = WORLDS[i + 1];
-      return next ? [front, [(x + next[0]) / 2, (z + next[1]) / 2 + 8] as [number, number]] : [front, [x + 12, z + 9] as [number, number]];
-    }),
-  ].map(([x, z]) => new THREE.Vector3(x, 0, z)),
-  false,
-  "centripetal",
-);
 
 const fontOf = (v: string, fb: string) => (typeof document !== "undefined" ? getComputedStyle(document.documentElement).getPropertyValue(v).trim() || fb : fb);
 
-/* ── ground, sky, hills, trees ── */
-
-function Sky() {
-  const mat = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        side: THREE.BackSide,
-        depthWrite: false,
-        fog: false,
-        uniforms: { top: { value: new THREE.Color("#BFD9E6") }, mid: { value: new THREE.Color("#F3E6D6") }, bottom: { value: new THREE.Color("#F7DDC2") } },
-        vertexShader: "varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }",
-        fragmentShader:
-          "uniform vec3 top; uniform vec3 mid; uniform vec3 bottom; varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(mid, top, smoothstep(0.02, 0.55, h)) : mix(mid, bottom, smoothstep(0.0, -0.2, h)); gl_FragColor = vec4(c, 1.0); }",
-      }),
-    [],
-  );
+/** a box mesh (most props are made of these) */
+function B({ p, s, c, r, m, cast = true }: { p: [number, number, number]; s: [number, number, number]; c?: string; r?: [number, number, number]; m?: THREE.Material; cast?: boolean }) {
   return (
-    <mesh material={mat} position={[80, 0, -20]}>
-      <sphereGeometry args={[420, 32, 16]} />
+    <mesh position={p} rotation={r} castShadow={cast} receiveShadow material={m}>
+      <boxGeometry args={s} />
+      {!m && <meshStandardMaterial color={c} roughness={0.8} />}
     </mesh>
-  );
-}
-
-function Ground({ compact }: { compact: boolean }) {
-  const tex = useCanvasTexture(
-    1024,
-    1024,
-    (g) => {
-      g.fillStyle = "#E7D3AF";
-      g.fillRect(0, 0, 1024, 1024);
-      // soft grass patches and sandy grain
-      for (let i = 0; i < 70; i++) {
-        const x = Math.random() * 1024;
-        const y = Math.random() * 1024;
-        const r = 40 + Math.random() * 120;
-        const gr = g.createRadialGradient(x, y, 0, x, y, r);
-        gr.addColorStop(0, "rgba(140,148,92,0.38)");
-        gr.addColorStop(1, "rgba(140,148,92,0)");
-        g.fillStyle = gr;
-        g.fillRect(x - r, y - r, r * 2, r * 2);
-      }
-      for (let i = 0; i < 30000; i++) {
-        g.fillStyle = `rgba(${Math.random() < 0.5 ? "90,70,40" : "255,250,235"},${Math.random() * 0.08})`;
-        g.fillRect(Math.random() * 1024, Math.random() * 1024, 2, 2);
-      }
-    },
-    [],
-    [10, 8],
-  );
-  // trees and bushes scattered away from the path and the plazas
-  const { trunks, crowns, hills } = useMemo(() => {
-    const trunks: { p: [number, number, number]; s?: [number, number, number] }[] = [];
-    const crowns: { p: [number, number, number]; s?: [number, number, number] }[] = [];
-    let seed = 11;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const samples = PATH.getSpacedPoints(160);
-    const clear = (x: number, z: number) => {
-      if (x > -20 && x < 20 && z > -38 && z < 8) return false; // the warehouse
-      if (samples.some((s) => Math.hypot(s.x - x, s.z - z) < 6)) return false;
-      return !WORLDS.some(([wx, wz]) => Math.hypot(wx - x, wz - z) < 13);
-    };
-    const n = compact ? 70 : 150;
-    for (let i = 0, tries = 0; i < n && tries < 4000; tries++) {
-      const x = -40 + rnd() * 230;
-      const z = -95 + rnd() * 130;
-      if (!clear(x, z)) continue;
-      const s = 0.8 + rnd() * 0.9;
-      trunks.push({ p: [x, 1.1 * s, z], s: [s, s, s] });
-      crowns.push({ p: [x, 2.9 * s, z], s: [1.6 * s, 1.9 * s, 1.6 * s] });
-      i++;
-    }
-    const hills: { p: [number, number, number]; s?: [number, number, number] }[] = [];
-    for (let i = 0; i < 9; i++) hills.push({ p: [-30 + i * 28 + rnd() * 10, -6, -110 - rnd() * 30], s: [30 + rnd() * 20, 14 + rnd() * 10, 18] });
-    return { trunks, crowns, hills };
-  }, [compact]);
-  const trunkGeo = useMemo(() => new THREE.CylinderGeometry(0.16, 0.24, 2.2, 6), []);
-  const crownGeo = useMemo(() => new THREE.IcosahedronGeometry(1, 1), []);
-  const hillGeo = useMemo(() => new THREE.SphereGeometry(1, 20, 12), []);
-  const trunkMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#7A5636", roughness: 0.9 }), []);
-  const crownMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#8C9457", roughness: 0.85, flatShading: true }), []);
-  const hillMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#C9B98E", roughness: 1 }), []);
-  return (
-    <group>
-      <mesh rotation-x={-Math.PI / 2} position={[80, -0.02, -30]} receiveShadow>
-        <planeGeometry args={[520, 360]} />
-        <meshStandardMaterial map={tex} roughness={0.95} />
-      </mesh>
-      <Instances geometry={trunkGeo} material={trunkMat} items={trunks} />
-      <Instances geometry={crownGeo} material={crownMat} items={crowns} />
-      <Instances geometry={hillGeo} material={hillMat} items={hills} castShadow={false} />
-    </group>
-  );
-}
-
-/** the paved path: a ribbon along the curve with orange edges, like the conveyor it continues */
-function Path() {
-  const { road, edges } = useMemo(() => {
-    const pts = PATH.getSpacedPoints(260);
-    const ribbon = (half: number, y: number, offset = 0) => {
-      const pos: number[] = [];
-      const uv: number[] = [];
-      const idx: number[] = [];
-      let dist = 0;
-      pts.forEach((p, i) => {
-        const t = PATH.getTangentAt(i / (pts.length - 1));
-        const n = new THREE.Vector3(-t.z, 0, t.x).normalize();
-        if (i) dist += p.distanceTo(pts[i - 1]);
-        for (const s of [-1, 1]) {
-          const q = p.clone().addScaledVector(n, offset + s * half);
-          pos.push(q.x, y, q.z);
-          uv.push(s < 0 ? 0 : 1, dist / 3);
-        }
-        if (i) {
-          const a = (i - 1) * 2;
-          idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3);
-        }
-      });
-      const g = new THREE.BufferGeometry();
-      g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
-      g.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
-      g.setIndex(idx);
-      g.computeVertexNormals();
-      return g;
-    };
-    return { road: ribbon(1.6, 0.03), edges: [ribbon(0.12, 0.04, -1.65), ribbon(0.12, 0.04, 1.65)] };
-  }, []);
-  const tiles = useCanvasTexture(
-    128,
-    128,
-    (g) => {
-      g.fillStyle = "#EADBC0";
-      g.fillRect(0, 0, 128, 128);
-      g.strokeStyle = "rgba(150,110,70,0.35)";
-      g.lineWidth = 3;
-      g.strokeRect(0, 0, 64, 64);
-      g.strokeRect(64, 64, 64, 64);
-      g.strokeRect(64, 0, 64, 64);
-      g.strokeRect(0, 64, 64, 64);
-    },
-    [],
-  );
-  tiles.wrapS = tiles.wrapT = THREE.RepeatWrapping;
-  return (
-    <group>
-      <mesh geometry={road} receiveShadow>
-        <meshStandardMaterial map={tiles} roughness={0.8} />
-      </mesh>
-      {edges.map((g, i) => (
-        <mesh key={i} geometry={g}>
-          <meshStandardMaterial color={C.orange} roughness={0.6} />
-        </mesh>
-      ))}
-    </group>
   );
 }
 
@@ -207,7 +42,6 @@ function Marker({ n, word, color }: { n: string; word: string; color: string }) 
       g.fillStyle = color;
       g.fillRect(0, 0, 256, 18);
       g.fillRect(0, 494, 256, 18);
-      g.fillStyle = color;
       g.font = `700 150px ${head}`;
       g.textAlign = "center";
       g.textBaseline = "middle";
@@ -220,12 +54,13 @@ function Marker({ n, word, color }: { n: string; word: string; color: string }) 
   );
   return (
     <group>
-      <mesh position-y={2.2} castShadow>
+      <B p={[0, 0.2, 0]} s={[2.2, 0.4, 1]} c="#D9C29A" />
+      <mesh position-y={2.4} castShadow>
         <boxGeometry args={[1.6, 4.4, 0.35]} />
         <meshStandardMaterial color={color} roughness={0.7} />
       </mesh>
       {[0.19, -0.19].map((z) => (
-        <mesh key={z} position={[0, 2.35, z]} rotation-y={z < 0 ? Math.PI : 0}>
+        <mesh key={z} position={[0, 2.55, z]} rotation-y={z < 0 ? Math.PI : 0}>
           <planeGeometry args={[1.4, 2.8]} />
           <meshStandardMaterial map={tex} roughness={0.8} />
         </mesh>
@@ -234,120 +69,57 @@ function Marker({ n, word, color }: { n: string; word: string; color: string }) 
   );
 }
 
-/* ── the five worlds ── */
+/* shared bits */
 
-function Discover() {
-  const bowl = useMemo(() => new THREE.CylinderGeometry(0.55, 0.32, 0.32, 20), []);
-  const laddoo = useMemo(() => new THREE.SphereGeometry(0.17, 12, 10), []);
-  const brass = useMemo(() => new THREE.MeshStandardMaterial({ color: C.brass, roughness: 0.3, metalness: 0.8 }), []);
-  const ladMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#B87A3A", roughness: 0.85 }), []);
-  const balls: { p: [number, number, number] }[] = [];
-  for (let b = 0; b < 4; b++) for (let k = 0; k < 6; k++) balls.push({ p: [-3 + b * 2 + Math.cos(k) * 0.22, 1.42 + (k > 3 ? 0.18 : 0), Math.sin(k * 1.7) * 0.2] });
+function Pot({ p, s = 1 }: { p: [number, number, number]; s?: number }) {
   return (
-    <group>
-      {/* Jaipur-style arch */}
-      <group position={[0, 0, -5]}>
-        {[-2.8, 2.8].map((x) => (
-          <mesh key={x} position={[x, 2.6, 0]} castShadow>
-            <boxGeometry args={[1, 5.2, 1]} />
-            <meshStandardMaterial color="#E59A7A" roughness={0.8} />
-          </mesh>
-        ))}
-        <mesh position={[0, 5.1, 0]} castShadow>
-          <torusGeometry args={[2.8, 0.5, 10, 24, Math.PI]} />
-          <meshStandardMaterial color="#E59A7A" roughness={0.8} />
-        </mesh>
-      </group>
-      {/* long table with brass bowls of laddoos */}
-      <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-        <boxGeometry args={[8.4, 0.18, 1.8]} />
-        <meshStandardMaterial color={C.wood} roughness={0.7} />
+    <group position={p} scale={s}>
+      <mesh position-y={0.35} castShadow>
+        <cylinderGeometry args={[0.42, 0.3, 0.7, 14]} />
+        <meshStandardMaterial color={C.terracotta} roughness={0.85} />
       </mesh>
-      {[-3.8, 3.8].map((x) => (
-        <mesh key={x} position={[x, 0.45, 0]} castShadow>
-          <boxGeometry args={[0.2, 0.9, 1.5]} />
-          <meshStandardMaterial color="#8A5F38" roughness={0.8} />
-        </mesh>
-      ))}
-      <Instances geometry={bowl} material={brass} items={[0, 1, 2, 3].map((b) => ({ p: [-3 + b * 2, 1.15, 0] as [number, number, number] }))} />
-      <Instances geometry={laddoo} material={ladMat} items={balls} />
-      {/* a big jar of laddoos */}
-      <group position={[4.8, 0, 3]}>
-        <mesh position-y={1.4} castShadow>
-          <cylinderGeometry args={[1, 1, 2.8, 24]} />
-          <meshStandardMaterial color="#FFF7EC" roughness={0.2} transparent opacity={0.5} />
-        </mesh>
-        <mesh position-y={2.95}>
-          <cylinderGeometry args={[1.05, 1.05, 0.3, 24]} />
-          <meshStandardMaterial color={C.orange} roughness={0.5} />
-        </mesh>
-        <Instances geometry={laddoo} material={ladMat} items={Array.from({ length: 30 }, (_, i) => ({ p: [Math.cos(i * 2.4) * 0.6, 0.3 + Math.floor(i / 8) * 0.32, Math.sin(i * 2.4) * 0.6] as [number, number, number], s: [2, 2, 2] as [number, number, number] }))} />
-      </group>
+      <mesh position-y={0.95} castShadow>
+        <icosahedronGeometry args={[0.55, 1]} />
+        <meshStandardMaterial color="#6F7D3E" roughness={0.9} flatShading />
+      </mesh>
     </group>
   );
 }
 
-const SHOTS = ["/brand/products/hazelnut-laddoo-1.webp", "/brand/products/marigold-hamper-2.webp", "/brand/products/laddoo-box-42-1.webp"];
-
-function Create() {
-  const texes = useLoader(THREE.TextureLoader, SHOTS);
-  useMemo(() => texes.forEach((t) => (t.colorSpace = THREE.SRGBColorSpace)), [texes]);
-  const post = useMemo(() => new THREE.MeshStandardMaterial({ color: C.oliveDark, roughness: 0.5, metalness: 0.4 }), []);
-  return (
-    <group>
-      {/* curved studio backdrop */}
-      <mesh position={[0, 0, -4.5]} rotation-y={Math.PI} receiveShadow>
-        <cylinderGeometry args={[6, 6, 5, 24, 1, true, -0.9, 1.8]} />
-        <meshStandardMaterial color={C.terracotta} roughness={0.9} side={THREE.DoubleSide} />
-      </mesh>
-      {/* billboards with real product photos */}
-      {texes.map((t, i) => (
-        <group key={i} position={[-4.4 + i * 4.4, 0, -1.6 + (i === 1 ? -1 : 0)]} rotation-y={(1 - i) * 0.25}>
-          <mesh material={post} position={[0, 1.4, -0.08]}>
-            <boxGeometry args={[0.16, 2.8, 0.16]} />
-          </mesh>
-          <mesh position={[0, 3.6, 0]} castShadow>
-            <boxGeometry args={[3.2, 3.2, 0.12]} />
-            <meshStandardMaterial color="#fff" roughness={0.6} />
-          </mesh>
-          <mesh position={[0, 3.6, 0.07]}>
-            <planeGeometry args={[3, 3]} />
-            <meshStandardMaterial map={t} roughness={0.5} />
-          </mesh>
-        </group>
-      ))}
-      {/* a camera on a tripod and two softboxes */}
-      <group position={[0.5, 0, 4]} rotation-y={Math.PI}>
-        {[0, 2.1, 4.2].map((a) => (
-          <mesh key={a} material={post} position={[Math.cos(a) * 0.35, 0.75, Math.sin(a) * 0.35]} rotation={[Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25]}>
-            <cylinderGeometry args={[0.04, 0.04, 1.6, 6]} />
-          </mesh>
-        ))}
-        <mesh position={[0, 1.7, 0]} castShadow>
-          <boxGeometry args={[0.7, 0.5, 0.45]} />
-          <meshStandardMaterial color={C.cocoa} roughness={0.4} />
-        </mesh>
-        <mesh position={[0, 1.7, 0.35]} rotation-x={Math.PI / 2}>
-          <cylinderGeometry args={[0.16, 0.2, 0.35, 16]} />
-          <meshStandardMaterial color="#1a1412" roughness={0.3} metalness={0.4} />
-        </mesh>
-      </group>
-      {[-3.6, 4.4].map((x, i) => (
-        <group key={x} position={[x, 0, 2.6]} rotation-y={i ? -0.6 : 0.6}>
-          <mesh material={post} position-y={1.2}>
-            <cylinderGeometry args={[0.05, 0.05, 2.4, 6]} />
-          </mesh>
-          <mesh position-y={2.6} castShadow>
-            <boxGeometry args={[1.2, 1.2, 0.3]} />
-            <meshStandardMaterial color="#fff" emissive="#FFF4E2" emissiveIntensity={0.9} roughness={0.6} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  );
+/** bunting: little flags strung between two points */
+function Bunting({ a, b, sag = 0.8 }: { a: [number, number, number]; b: [number, number, number]; sag?: number }) {
+  const items = useMemo(() => {
+    const cols = ["#FF5C00", "#F5C02A", "#E2507A", "#2F7F86", "#FFF1E0"];
+    const out: Place[] = [];
+    const n = 16;
+    for (let i = 1; i < n; i++) {
+      const k = i / n;
+      out.push({ p: [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k - Math.sin(Math.PI * k) * sag - 0.2, a[2] + (b[2] - a[2]) * k], r: [0, Math.atan2(b[0] - a[0], b[2] - a[2]) + Math.PI / 2, Math.PI], c: cols[i % cols.length] });
+    }
+    return out;
+  }, [a, b, sag]);
+  const geo = useMemo(() => new THREE.ConeGeometry(0.2, 0.42, 3), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#fff", roughness: 0.8, side: THREE.DoubleSide }), []);
+  return <Instances geometry={geo} material={mat} items={items} castShadow={false} />;
 }
 
-function Operate() {
+/** a string of small warm bulbs */
+function Lights({ a, b, sag = 0.6 }: { a: [number, number, number]; b: [number, number, number]; sag?: number }) {
+  const items = useMemo(() => {
+    const out: Place[] = [];
+    const n = 18;
+    for (let i = 1; i < n; i++) {
+      const k = i / n;
+      out.push({ p: [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k - Math.sin(Math.PI * k) * sag, a[2] + (b[2] - a[2]) * k] });
+    }
+    return out;
+  }, [a, b, sag]);
+  const geo = useMemo(() => new THREE.SphereGeometry(0.09, 8, 6), []);
+  const mat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#fff", emissive: "#FFD59A", emissiveIntensity: 1.6 }), []);
+  return <Instances geometry={geo} material={mat} items={items} castShadow={false} />;
+}
+
+function Truck({ p, ry }: { p: [number, number, number]; ry: number }) {
   const logo = useLogo();
   const side = useCanvasTexture(
     512,
@@ -361,64 +133,326 @@ function Operate() {
     },
     [logo],
   );
-  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
   const wheel = useMemo(() => new THREE.CylinderGeometry(0.42, 0.42, 0.3, 14), []);
   const tyre = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2a2422", roughness: 0.8 }), []);
-  const crate = useMemo(() => new THREE.MeshStandardMaterial({ color: C.kraft, roughness: 0.9 }), []);
-  const truck = (x: number, z: number, ry: number) => (
-    <group position={[x, 0, z]} rotation-y={ry} key={`${x}${z}`}>
-      <mesh position={[0, 1.75, 0]} castShadow>
-        <boxGeometry args={[4.2, 2.3, 2.1]} />
-        <meshStandardMaterial color="#F4E9D8" roughness={0.6} />
-      </mesh>
+  return (
+    <group position={p} rotation-y={ry}>
+      <B p={[0, 1.75, 0]} s={[4.2, 2.3, 2.1]} c="#F4E9D8" />
       {[1.06, -1.06].map((dz) => (
         <mesh key={dz} position={[0, 1.75, dz]} rotation-y={dz > 0 ? 0 : Math.PI}>
           <planeGeometry args={[4.1, 2.2]} />
           <meshStandardMaterial map={side} roughness={0.6} />
         </mesh>
       ))}
-      <mesh position={[2.75, 1.25, 0]} castShadow>
-        <boxGeometry args={[1.3, 1.6, 2]} />
-        <meshStandardMaterial color={C.orange} roughness={0.5} />
-      </mesh>
-      <mesh position={[3.35, 1.55, 0]}>
-        <boxGeometry args={[0.1, 0.7, 1.7]} />
-        <meshStandardMaterial color="#3a4a52" roughness={0.1} metalness={0.4} />
-      </mesh>
-      <Instances geometry={wheel} material={tyre} items={[-1.3, 1.1, 2.75].flatMap((wx) => [1.02, -1.02].map((wz) => ({ p: [wx, 0.42, wz] as [number, number, number], r: [Math.PI / 2, 0, 0] as [number, number, number] })))} />
-    </group>
-  );
-  return (
-    <group>
-      {/* the hub building */}
-      <mesh position={[-1.5, 2.2, -4.6]} castShadow receiveShadow>
-        <boxGeometry args={[9, 4.4, 4]} />
-        <meshStandardMaterial color={C.cream} roughness={0.85} />
-      </mesh>
-      <mesh position={[-1.5, 4.6, -4.6]} castShadow>
-        <boxGeometry args={[9.4, 0.4, 4.4]} />
-        <meshStandardMaterial color={C.terracotta} roughness={0.8} />
-      </mesh>
-      {[-4, -1.5, 1].map((x) => (
-        <mesh key={x} position={[x, 1.4, -2.58]}>
-          <planeGeometry args={[2, 2.8]} />
-          <meshStandardMaterial color={C.oliveDark} roughness={0.6} />
-        </mesh>
-      ))}
-      {truck(-2.2, 1.2, 0.15)}
-      {truck(4.2, -1.2, -0.7)}
-      <Instances
-        geometry={box}
-        material={crate}
-        items={[
-          { p: [5.2, 0.4, 3.6], s: [0.8, 0.8, 0.8] },
-          { p: [6.1, 0.4, 3.4], s: [0.8, 0.8, 0.8] },
-          { p: [5.6, 1.2, 3.5], s: [0.8, 0.8, 0.8] },
-        ]}
-      />
+      <B p={[2.75, 1.25, 0]} s={[1.3, 1.6, 2]} c={C.orange} />
+      <B p={[3.42, 1.55, 0]} s={[0.05, 0.7, 1.7]} c="#35464E" />
+      <B p={[0, 0.5, 0]} s={[5.4, 0.25, 1.6]} c="#3a3330" />
+      {[-1.3, 1.1, 2.75].flatMap((wx) => [1.02, -1.02].map((wz) => <mesh key={`${wx}${wz}`} geometry={wheel} material={tyre} position={[wx, 0.42, wz]} rotation-x={Math.PI / 2} />))}
     </group>
   );
 }
+
+/* ── 01 Discover: a Jaipur courtyard where the story began ── */
+
+function Discover() {
+  const pink = useMemo(() => new THREE.MeshStandardMaterial({ color: "#E7A189", roughness: 0.85 }), []);
+  const trim = useMemo(() => new THREE.MeshStandardMaterial({ color: "#F6E3C9", roughness: 0.8 }), []);
+  const shade = useMemo(() => new THREE.MeshStandardMaterial({ color: "#8E4B3A", roughness: 0.9 }), []);
+  const brass = useMemo(() => new THREE.MeshStandardMaterial({ color: C.brass, roughness: 0.3, metalness: 0.8 }), []);
+  const ladMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#B87A3A", roughness: 0.85 }), []);
+  const bowl = useMemo(() => new THREE.CylinderGeometry(0.55, 0.32, 0.32, 20), []);
+  const laddoo = useMemo(() => new THREE.SphereGeometry(0.17, 12, 10), []);
+  const balls = useMemo(() => {
+    const out: Place[] = [];
+    for (let b = 0; b < 4; b++) for (let k = 0; k < 6; k++) out.push({ p: [-3 + b * 2 + Math.cos(k) * 0.22, 1.42 + (k > 3 ? 0.18 : 0), Math.sin(k * 1.7) * 0.2] });
+    return out;
+  }, []);
+  const people: PersonSpot[] = useMemo(
+    () => [
+      { x: -3.5, z: 1.4, ry: Math.PI },
+      { x: -1.2, z: 1.5, ry: Math.PI },
+      { x: 1.4, z: 1.4, ry: Math.PI },
+      { x: 3.4, z: -1.4, ry: 0 },
+      { x: -2.2, z: -1.5, ry: 0 },
+      { x: 5.9, z: 1.2, ry: -2.2 },
+      { x: 6.6, z: 2.1, ry: -2.6, s: 0.72 },
+      { x: -6.2, z: 2.6, ry: 1.2 },
+    ],
+    [],
+  );
+  return (
+    <group>
+      {/* the haveli wall: three arches, a jharokha balcony and two chhatris */}
+      <group position={[0, 0, -6.4]}>
+        <mesh material={pink} position={[0, 3.2, 0]} castShadow receiveShadow>
+          <boxGeometry args={[15, 6.4, 1]} />
+        </mesh>
+        {[-4.6, 0, 4.6].map((x) => (
+          <group key={x} position={[x, 0, 0.51]}>
+            <mesh material={shade} position={[0, 1.6, 0]}>
+              <planeGeometry args={[2.2, 3.2]} />
+            </mesh>
+            <mesh material={shade} position={[0, 3.2, 0]}>
+              <circleGeometry args={[1.1, 20, 0, Math.PI]} />
+            </mesh>
+            <mesh material={trim} position={[0, 3.2, 0.02]}>
+              <ringGeometry args={[1.1, 1.32, 24, 1, 0, Math.PI]} />
+            </mesh>
+          </group>
+        ))}
+        <B p={[0, 6.55, 0.1]} s={[15.4, 0.3, 1.3]} m={trim} />
+        <group position={[0, 4.6, 0.9]}>
+          <B p={[0, 0, 0]} s={[3, 0.25, 1.1]} m={trim} />
+          <B p={[0, 1, 0.45]} s={[2.6, 1.6, 0.12]} m={shade} cast={false} />
+          {[-1.3, 1.3].map((x) => (
+            <B key={x} p={[x, 1, 0.45]} s={[0.18, 1.8, 0.18]} m={trim} />
+          ))}
+          <mesh material={trim} position={[0, 2.1, 0.2]} castShadow>
+            <sphereGeometry args={[1, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          </mesh>
+        </group>
+        {[-7, 7].map((x) => (
+          <group key={x} position={[x, 6.7, 0]}>
+            {[-0.5, 0.5].flatMap((dx) => [-0.5, 0.5].map((dz) => <B key={`${dx}${dz}`} p={[dx, 0.6, dz]} s={[0.14, 1.2, 0.14]} m={trim} />))}
+            <mesh material={trim} position-y={1.25} castShadow>
+              <sphereGeometry args={[0.85, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2]} />
+            </mesh>
+          </group>
+        ))}
+      </group>
+      {/* long table with brass bowls of laddoos */}
+      <B p={[0, 0.9, 0]} s={[8.4, 0.18, 1.8]} c={C.wood} />
+      {[-3.8, 3.8].map((x) => (
+        <B key={x} p={[x, 0.45, 0]} s={[0.2, 0.9, 1.5]} c="#8A5F38" />
+      ))}
+      <Instances geometry={bowl} material={brass} items={[0, 1, 2, 3].map((b) => ({ p: [-3 + b * 2, 1.15, 0] as [number, number, number] }))} />
+      <Instances geometry={laddoo} material={ladMat} items={balls} />
+      {/* the big laddoo jar and a hand cart of crates */}
+      <group position={[5.2, 0, 3.4]}>
+        <mesh position-y={1.4} castShadow>
+          <cylinderGeometry args={[1, 1, 2.8, 24]} />
+          <meshStandardMaterial color="#FFF7EC" roughness={0.15} transparent opacity={0.45} />
+        </mesh>
+        <B p={[0, 2.95, 0]} s={[2.1, 0.3, 2.1]} c={C.orange} />
+        <Instances geometry={laddoo} material={ladMat} items={Array.from({ length: 30 }, (_, i) => ({ p: [Math.cos(i * 2.4) * 0.6, 0.3 + Math.floor(i / 8) * 0.32, Math.sin(i * 2.4) * 0.6] as [number, number, number], s: [2, 2, 2] as [number, number, number] }))} />
+      </group>
+      <group position={[-6, 0, 0.5]} rotation-y={0.4}>
+        <B p={[0, 0.9, 0]} s={[2.4, 0.15, 1.3]} c={C.wood} />
+        <B p={[0.3, 1.25, 0]} s={[0.9, 0.55, 0.8]} c={C.kraft} />
+        <B p={[-0.6, 1.2, 0.1]} s={[0.7, 0.45, 0.7]} c={C.kraft} />
+        {[-0.75, 0.75].map((z) => (
+          <mesh key={z} position={[-0.4, 0.5, z]} rotation-x={Math.PI / 2}>
+            <torusGeometry args={[0.45, 0.07, 6, 18]} />
+            <meshStandardMaterial color="#5A4130" roughness={0.8} />
+          </mesh>
+        ))}
+      </group>
+      {[-7.4, 7.4].map((x) => (
+        <B key={x} p={[x, 2.4, 4.4]} s={[0.12, 4.8, 0.12]} c={C.oliveDark} />
+      ))}
+      <Bunting a={[-7.4, 4.6, 4.4]} b={[7.4, 4.6, 4.4]} />
+      <Bunting a={[-7.4, 4.6, 4.4]} b={[-3, 6.4, -6]} sag={0.4} />
+      <Bunting a={[7.4, 4.6, 4.4]} b={[3, 6.4, -6]} sag={0.4} />
+      <Pot p={[-7.4, 0, -4.4]} s={1.2} />
+      <Pot p={[7.6, 0, -4.4]} s={1.2} />
+      <Pot p={[-2.6, 0, -5.4]} />
+      <Pot p={[2.6, 0, -5.4]} />
+      <Crowd people={people} seed={3} />
+    </group>
+  );
+}
+
+/* ── 02 Create: a brand photo studio ── */
+
+const SHOTS = ["/brand/products/hazelnut-laddoo-1.webp", "/brand/products/marigold-hamper-2.webp", "/brand/products/laddoo-box-42-1.webp"];
+
+function Create() {
+  const texes = useLoader(THREE.TextureLoader, SHOTS);
+  useMemo(() => texes.forEach((t) => (t.colorSpace = THREE.SRGBColorSpace)), [texes]);
+  const post = useMemo(() => new THREE.MeshStandardMaterial({ color: C.oliveDark, roughness: 0.5, metalness: 0.4 }), []);
+  const crew: PersonSpot[] = useMemo(
+    () => [
+      { x: 0.4, z: 4.9, ry: Math.PI },
+      { x: 2.2, z: 4.2, ry: Math.PI - 0.4 },
+      { x: -2.6, z: 3.6, ry: Math.PI + 0.5 },
+      { x: -0.8, z: 0.4, ry: 0.2 },
+      { x: 5.8, z: 3.4, ry: -2.4 },
+      { x: -6.2, z: 4.8, ry: 2.6 },
+    ],
+    [],
+  );
+  return (
+    <group>
+      <mesh position={[0, 3, -4.6]} rotation-y={Math.PI} receiveShadow>
+        <cylinderGeometry args={[7, 7, 6, 32, 1, true, -1, 2]} />
+        <meshStandardMaterial color={C.terracotta} roughness={0.9} side={THREE.DoubleSide} />
+      </mesh>
+      <B p={[0, 0.15, -1.8]} s={[9, 0.3, 4.6]} c="#F2E2CC" />
+      {texes.map((t, i) => (
+        <group key={i} position={[-4.6 + i * 4.6, 0.3, -2.4 + (i === 1 ? -1.2 : 0)]} rotation-y={(1 - i) * 0.28}>
+          <mesh material={post} position={[0, 1.4, -0.1]}>
+            <boxGeometry args={[0.16, 2.8, 0.16]} />
+          </mesh>
+          <B p={[0, 3.6, 0]} s={[3.2, 3.2, 0.12]} c="#fff" />
+          <mesh position={[0, 3.6, 0.07]}>
+            <planeGeometry args={[3, 3]} />
+            <meshStandardMaterial map={t} roughness={0.5} />
+          </mesh>
+        </group>
+      ))}
+      <group position={[0, 0.3, -0.6]}>
+        <B p={[0, 0.45, 0]} s={[1.6, 0.9, 1]} c="#FFF7EC" />
+        <B p={[-0.3, 1.1, 0]} s={[0.6, 0.4, 0.5]} c={C.orange} />
+        <B p={[0.35, 1.05, 0.1]} s={[0.5, 0.3, 0.4]} c="#7A1E12" />
+        <mesh position={[1.9, 1.8, 0.6]} rotation-y={-0.6}>
+          <torusGeometry args={[0.55, 0.06, 8, 32]} />
+          <meshStandardMaterial color="#fff" emissive="#FFF2DF" emissiveIntensity={1.2} />
+        </mesh>
+        <mesh material={post} position={[1.9, 0.6, 0.6]}>
+          <cylinderGeometry args={[0.04, 0.04, 1.2, 6]} />
+        </mesh>
+      </group>
+      <group position={[0.5, 0, 4]} rotation-y={Math.PI}>
+        {[0, 2.1, 4.2].map((a) => (
+          <mesh key={a} material={post} position={[Math.cos(a) * 0.35, 0.75, Math.sin(a) * 0.35]} rotation={[Math.sin(a) * 0.25, 0, -Math.cos(a) * 0.25]}>
+            <cylinderGeometry args={[0.04, 0.04, 1.6, 6]} />
+          </mesh>
+        ))}
+        <B p={[0, 1.7, 0]} s={[0.7, 0.5, 0.45]} c={C.cocoa} />
+        <mesh position={[0, 1.7, 0.35]} rotation-x={Math.PI / 2}>
+          <cylinderGeometry args={[0.16, 0.2, 0.35, 16]} />
+          <meshStandardMaterial color="#1a1412" roughness={0.3} metalness={0.4} />
+        </mesh>
+      </group>
+      <group position={[-4.2, 0, 2.4]} rotation-y={0.5}>
+        <B p={[0, 1.4, 0]} s={[0.3, 2.8, 0.3]} m={post} />
+        <B p={[0.8, 3.1, 0]} s={[4.2, 0.18, 0.18]} r={[0, 0, 0.25]} m={post} />
+        <B p={[2.7, 3.6, 0]} s={[0.5, 0.4, 0.4]} c={C.cocoa} />
+        <B p={[-1.1, 2.6, 0]} s={[0.5, 0.5, 0.5]} c="#555" />
+      </group>
+      {[-5.6, 5.4].map((x, i) => (
+        <group key={x} position={[x, 0, 0.6]} rotation-y={i ? -0.7 : 0.7}>
+          <mesh material={post} position-y={1.2}>
+            <cylinderGeometry args={[0.05, 0.05, 2.4, 6]} />
+          </mesh>
+          <mesh position-y={2.6} castShadow>
+            <boxGeometry args={[1.3, 1.3, 0.35]} />
+            <meshStandardMaterial color="#fff" emissive="#FFF4E2" emissiveIntensity={1} roughness={0.6} />
+          </mesh>
+        </group>
+      ))}
+      <Crowd people={crew} seed={8} />
+    </group>
+  );
+}
+
+/* ── 03 Operate: the distribution hub ── */
+
+const STACK_SPOTS: [number, number, number][] = [
+  [5.6, 2.8, 3],
+  [7, 2.2, 2],
+  [6.2, 4, 2],
+  [-7.6, 2.6, 3],
+];
+
+function Operate() {
+  const logo = useLogo();
+  const shutter = useCanvasTexture(64, 128, (g) => {
+    g.fillStyle = "#B9B2A6";
+    g.fillRect(0, 0, 64, 128);
+    g.fillStyle = "rgba(0,0,0,0.18)";
+    for (let y = 0; y < 128; y += 6) g.fillRect(0, y, 64, 2);
+  });
+  const sign = useCanvasTexture(
+    512,
+    160,
+    (g) => {
+      g.fillStyle = "#FFF7EC";
+      g.fillRect(0, 0, 512, 160);
+      g.drawImage(logo, 120, 100, 360, 200, 156, 10, 200, 140);
+    },
+    [logo],
+  );
+  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const crate = useMemo(() => new THREE.MeshStandardMaterial({ color: C.kraft, roughness: 0.9 }), []);
+  const pallet = useMemo(() => new THREE.MeshStandardMaterial({ color: C.wood, roughness: 0.9 }), []);
+  const { stacks, pallets } = useMemo(() => {
+    const stacks: Place[] = [];
+    const pallets: Place[] = [];
+    for (const [x, z, n] of STACK_SPOTS) {
+      pallets.push({ p: [x, 0.08, z], s: [1.4, 0.16, 1.1] });
+      for (let k = 0; k < n; k++) for (const dx of [-0.32, 0.32]) stacks.push({ p: [x + dx, 0.4 + k * 0.5, z], s: [0.6, 0.48, 0.9] });
+    }
+    return { stacks, pallets };
+  }, []);
+  const crew: PersonSpot[] = useMemo(
+    () => [
+      { x: 4.6, z: 1.6, ry: 2.4 },
+      { x: -3.2, z: 1.6, ry: -0.6 },
+      { x: 0.8, z: 0.4, ry: 0.4 },
+      { x: -6, z: 3.8, ry: 1.2 },
+      { x: 7.6, z: 4.6, ry: -2.2 },
+    ],
+    [],
+  );
+  return (
+    <group>
+      <B p={[0, 2.6, -5]} s={[15, 5.2, 4.2]} c={C.cream} />
+      <B p={[0, 5.4, -5]} s={[15.4, 0.4, 4.6]} c={C.terracotta} />
+      <B p={[0, 3.7, -2.4]} s={[15, 0.15, 1.6]} c={C.oliveDark} />
+      <mesh position={[0, 4.6, -2.88]}>
+        <planeGeometry args={[4.2, 1.3]} />
+        <meshStandardMaterial map={sign} roughness={0.7} />
+      </mesh>
+      {[-4.4, 0, 4.4].map((x) => (
+        <group key={x}>
+          <mesh position={[x, 1.6, -2.88]}>
+            <planeGeometry args={[3, 3.2]} />
+            <meshStandardMaterial map={shutter} roughness={0.6} metalness={0.3} />
+          </mesh>
+          <B p={[x, 0.5, -2.4]} s={[3.2, 1, 0.9]} c="#C9B79A" />
+        </group>
+      ))}
+      <Truck p={[-4.4, 0, 1.4]} ry={Math.PI / 2} />
+      <Van position={[4.4, 0, 0.6]} ry={Math.PI} />
+      <group position={[1.2, 0, 2.6]} rotation-y={-0.5}>
+        <B p={[0, 0.7, 0]} s={[1.1, 0.9, 1.6]} c="#D9A030" />
+        <B p={[0, 1.5, -0.2]} s={[1, 0.08, 1]} c="#3a3330" />
+        {[-0.45, 0.45].map((x) => (
+          <B key={x} p={[x, 1.1, -0.2]} s={[0.06, 0.8, 0.06]} c="#3a3330" />
+        ))}
+        <B p={[0, 1.2, 1.05]} s={[1, 2, 0.12]} c="#3a3330" />
+        <B p={[0, 0.35, 1.5]} s={[0.9, 0.1, 1]} m={pallet} />
+        <B p={[0, 0.7, 1.5]} s={[0.8, 0.6, 0.8]} m={crate} />
+        {[-0.55, 0.55].flatMap((x) =>
+          [-0.5, 0.5].map((z) => (
+            <mesh key={`${x}${z}`} position={[x, 0.25, z]} rotation-z={Math.PI / 2}>
+              <cylinderGeometry args={[0.25, 0.25, 0.2, 12]} />
+              <meshStandardMaterial color="#2a2422" roughness={0.8} />
+            </mesh>
+          )),
+        )}
+      </group>
+      <Instances geometry={box} material={pallet} items={pallets} />
+      <Instances geometry={box} material={crate} items={stacks} />
+      {[-1.8, -0.9, 0].map((x, i) => (
+        <Scooter key={x} position={[x - 6.2, 0, -1.2]} ry={0.1 * i} />
+      ))}
+      <Crowd people={crew} seed={14} />
+    </group>
+  );
+}
+
+/* ── 04 Strategize: the city block where growth plans are made ── */
+
+const BLOCKS: { p: [number, number]; w: number; h: number; c: string; glassy?: boolean }[] = [
+  { p: [-6.6, -5], w: 2.4, h: 4, c: C.cream },
+  { p: [-4, -5.4], w: 2.6, h: 6.2, c: "#E8C9A8" },
+  { p: [-1.2, -5.6], w: 2.8, h: 8.4, c: C.cream },
+  { p: [1.8, -5.6], w: 3, h: 13.5, c: "#8FB0BC", glassy: true },
+  { p: [4.8, -5.2], w: 2.6, h: 10, c: "#E8C9A8" },
+  { p: [7.2, -4.6], w: 2.2, h: 6.6, c: C.terracotta },
+];
 
 function Strategize() {
   const windows = useCanvasTexture(
@@ -427,35 +461,73 @@ function Strategize() {
     (g) => {
       g.fillStyle = "#F1E3CC";
       g.fillRect(0, 0, 64, 128);
-      g.fillStyle = "rgba(80,100,110,0.55)";
-      for (let y = 8; y < 128; y += 16) for (let x = 8; x < 64; x += 20) g.fillRect(x, y, 10, 9);
+      for (let y = 6; y < 128; y += 14)
+        for (let x = 6; x < 64; x += 18) {
+          g.fillStyle = (x * 7 + y * 3) % 11 < 3 ? "rgba(255,226,170,0.9)" : "rgba(70,95,110,0.6)";
+          g.fillRect(x, y, 10, 8);
+        }
     },
     [],
   );
-  windows.wrapS = windows.wrapT = THREE.RepeatWrapping;
-  const heights = [3, 4.6, 6.4, 8.6, 11.2];
-  const cols = [C.cream, "#E8C9A8", C.cream, "#E8C9A8", C.terracotta];
+  const glass = useCanvasTexture(64, 128, (g) => {
+    g.fillStyle = "#7FA4B2";
+    g.fillRect(0, 0, 64, 128);
+    g.fillStyle = "rgba(255,255,255,0.25)";
+    for (let y = 0; y < 128; y += 10) g.fillRect(0, y, 64, 1.5);
+    for (let x = 0; x < 64; x += 16) g.fillRect(x, 0, 1.5, 128);
+  });
+  const { tanks, acs } = useMemo(
+    () => ({
+      tanks: BLOCKS.filter((b) => !b.glassy).map((b): Place => ({ p: [b.p[0] + 0.5, b.h + 0.45, b.p[1]] })),
+      acs: BLOCKS.map((b, i): Place => ({ p: [b.p[0] - 0.6, b.h + 0.25, b.p[1] + (i % 2 ? 0.4 : -0.4)], s: [0.7, 0.5, 0.5] })),
+    }),
+    [],
+  );
+  const tankGeo = useMemo(() => new THREE.CylinderGeometry(0.45, 0.45, 0.9, 12), []);
+  const tankMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#2B2B2B", roughness: 0.6 }), []);
+  const box = useMemo(() => new THREE.BoxGeometry(1, 1, 1), []);
+  const acMat = useMemo(() => new THREE.MeshStandardMaterial({ color: "#DAD3C6", roughness: 0.7 }), []);
+  const people: PersonSpot[] = useMemo(
+    () => [
+      { x: -1.8, z: 3.4, ry: -Math.PI / 2 },
+      { x: -5.4, z: 3.4, ry: Math.PI / 2 },
+      { x: -3.6, z: 5.2, ry: Math.PI },
+      { x: -3.6, z: 1.6, ry: 0 },
+      { x: 3.6, z: 2.6, ry: -0.8 },
+      { x: 6.4, z: 1.8, ry: 2.2 },
+    ],
+    [],
+  );
+  const cars: { p: [number, number, number]; c: string; ry: number }[] = [
+    { p: [6.6, 0, 3.6], c: "#B8434E", ry: 0.3 },
+    { p: [-7.4, 0, 1], c: "#F4EBDD", ry: -0.2 },
+  ];
   return (
     <group>
-      {/* a skyline that rises like a growth chart */}
-      {heights.map((h, i) => (
-        <mesh key={i} position={[-5 + i * 2.5, h / 2, -4]} castShadow receiveShadow>
-          <boxGeometry args={[2.1, h, 2.1]} />
-          <meshStandardMaterial map={i === 4 ? undefined : windows} color={cols[i]} roughness={0.8} />
+      {BLOCKS.map((b, i) => (
+        <mesh key={i} position={[b.p[0], b.h / 2, b.p[1]]} castShadow receiveShadow>
+          <boxGeometry args={[b.w, b.h, b.w]} />
+          <meshStandardMaterial map={b.glassy ? glass : windows} color={b.glassy ? "#ffffff" : b.c} roughness={b.glassy ? 0.25 : 0.8} metalness={b.glassy ? 0.3 : 0} />
         </mesh>
       ))}
-      {/* the growth arrow */}
-      <group position={[0, 0, 1.6]} rotation={[0, 0, -0.85]}>
-        <mesh position={[1.4, 3, 0]} castShadow>
-          <boxGeometry args={[0.45, 6.6, 0.45]} />
-          <meshStandardMaterial color={C.orange} roughness={0.5} />
-        </mesh>
+      <Instances geometry={tankGeo} material={tankMat} items={tanks} />
+      <Instances geometry={box} material={acMat} items={acs} />
+      <group position={[1.2, 0, 1.2]} rotation={[0, 0, -0.85]}>
+        <B p={[1.4, 3, 0]} s={[0.45, 6.6, 0.45]} c={C.orange} />
         <mesh position={[1.4, 6.7, 0]} castShadow>
           <coneGeometry args={[0.9, 1.4, 4]} />
           <meshStandardMaterial color={C.orange} roughness={0.5} />
         </mesh>
       </group>
-      {/* a round meeting table */}
+      {[0, 1, 2, 3].map((k) => (
+        <group key={k} position={[2.6 + k * 1.2, 0, 4.4]}>
+          <B p={[0, 0.25 + k * 0.2, 0]} s={[0.9, 0.5 + k * 0.4, 0.9]} c="#D9C29A" />
+          <mesh position-y={0.7 + k * 0.4} castShadow>
+            <icosahedronGeometry args={[0.45, 1]} />
+            <meshStandardMaterial color="#6F7D3E" roughness={0.9} flatShading />
+          </mesh>
+        </group>
+      ))}
       <group position={[-3.6, 0, 3.4]}>
         <mesh position-y={0.8} castShadow receiveShadow>
           <cylinderGeometry args={[1.3, 1.3, 0.1, 24]} />
@@ -465,13 +537,48 @@ function Strategize() {
           <cylinderGeometry args={[0.12, 0.2, 0.8, 8]} />
           <meshStandardMaterial color={C.oliveDark} roughness={0.5} />
         </mesh>
-        {[0, 1.57, 3.14, 4.71].map((a) => (
-          <mesh key={a} position={[Math.cos(a) * 1.8, 0.45, Math.sin(a) * 1.8]} castShadow>
-            <boxGeometry args={[0.55, 0.9, 0.55]} />
-            <meshStandardMaterial color={C.olive} roughness={0.8} />
-          </mesh>
-        ))}
+        <B p={[0.2, 0.9, 0.1]} s={[0.5, 0.03, 0.35]} c="#FFF7EC" />
+        <B p={[-0.4, 0.9, -0.3]} s={[0.4, 0.03, 0.3]} c="#FFF7EC" />
       </group>
+      {cars.map((c, i) => (
+        <group key={i} position={c.p} rotation-y={c.ry}>
+          <B p={[0, 0.55, 0]} s={[1.7, 0.7, 3.6]} c={c.c} />
+          <B p={[0, 1.1, -0.2]} s={[1.5, 0.55, 1.8]} c={c.c} />
+          <B p={[0, 1.1, -0.2]} s={[1.52, 0.4, 1.6]} c="#35464E" cast={false} />
+          {[-0.8, 0.8].flatMap((x) =>
+            [-1.1, 1.1].map((z) => (
+              <mesh key={`${x}${z}`} position={[x, 0.3, z]} rotation-z={Math.PI / 2}>
+                <cylinderGeometry args={[0.3, 0.3, 0.2, 12]} />
+                <meshStandardMaterial color="#2a2422" roughness={0.8} />
+              </mesh>
+            )),
+          )}
+        </group>
+      ))}
+      <Crowd people={people} seed={21} />
+    </group>
+  );
+}
+
+/* ── 05 Build: a market street with the Eat Better store ── */
+
+const stripes = (a: string, b: string) => (g: CanvasRenderingContext2D) => {
+  for (let i = 0; i < 8; i++) {
+    g.fillStyle = i % 2 ? b : a;
+    g.fillRect(i * 32, 0, 32, 64);
+  }
+};
+
+function Shop({ x, w, h, wall, aw, children }: { x: number; w: number; h: number; wall: string; aw: THREE.Texture; children?: ReactNode }) {
+  return (
+    <group position={[x, 0, -3.6]}>
+      <B p={[0, h / 2, 0]} s={[w, h, 3.4]} c={wall} />
+      <B p={[0, h + 0.15, 0]} s={[w + 0.2, 0.3, 3.6]} c="#F6E3C9" />
+      <mesh position={[0, 3.35, 2.4]} rotation-x={0.45} castShadow>
+        <boxGeometry args={[w - 0.3, 0.08, 1.6]} />
+        <meshStandardMaterial map={aw} roughness={0.8} />
+      </mesh>
+      {children}
     </group>
   );
 }
@@ -480,12 +587,9 @@ function Build() {
   const logo = useLogo();
   const shots = useLoader(THREE.TextureLoader, ["/brand/products/laddoo-box-24-0.webp", "/brand/products/diwali-hamper-0.webp", "/brand/products/laddoo-tin-0.webp"]);
   useMemo(() => shots.forEach((t) => (t.colorSpace = THREE.SRGBColorSpace)), [shots]);
-  const awning = useCanvasTexture(256, 64, (g) => {
-    for (let i = 0; i < 8; i++) {
-      g.fillStyle = i % 2 ? "#FFF3E3" : C.orange;
-      g.fillRect(i * 32, 0, 32, 64);
-    }
-  });
+  const awning = useCanvasTexture(256, 64, stripes(C.orange, "#FFF3E3"));
+  const awningG = useCanvasTexture(256, 64, stripes("#2F7F86", "#F4EBDD"));
+  const awningM = useCanvasTexture(256, 64, stripes("#7A1E12", "#F4EBDD"));
   const sign = useCanvasTexture(
     512,
     128,
@@ -498,50 +602,74 @@ function Build() {
     },
     [logo],
   );
+  const customers: PersonSpot[] = useMemo(
+    () => [
+      { x: -1, z: 0.6, ry: Math.PI },
+      { x: 0.4, z: 0.9, ry: Math.PI + 0.3 },
+      { x: 1.6, z: 1.8, ry: 2.6 },
+      { x: -5.6, z: 1.4, ry: 2.8 },
+      { x: 5.2, z: 1.2, ry: -2.8 },
+      { x: 6.4, z: 3.2, ry: -2 },
+      { x: -2.8, z: 3.6, ry: 0.6 },
+      { x: -3.4, z: 3.9, ry: 0.4, s: 0.7 },
+    ],
+    [],
+  );
   return (
     <group>
-      <mesh position={[0, 2.5, -3.5]} castShadow receiveShadow>
-        <boxGeometry args={[9, 5, 3.4]} />
-        <meshStandardMaterial color={C.cream} roughness={0.85} />
-      </mesh>
-      <mesh position={[0, 4.4, -1.78]}>
-        <planeGeometry args={[4.4, 1.1]} />
-        <meshStandardMaterial map={sign} roughness={0.7} />
-      </mesh>
-      <mesh position={[0, 3.45, -1.1]} rotation-x={0.45} castShadow>
-        <boxGeometry args={[8.6, 0.08, 1.6]} />
-        <meshStandardMaterial map={awning} roughness={0.8} />
-      </mesh>
-      {/* display windows with real products */}
-      {shots.map((t, i) => (
-        <group key={i} position={[-2.9 + i * 2.9, 1.7, -1.78]}>
-          <mesh position-z={-0.01}>
-            <planeGeometry args={[2.4, 2.4]} />
-            <meshStandardMaterial color={C.cocoa} roughness={0.6} />
-          </mesh>
-          <mesh position-z={0.01}>
-            <planeGeometry args={[2.2, 2.2]} />
-            <meshStandardMaterial map={t} roughness={0.4} />
-          </mesh>
-        </group>
-      ))}
-      {/* street lamps and a bench */}
-      {[-5.6, 5.6].map((x) => (
-        <group key={x} position={[x, 0, 0.8]}>
-          <mesh position-y={1.8}>
-            <cylinderGeometry args={[0.07, 0.09, 3.6, 8]} />
+      <Shop x={-6} w={4.4} h={4.6} wall="#E8C9A8" aw={awningG}>
+        <B p={[0, 1.5, 1.72]} s={[3.4, 2.2, 0.05]} c="#3E4E52" cast={false} />
+      </Shop>
+      <Shop x={0} w={6.4} h={5.4} wall={C.cream} aw={awning}>
+        <mesh position={[0, 4.4, 1.72]}>
+          <planeGeometry args={[4, 1]} />
+          <meshStandardMaterial map={sign} roughness={0.7} />
+        </mesh>
+        {shots.map((t, i) => (
+          <group key={i} position={[-2 + i * 2, 1.6, 1.72]}>
+            <mesh position-z={-0.01}>
+              <planeGeometry args={[1.8, 2]} />
+              <meshStandardMaterial color={C.cocoa} roughness={0.6} />
+            </mesh>
+            <mesh position-z={0.01}>
+              <planeGeometry args={[1.6, 1.6]} />
+              <meshStandardMaterial map={t} roughness={0.4} />
+            </mesh>
+          </group>
+        ))}
+      </Shop>
+      <Shop x={6} w={4.4} h={4.2} wall="#F2D8B8" aw={awningM}>
+        <B p={[0, 1.5, 1.72]} s={[3.4, 2.2, 0.05]} c="#4A3B33" cast={false} />
+      </Shop>
+      <group position={[4.4, 0, 3.2]}>
+        <B p={[0, 0.55, 0]} s={[1.6, 1.1, 0.9]} c={C.orange} />
+        <B p={[0, 1.15, 0]} s={[1.7, 0.08, 1]} c="#FFF7EC" />
+        <mesh position-y={1.8}>
+          <cylinderGeometry args={[0.04, 0.04, 2.4, 6]} />
+          <meshStandardMaterial color="#555" />
+        </mesh>
+        <mesh position-y={3} castShadow>
+          <coneGeometry args={[1.4, 0.6, 10, 1, true]} />
+          <meshStandardMaterial color="#F5C02A" roughness={0.8} side={THREE.DoubleSide} />
+        </mesh>
+      </group>
+      {[-8.4, 8.4].map((x) => (
+        <group key={x} position={[x, 0, 1.6]}>
+          <mesh position-y={2}>
+            <cylinderGeometry args={[0.07, 0.09, 4, 8]} />
             <meshStandardMaterial color={C.oliveDark} roughness={0.5} metalness={0.4} />
           </mesh>
-          <mesh position-y={3.7}>
+          <mesh position-y={4.1}>
             <sphereGeometry args={[0.28, 12, 10]} />
             <meshStandardMaterial color="#fff" emissive="#FFE3B8" emissiveIntensity={1.2} />
           </mesh>
         </group>
       ))}
-      <mesh position={[3, 0.5, 2.4]} castShadow>
-        <boxGeometry args={[2.2, 0.12, 0.6]} />
-        <meshStandardMaterial color={C.wood} roughness={0.7} />
-      </mesh>
+      <Lights a={[-8.4, 3.9, 1.6]} b={[8.4, 3.9, 1.6]} sag={0.7} />
+      <Scooter position={[-3, 0, 1.6]} ry={-0.4} />
+      <Scooter position={[2.8, 0, 2.6]} ry={0.6} color="#2F7F86" />
+      <B p={[-6.4, 0.45, 2.6]} s={[1.8, 0.1, 0.55]} c={C.wood} />
+      <Crowd people={customers} seed={33} />
     </group>
   );
 }
@@ -554,12 +682,46 @@ function World({ i, active, onPick }: { i: number; active: boolean; onPick?: (i:
   const [hover, setHover] = useState(false);
   const ring = useRef<THREE.Mesh>(null);
   const Props = PROPS[i];
+  const paving = useCanvasTexture(
+    512,
+    512,
+    (g) => {
+      // circular sandstone paving with a terracotta inlay ring
+      g.fillStyle = "#EEDDC2";
+      g.fillRect(0, 0, 512, 512);
+      g.strokeStyle = "rgba(140,110,75,0.35)";
+      g.lineWidth = 2;
+      for (let r = 30; r < 256; r += 30) {
+        g.beginPath();
+        g.arc(256, 256, r, 0, Math.PI * 2);
+        g.stroke();
+        const n = Math.round((2 * Math.PI * r) / 40);
+        for (let k = 0; k < n; k++) {
+          const a = (k / n) * Math.PI * 2 + r;
+          g.beginPath();
+          g.moveTo(256 + Math.cos(a) * (r - 30), 256 + Math.sin(a) * (r - 30));
+          g.lineTo(256 + Math.cos(a) * r, 256 + Math.sin(a) * r);
+          g.stroke();
+        }
+      }
+      g.strokeStyle = "rgba(200,100,59,0.45)";
+      g.lineWidth = 10;
+      g.beginPath();
+      g.arc(256, 256, 225, 0, Math.PI * 2);
+      g.stroke();
+      for (let k = 0; k < 9000; k++) {
+        g.fillStyle = `rgba(90,70,40,${Math.random() * 0.08})`;
+        g.fillRect(Math.random() * 512, Math.random() * 512, 2, 2);
+      }
+    },
+    [],
+  );
   useFrame((_, dt) => {
     const r = ring.current;
     if (!r) return;
-    const want = active || hover ? 1 : 0;
+    const want = active || hover ? 0.6 : 0;
     const mat = r.material as THREE.MeshStandardMaterial;
-    mat.emissiveIntensity += ((want ? 0.55 : 0) - mat.emissiveIntensity) * Math.min(1, dt * 5);
+    mat.emissiveIntensity += (want - mat.emissiveIntensity) * Math.min(1, dt * 5);
   });
   const pick = (e: ThreeEvent<MouseEvent>) => {
     if (!onPick) return;
@@ -582,16 +744,20 @@ function World({ i, active, onPick }: { i: number; active: boolean; onPick?: (i:
       }}
     >
       <mesh position-y={0.15} receiveShadow>
-        <cylinderGeometry args={[10, 10.4, 0.3, 48]} />
-        <meshStandardMaterial color="#F3E6D1" roughness={0.85} />
+        <cylinderGeometry args={[10, 10.4, 0.3, 64]} />
+        <meshStandardMaterial color="#E9D6B8" roughness={0.85} />
+      </mesh>
+      <mesh position-y={0.305} rotation-x={-Math.PI / 2} receiveShadow>
+        <circleGeometry args={[10, 64]} />
+        <meshStandardMaterial map={paving} roughness={0.85} />
       </mesh>
       <mesh ref={ring} position-y={0.32} rotation-x={-Math.PI / 2}>
-        <ringGeometry args={[9.3, 9.9, 64]} />
+        <ringGeometry args={[9.5, 10, 64]} />
         <meshStandardMaterial color={m.color} emissive={m.color} emissiveIntensity={0} roughness={0.6} />
       </mesh>
       <group position-y={0.3}>
         <Props />
-        <group position={[-7.2, 0, 5.2]} rotation-y={0.5}>
+        <group position={[-8, 0, 5.8]} rotation-y={0.5}>
           <Marker n={m.n} word={m.word} color={m.color} />
         </group>
       </group>
@@ -602,9 +768,10 @@ function World({ i, active, onPick }: { i: number; active: boolean; onPick?: (i:
 export function Worlds({ compact, active, onPick }: { compact: boolean; active: number; onPick?: (i: number) => void }) {
   return (
     <group>
-      <Sky />
-      <Ground compact={compact} />
-      <Path />
+      <Nature compact={compact} />
+      <Walkers count={compact ? 14 : 34} />
+      <Van drive offset={0} />
+      {!compact && <Van drive offset={1.1} lane={1} />}
       {MODULES.map((_, i) => (
         <World key={i} i={i} active={active === i} onPick={onPick} />
       ))}

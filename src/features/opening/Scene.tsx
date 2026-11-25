@@ -15,6 +15,7 @@ import { WORLDS, Worlds } from "./Worlds";
  * cut, no black frame.
  *
  * Camera, by phase:
+ *  - loading / ready: outside the front door, looking in (ready = waiting for the first scroll or tap);
  *  - entry:   from outside the front door, into the warehouse, turning to face the screen;
  *  - film:    a slow approach to the screen, driven by the film's own clock (pauses if the film buffers);
  *  - hold:    still, close enough that the final title is easy to read;
@@ -22,7 +23,7 @@ import { WORLDS, Worlds } from "./Worlds";
  *  - explore: scroll moves between the overview and each world.
  */
 
-export type Phase = "loading" | "entry" | "film" | "hold" | "travel" | "explore";
+export type Phase = "loading" | "ready" | "entry" | "film" | "hold" | "travel" | "explore";
 export type Rig = {
   phase: Phase;
   phaseAt: number; // performance.now() when the phase started
@@ -100,9 +101,13 @@ function CameraRig({ rig, video, onTravelDone }: { rig: MutableRefObject<Rig>; v
     const t = (performance.now() - r.phaseAt) / 1000;
     const p = pos.current;
     const l = look.current;
-    if (r.phase === "loading") {
+    if (r.phase === "loading" || r.phase === "ready") {
       k.entry.getPointAt(0, p);
       k.entryLook.getPointAt(0, l);
+      // standing at the door: the gentlest drift, so the scene feels alive while it waits
+      const s = performance.now() / 1000;
+      p.x += Math.sin(s * 0.35) * 0.35;
+      p.y += Math.sin(s * 0.5) * 0.08;
     } else if (r.phase === "entry" || r.phase === "film") {
       const te = r.phase === "entry" ? t : ENTRY_S + t;
       if (te < ENTRY_S) {

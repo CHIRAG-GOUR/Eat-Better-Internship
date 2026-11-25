@@ -2,10 +2,9 @@
 /* eslint-disable react-hooks/immutability -- three.js objects, textures and the camera rig are updated in place by design */
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { ArrowRight, ChevronDown, Play, Volume2, VolumeX } from "lucide-react";
+import { ArrowRight, ChevronDown, Play, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { FullscreenToggle } from "@/components/chapter/FullscreenToggle";
 import { getMediaUrl } from "@/lib/media";
 import { useMediaQuery } from "@/lib/useClient";
@@ -15,11 +14,13 @@ import { ENTRY_S, FILM_PLAY_AT_S, type Phase, type Rig } from "./Scene";
 const Scene = dynamic(() => import("./Scene"), { ssr: false });
 
 /**
- * The internship's front door. The student arrives outside the Eat Better warehouse; the camera walks in and the
- * opening film (real chapter and activity footage) plays on the warehouse screen. The page cannot scroll while it plays.
+ * The internship's front door. The student arrives outside the Eat Better warehouse, at the door. The first scroll
+ * (or swipe, tap or key) starts the intro: the camera walks in and the opening film (real chapter and activity footage)
+ * plays on the warehouse screen with sound on (a button turns it off). The page cannot scroll while it plays.
  * The film ends and holds on the title. A scroll, swipe or tap on the scene then flies the camera out through the
- * loading bay and along the path to the five worlds, and the page becomes a scrollable overview of the modules,
- * each linking to its chapters and activity.
+ * loading bay and along the path to the five worlds, and the page becomes a scrollable overview of the modules.
+ * Chapters and activities are not links here (students reach them through their own chapter links): tapping one shows
+ * a line about it.
  */
 export function Opening() {
   const compact = useMediaQuery("(max-width: 820px), (pointer: coarse)");
@@ -29,10 +30,13 @@ export function Opening() {
   const [videoReady, setVideoReady] = useState(false);
   const [sceneReady, setSceneReady] = useState(false);
   const [live, setLive] = useState(false); // the film's first frame is on screen
-  const [muted, setMuted] = useState(true);
-  const [blocked, setBlocked] = useState(false); // autoplay refused: ask for a tap
+  const [muted, setMuted] = useState(false); // sound is on by default; the button turns it off
+  const [soundBlocked, setSoundBlocked] = useState(false); // the browser refused sound (no tap or key yet): offer a tap
+  const [blocked, setBlocked] = useState(false); // the browser refused to play at all: ask for a tap
   const [buffered, setBuffered] = useState(0);
   const [active, setActive] = useState(-1);
+  const filmStarted = useRef(false); // the sound unlock plays the film for an instant; only the real start counts
+  const [openInfo, setOpenInfo] = useState<string | null>(null); // the chapter or activity whose info line is showing
 
   const setPhase = useCallback((p: Phase) => {
     rig.current.phase = p;
@@ -81,24 +85,58 @@ export function Opening() {
     };
   }, [compact]);
 
+  // play with sound; if the browser refuses sound, play muted and offer "Tap for sound"; if it refuses even that, ask for a tap
   const startFilm = useCallback(() => {
     if (!video) return;
+    filmStarted.current = true;
     video.play().then(
       () => setBlocked(false),
-      () => setBlocked(true),
+      () => {
+        if (!video.muted) {
+          video.muted = true;
+          setMuted(true);
+          setSoundBlocked(true);
+          video.play().then(
+            () => setBlocked(false),
+            () => setBlocked(true),
+          );
+        } else setBlocked(true);
+      },
     );
   }, [video]);
 
-  // when the film and the scene are both ready: walk in, start the film as the screen comes into view
+  // when the film and the scene are both ready: wait at the door for the first scroll
   useEffect(() => {
     if (phase !== "loading" || !videoReady || !sceneReady || !video) return;
-    const t0 = setTimeout(() => setPhase("entry"), 250);
+    const t0 = setTimeout(() => setPhase("ready"), 250);
     return () => clearTimeout(t0);
   }, [phase, videoReady, sceneReady, video, setPhase]);
 
+  /** the first scroll / swipe / tap / key: unlock sound inside the gesture, then walk in */
+  const begin = useCallback(() => {
+    if (rig.current.phase !== "ready" || !video) return;
+    setPhase("entry");
+    video.muted = false;
+    setMuted(false);
+    // phones only allow sound for media started inside the gesture: start and pause at once so the film may play later
+    video.play().then(
+      () => {
+        video.pause();
+        video.currentTime = 0;
+      },
+      () => {
+        video.muted = true;
+        setMuted(true);
+        setSoundBlocked(true);
+      },
+    );
+  }, [setPhase, video]);
+
   useEffect(() => {
     if (!video) return;
-    const onFrame = () => setLive(true);
+    const onFrame = () => {
+      if (filmStarted.current) setLive(true);
+    };
     const onEnded = () => {
       video.pause();
       setPhase("hold"); // the last frame (the title) stays on the screen
@@ -124,10 +162,11 @@ export function Opening() {
 
   /* ── scroll lock while the opening plays; on the title, a scroll / swipe / key continues ── */
   const continueOn = useCallback(() => {
+    if (rig.current.phase === "ready") return begin();
     if (rig.current.phase !== "hold") return;
     setPhase("travel");
     video?.pause();
-  }, [setPhase, video]);
+  }, [setPhase, video, begin]);
 
   useEffect(() => {
     if (phase === "explore") return;
@@ -195,9 +234,10 @@ export function Opening() {
     if (!video) return;
     video.muted = !video.muted;
     setMuted(video.muted);
+    setSoundBlocked(false);
   };
 
-  const showControls = phase === "entry" || phase === "film" || phase === "hold";
+  const showControls = phase === "ready" || phase === "entry" || phase === "film" || phase === "hold";
   const exploring = phase === "explore";
 
   return (
@@ -239,11 +279,11 @@ export function Opening() {
             }}
             aria-label={muted ? "Turn sound on" : "Turn sound off"}
             aria-pressed={!muted}
-            className="fixed z-50 flex h-12 items-center gap-2 rounded-full border border-cocoa bg-cream px-4 text-[0.85rem] font-bold text-cocoa shadow-[2px_2px_0_0_#2f1c1a] transition-colors hover:bg-orange hover:text-white"
+            className={`fixed z-50 flex h-12 items-center gap-2 rounded-full border border-cocoa px-4 text-[0.85rem] font-bold shadow-[2px_2px_0_0_#2f1c1a] transition-colors ${soundBlocked ? "bg-orange text-white hover:bg-[#e04f00]" : "bg-cream text-cocoa hover:bg-orange hover:text-white"}`}
             style={{ bottom: "max(16px, env(safe-area-inset-bottom))", right: "max(16px, env(safe-area-inset-right))" }}
           >
             {muted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
-            <span className="hidden sm:inline">{muted ? "Sound off" : "Sound on"}</span>
+            <span className={soundBlocked ? "" : "hidden sm:inline"}>{soundBlocked ? "Tap for sound" : muted ? "Sound off" : "Sound on"}</span>
           </motion.button>
         )}
       </AnimatePresence>
@@ -260,6 +300,30 @@ export function Opening() {
           <Play className="size-5 fill-white" /> Play the film
         </button>
       )}
+
+      {/* at the door: the first scroll starts the intro */}
+      <AnimatePresence>
+        {phase === "ready" && (
+          <motion.button
+            key="begin"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            transition={{ duration: 0.6 }}
+            onClick={(e) => {
+              e.stopPropagation();
+              begin();
+            }}
+            className="fixed left-1/2 z-40 flex -translate-x-1/2 flex-col items-center gap-1 rounded-full px-5 py-2 text-[0.95rem] font-bold text-cocoa"
+            style={{ bottom: "max(26px, env(safe-area-inset-bottom))" }}
+          >
+            <span className="rounded-full border-2 border-cocoa bg-orange px-5 py-2 text-white shadow-[3px_3px_0_0_#2f1c1a]">{compact ? "Swipe up or tap to enter" : "Scroll to enter the warehouse"}</span>
+            <motion.span animate={{ y: [0, 6, 0] }} transition={{ duration: 1.4, repeat: Infinity }}>
+              <ChevronDown className="size-6" />
+            </motion.span>
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* on the title: how to continue */}
       <AnimatePresence>
@@ -294,10 +358,11 @@ export function Opening() {
                 key={m.n}
                 onClick={() => goTo(i)}
                 aria-current={active === i ? "step" : undefined}
+                aria-label={`Module ${m.n} ${m.word}`}
+                title={m.word}
                 className={`flex items-center gap-2 rounded-full border border-cocoa px-2.5 py-1.5 text-[0.78rem] font-extrabold shadow-[2px_2px_0_0_#2f1c1a] transition-colors ${active === i ? "bg-orange text-white" : "bg-cream/95 text-cocoa hover:bg-peach"}`}
               >
                 {m.n}
-                <span className="hidden lg:inline">{m.word}</span>
               </button>
             ))}
           </nav>
@@ -340,24 +405,12 @@ export function Opening() {
                   <p className="mt-2.5 text-[0.95rem] leading-snug text-cocoa-2">{m.summary}</p>
                   <ul className="mt-3 grid gap-1">
                     {m.chapters.map((c) => (
-                      <li key={c.id}>
-                        <Link href={`/${c.id}`} className="group flex items-center gap-3 rounded-xl px-2 py-1.5 hover:bg-peach">
-                          <span className="w-8 shrink-0 font-display text-[0.95rem] font-bold text-orange">{c.id}</span>
-                          <span className="min-w-0 flex-1 text-[0.95rem] font-semibold leading-snug text-cocoa">{c.title}</span>
-                          <ArrowRight className="size-4 shrink-0 text-cocoa-2 transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      </li>
+                      <InfoRow key={c.id} id={c.id} open={openInfo === c.id} onToggle={setOpenInfo} label={c.id} title={c.title} info={c.info} />
                     ))}
+                    {m.activity && (
+                      <InfoRow id={m.activity.href} open={openInfo === m.activity.href} onToggle={setOpenInfo} label={<Sparkles className="size-4" />} kicker="Experiential activity" title={m.activity.title} info={m.activity.info} highlight />
+                    )}
                   </ul>
-                  {m.activity && (
-                    <Link href={m.activity.href} className="mt-3 flex items-center gap-3 rounded-2xl border-2 border-cocoa bg-orange px-4 py-2.5 text-white shadow-[2px_2px_0_0_#2f1c1a] hover:bg-[#e04f00]">
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[0.7rem] font-extrabold uppercase tracking-[0.12em] text-white/85">Experiential activity</span>
-                        <span className="block font-bold leading-tight">{m.activity.title}</span>
-                      </span>
-                      <ArrowRight className="size-5 shrink-0" />
-                    </Link>
-                  )}
                 </motion.div>
               </Section>
             ))}
@@ -365,6 +418,33 @@ export function Opening() {
         </>
       )}
     </div>
+  );
+}
+
+/** a chapter or activity in a module card: tap to show (or hide) a line about it; it does not navigate */
+function InfoRow({ id, open, onToggle, label, kicker, title, info, highlight }: { id: string; open: boolean; onToggle: (id: string | null) => void; label: React.ReactNode; kicker?: string; title: string; info: string; highlight?: boolean }) {
+  return (
+    <li className={highlight ? "mt-1.5" : undefined}>
+      <button
+        onClick={() => onToggle(open ? null : id)}
+        aria-expanded={open}
+        className={`group flex w-full items-center gap-3 rounded-xl px-2 py-1.5 text-left transition-colors ${highlight ? "border-2 border-cocoa bg-orange text-white shadow-[2px_2px_0_0_#2f1c1a] hover:bg-[#e04f00]" : open ? "bg-peach" : "hover:bg-peach"}`}
+      >
+        <span className={`grid w-8 shrink-0 place-items-center font-display text-[0.95rem] font-bold ${highlight ? "text-white" : "text-orange"}`}>{label}</span>
+        <span className="min-w-0 flex-1">
+          {kicker && <span className="block text-[0.68rem] font-extrabold uppercase tracking-[0.12em] text-white/85">{kicker}</span>}
+          <span className={`block text-[0.95rem] font-semibold leading-snug ${highlight ? "font-bold text-white" : "text-cocoa"}`}>{title}</span>
+        </span>
+        <ChevronDown className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""} ${highlight ? "text-white" : "text-cocoa-2"}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.p initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} className="overflow-hidden px-2 pl-[3.25rem] text-[0.88rem] leading-snug text-cocoa-2">
+            <span className="block pb-1.5 pt-1">{info}</span>
+          </motion.p>
+        )}
+      </AnimatePresence>
+    </li>
   );
 }
 
