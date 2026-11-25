@@ -46,7 +46,8 @@ export function BizCanvas({
   const tone = (id: BlockId) => (on(id) ? "lit" : before(id) ? "studied" : later(id) ? "locked" : "next");
   const hasLocked = Object.keys(upcoming).length > 0;
   return (
-    <figure className="min-w-0">
+    // data-tour-skip: the board is a diagram laid out differently on phones; Laddoo explains it instead of reading it
+    <figure data-tour-skip className="min-w-0">
       {/* full canvas */}
       <div className="hidden gap-1.5 rounded-[22px] border border-cocoa bg-cocoa p-1.5 shadow-[3px_3px_0_0_#2f1c1a] sm:grid" style={{ gridTemplateColumns: "repeat(10, minmax(0, 1fr))", gridTemplateRows: "minmax(8.5rem, auto) minmax(8.5rem, auto) minmax(4.5rem, auto)" }}>
         {BLOCKS.map((b, i) => {

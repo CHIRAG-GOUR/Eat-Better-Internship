@@ -44,7 +44,10 @@ const FALLBACK_MODEL = "eleven_multilingual_v2";
 
 // Laddoo's mood → an emotion cue for the voice (eleven_v3 audio tags)
 const CUE = { wave: "[cheerfully]", party: "[excited]", wow: "[amazed]", think: "[curious]", point: "[warmly]", cheer: "[encouragingly]", happy: "[warmly]", talk: "", cheeky: "[playfully]" };
-const cueFor = (s) => (MODEL === "eleven_v3" ? (s.kind === "explain" ? CUE[s.mood] || "[warmly]" : CUE[s.mood] || "") : "");
+// cues are billed like words: by default only Laddoo's own lines (hello, explanations, goodbye) get one; the lines he
+// reads from the page get none (ELEVENLABS_CUES=all brings them back)
+const CUES_ALL = process.env.ELEVENLABS_CUES === "all";
+const cueFor = (s) => (MODEL !== "eleven_v3" ? "" : s.kind === "explain" ? CUE[s.mood] || "[warmly]" : CUES_ALL ? CUE[s.mood] || "" : "");
 const SITE = (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const CHUNK_CHARS = Number(process.env.CHUNK_CHARS) || 4000; // smaller parts use leftover credits better

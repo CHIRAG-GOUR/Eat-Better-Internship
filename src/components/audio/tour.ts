@@ -71,7 +71,8 @@ export function buildTour(chapter: string, card: HTMLElement | null): TourStep[]
   let k = 0;
   for (const sec of sections) {
     // activity sections: read the heading and intro only, then explain what the activity is for
-    const activity = !!sec.querySelector("[data-tour-skip], [role=img], canvas, textarea");
+    // (data-tour-skip="quiet" only hides a label from the reading; it does not make the section an activity)
+    const activity = !!sec.querySelector('[data-tour-skip]:not([data-tour-skip="quiet"]), [role=img], canvas, textarea');
     // headings, paragraphs and list items, plus any block that holds a sentence of its own (text not wrapped in <p>)
     const tagged = [...sec.querySelectorAll<HTMLElement>(CANDIDATES)];
     const prose = [...sec.querySelectorAll<HTMLElement>("div, span")].filter((el) => ownWords(el) >= 6);

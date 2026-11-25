@@ -71,7 +71,7 @@ export function Gtm() {
         </motion.div>
 
         {/* the four pillars holding up the brand */}
-        <div className="mt-6 hidden rounded-t-[22px] bg-cocoa px-6 py-3 text-center font-display text-[1.3rem] font-semibold text-cream md:block">Eat Better Co reaches its customers through</div>
+        <div data-tour-skip="quiet" className="mt-6 hidden rounded-t-[22px] bg-cocoa px-6 py-3 text-center font-display text-[1.3rem] font-semibold text-cream md:block">Eat Better Co reaches its customers through</div>
         <div className="grid gap-4 md:grid-cols-4 md:gap-3">
           {PILLARS.map((p, i) => {
             const Icon = PILLAR_ICON[p.id];
