@@ -12,7 +12,7 @@ import { ArrowUp } from "lucide-react";
  */
 export function BackToTop() {
   const path = usePathname() ?? "";
-  const hidden = path.startsWith("/experiential-activity");
+  const hidden = path === "/" || path.startsWith("/experiential-activity");
   const [show, setShow] = useState(false);
   const reduce = useReducedMotion();
 
