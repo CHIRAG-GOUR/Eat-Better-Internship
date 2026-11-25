@@ -153,7 +153,7 @@ function Flowers({ compact }: { compact: boolean }) {
         if (pathDist(x, z) < 2.6) continue;
         out.push({ p: [x, 0.25 + rnd() * 0.25, z], s: [1, 1, 1], c: cols[Math.floor(rnd() * cols.length)] });
       }
-    for (const [x, z] of scatter(compact ? 40 : 110, 33, 0.5, [-20, 180, -80, 40])) {
+    for (const [x, z] of scatter(compact ? 40 : 110, 33, 0.5, [-20, 180, -80, 40]).filter(([x, z]) => !(x > -24 && x < 24 && z > 4))) {
       const c = cols[Math.floor(rnd() * cols.length)];
       for (let k = 0; k < 7; k++) {
         const fx = x + (rnd() - 0.5) * 2.4;

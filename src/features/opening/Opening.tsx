@@ -36,6 +36,10 @@ export function Opening() {
   const [buffered, setBuffered] = useState(0);
   const [active, setActive] = useState(-1);
   const filmStarted = useRef(false); // the sound unlock plays the film for an instant; only the real start counts
+  // sound needs one click, tap or key first (browsers don't count a scroll); "Begin" gives it, then a scroll starts the intro
+  const [primed, setPrimed] = useState(false);
+  const [nudge, setNudge] = useState(0); // a scroll before Begin: give the button a little bounce
+  const userMuted = useRef(false); // the student switched sound off themselves: never turn it back on for them
   const [openInfo, setOpenInfo] = useState<string | null>(null); // the chapter or activity whose info line is showing
 
   const setPhase = useCallback((p: Phase) => {
@@ -108,29 +112,43 @@ export function Opening() {
   // when the film and the scene are both ready: wait at the door for the first scroll
   useEffect(() => {
     if (phase !== "loading" || !videoReady || !sceneReady || !video) return;
-    const t0 = setTimeout(() => setPhase("ready"), 250);
+    const t0 = setTimeout(() => {
+      // already allowed to play sound (the student clicked or tapped on the page before): no Begin step needed
+      setPrimed(!!(navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive);
+      setPhase("ready");
+    }, 250);
     return () => clearTimeout(t0);
   }, [phase, videoReady, sceneReady, video, setPhase]);
 
-  /** the first scroll / swipe / tap / key: unlock sound inside the gesture, then walk in */
-  const begin = useCallback(() => {
-    if (rig.current.phase !== "ready" || !video) return;
-    setPhase("entry");
+  /** "Begin": the click that lets the film play with sound (it plays for an instant and rewinds); the scroll then starts the intro */
+  const prime = useCallback(() => {
+    if (!video || rig.current.phase !== "ready") return;
+    userMuted.current = false;
     video.muted = false;
     setMuted(false);
-    // phones only allow sound for media started inside the gesture: start and pause at once so the film may play later
+    setSoundBlocked(false);
     video.play().then(
       () => {
         video.pause();
         video.currentTime = 0;
       },
-      () => {
-        video.muted = true;
-        setMuted(true);
-        setSoundBlocked(true);
-      },
+      () => undefined,
     );
-  }, [setPhase, video]);
+    setPrimed(true);
+  }, [video]);
+
+  /** the scroll after Begin: walk in (sound is already allowed); a scroll before Begin only nudges the button */
+  const begin = useCallback(() => {
+    if (rig.current.phase !== "ready" || !video) return;
+    if (!primed) {
+      setNudge((n) => n + 1);
+      return;
+    }
+    // sound on (unless the student switched it off)
+    video.muted = userMuted.current;
+    setMuted(userMuted.current);
+    setPhase("entry");
+  }, [setPhase, video, primed]);
 
   useEffect(() => {
     if (!video) return;
@@ -162,11 +180,12 @@ export function Opening() {
 
   /* ── scroll lock while the opening plays; on the title, a scroll / swipe / key continues ── */
   const continueOn = useCallback(() => {
-    if (rig.current.phase === "ready") return begin();
+    // at the door, a click or tap on the scene counts as Begin (it is a real gesture); after that, it walks in
+    if (rig.current.phase === "ready") return primed ? begin() : prime();
     if (rig.current.phase !== "hold") return;
     setPhase("travel");
     video?.pause();
-  }, [setPhase, video, begin]);
+  }, [setPhase, video, begin, prime, primed]);
 
   useEffect(() => {
     if (phase === "explore") return;
@@ -175,22 +194,27 @@ export function Opening() {
     html.style.overflow = "hidden";
     window.scrollTo(0, 0);
     let touchY: number | null = null;
+    // a scroll or swipe is not a gesture that allows sound: at the door it starts the intro only after Begin
+    const scrolled = () => (rig.current.phase === "ready" ? begin() : continueOn());
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.deltaY > 4) continueOn();
+      if (e.deltaY > 4) scrolled();
     };
     const tStart = (e: TouchEvent) => {
       touchY = e.touches[0]?.clientY ?? null;
     };
     const tMove = (e: TouchEvent) => {
       e.preventDefault();
-      if (touchY !== null && touchY - (e.touches[0]?.clientY ?? touchY) > 30) continueOn();
+      if (touchY !== null && touchY - (e.touches[0]?.clientY ?? touchY) > 30) {
+        touchY = null;
+        scrolled();
+      }
     };
     const key = (e: KeyboardEvent) => {
       if ([" ", "ArrowDown", "PageDown", "End", "Enter"].includes(e.key)) {
         if ((e.target as HTMLElement)?.closest?.("button, a")) return;
         e.preventDefault();
-        continueOn();
+        continueOn(); // a key press is a real gesture: at the door it works like Begin
       }
     };
     window.addEventListener("wheel", wheel, { passive: false });
@@ -204,7 +228,7 @@ export function Opening() {
       window.removeEventListener("touchmove", tMove);
       window.removeEventListener("keydown", key);
     };
-  }, [phase, continueOn]);
+  }, [phase, continueOn, begin]);
 
   /* ── explore: the page scroll drives the camera between the overview and the worlds ── */
   useEffect(() => {
@@ -230,7 +254,6 @@ export function Opening() {
     if (el) window.scrollTo({ top: el.offsetTop, behavior: "smooth" });
   }, []);
 
-  const userMuted = useRef(false); // the student switched sound off themselves: never turn it back on for them
   const toggleSound = () => {
     if (!video) return;
     video.muted = !video.muted;
@@ -326,9 +349,31 @@ export function Opening() {
         </button>
       )}
 
-      {/* at the door: the first scroll starts the intro */}
+      {/* at the door: Begin (turns the sound on), then a scroll starts the intro */}
       <AnimatePresence>
-        {phase === "ready" && (
+        {phase === "ready" && !primed && (
+          <motion.div key="begin-wrap" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 16 }} transition={{ duration: 0.6 }} className="fixed left-1/2 z-40 -translate-x-1/2" style={{ bottom: "max(30px, env(safe-area-inset-bottom))" }}>
+            <motion.button
+              key={nudge}
+              initial={nudge ? { scale: 1.14 } : false}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                prime();
+              }}
+              className="flex flex-col items-center gap-1"
+            >
+              <span className="flex items-center gap-2.5 rounded-full border-2 border-cocoa bg-orange px-8 py-3 font-display text-[1.2rem] font-semibold text-white shadow-[3px_3px_0_0_#2f1c1a] transition-colors hover:bg-[#e04f00]">
+                <Volume2 className="size-5" /> Begin
+              </span>
+              <span className="rounded-full bg-cream/90 px-3 py-0.5 text-[0.78rem] font-semibold text-cocoa-2">Turns the sound on</span>
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {phase === "ready" && primed && (
           <motion.button
             key="begin"
             initial={{ opacity: 0, y: 12 }}
