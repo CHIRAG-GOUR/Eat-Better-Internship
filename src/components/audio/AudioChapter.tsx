@@ -7,6 +7,7 @@ import { Headphones, Pause, Play, Volume1, Volume2, VolumeX, X } from "lucide-re
 import { Mascot } from "@/components/celebrate/Mascot";
 import SCRIPTS from "@/features/audio-chapters/scripts.json";
 import { buildTour, type TourStep } from "./tour";
+import { ExplainerCard } from "./ExplainerCard";
 
 /**
  * Audio chapter with Laddoo as the guide. Press play and Laddoo walks onto the page: it goes to each heading,
@@ -589,7 +590,12 @@ export function AudioChapter({ chapter }: { chapter: string }) {
 
   return (
     <>
-      {/* the card under the chapter title */}
+      {/* the card under the chapter title: the Chapter Explainer cover (Modules 1–4), or a simple card (Module 5) */}
+      {!chapter.startsWith("5.") ? (
+        <div ref={card} className="pointer-events-auto mt-5 w-full max-w-[40rem]">
+          <ExplainerCard chapter={chapter} playing={playing} open={open} onToggle={playing ? pause : play} />
+        </div>
+      ) : (
       <div ref={card} className="pointer-events-auto mt-5 flex max-w-[38rem] items-center gap-3 rounded-2xl border border-cocoa bg-white/95 p-3 shadow-[3px_3px_0_0_#2f1c1a] sm:p-3.5">
         <div className="hidden shrink-0 sm:block">
           <Mascot mood={open ? "happy" : "wave"} size={58} />
@@ -605,6 +611,7 @@ export function AudioChapter({ chapter }: { chapter: string }) {
           {playing ? <Pause className="size-5 fill-white" /> : <Play className="ml-0.5 size-5 fill-white" />}
         </button>
       </div>
+      )}
 
       {typeof document !== "undefined" &&
         createPortal(
