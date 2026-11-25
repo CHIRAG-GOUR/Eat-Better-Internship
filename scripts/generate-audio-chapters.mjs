@@ -21,6 +21,9 @@
  * when explaining, cheerful hello and goodbye). Cues are not spoken and are left out of the word timings. If v3 cannot
  * return word timings, the script falls back to eleven_multilingual_v2 with livelier settings.
  *
+ * Progress is saved after every audio part (public/audio-chapters/<chapter>.partial.json). If the credits run out in
+ * the middle of a chapter, the next run (with a new key) carries on from the next part instead of starting again.
+ *
  * Optional: $env:SITE_URL (default http://localhost:3000), $env:CHROME_PATH, $env:ELEVENLABS_VOICE_ID and
  * $env:ELEVENLABS_MODEL_ID to override.
  */
@@ -44,7 +47,7 @@ const CUE = { wave: "[cheerfully]", party: "[excited]", wow: "[amazed]", think: 
 const cueFor = (s) => (MODEL === "eleven_v3" ? (s.kind === "explain" ? CUE[s.mood] || "[warmly]" : CUE[s.mood] || "") : "");
 const SITE = (process.env.SITE_URL || "http://localhost:3000").replace(/\/$/, "");
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
-const CHUNK_CHARS = 4000;
+const CHUNK_CHARS = Number(process.env.CHUNK_CHARS) || 4000; // smaller parts use leftover credits better
 if (!KEY) {
   console.error("Set ELEVENLABS_API_KEY first (see the comment at the top of this file).");
   process.exit(1);
@@ -103,11 +106,21 @@ for (const ch of chapters) {
     process.exitCode = 1;
     continue;
   }
-  // group steps into chunks under the request limit
+  // carry on from a saved partial run, if it was made from this same tour
+  const partialFile = path.join(outDir, `${ch}.partial.json`);
+  const sig = tour.map((s) => s.key + "\u0001" + s.text).join("\u0002");
+  let saved = { chunks: [] };
+  if (fs.existsSync(partialFile)) {
+    const p = JSON.parse(fs.readFileSync(partialFile, "utf8"));
+    if (p.sig === sig && !force) saved = p;
+  }
+  const done = saved.chunks.reduce((n, c) => n + c.steps.length, 0);
+  if (done) console.log(`${ch}: resuming after ${done} of ${tour.length} steps`);
+  // group the remaining steps into chunks under the request limit
   const groups = [];
   let cur = [];
   let len = 0;
-  for (const s of tour) {
+  for (const s of tour.slice(done)) {
     if (cur.length && len + s.text.length + 2 > CHUNK_CHARS) {
       groups.push(cur);
       cur = [];
@@ -118,7 +131,7 @@ for (const ch of chapters) {
   }
   if (cur.length) groups.push(cur);
 
-  const chunks = [];
+  const chunks = [...saved.chunks];
   try {
     for (let g = 0; g < groups.length; g++) {
       const steps = groups[g];
@@ -159,17 +172,21 @@ for (const ch of chapters) {
         }
         return { key: s.key, text: s.text, words };
       });
-      const file = `${ch}-${g + 1}.mp3`;
+      const file = `${ch}-${chunks.length + 1}.mp3`;
       fs.writeFileSync(path.join(outDir, file), Buffer.from(data.audio_base64, "base64"));
       chunks.push({ audio: `/audio-chapters/${file}`, steps: out });
-      console.log(`${ch}: part ${g + 1}/${groups.length} (${steps.length} steps)`);
+      fs.writeFileSync(partialFile, JSON.stringify({ sig, voice: VOICE, model: MODEL, chunks }));
+      console.log(`${ch}: part ${chunks.length} saved (${steps.length} steps; ${groups.length - g - 1} part(s) left this run)`);
     }
   } catch (e) {
-    console.error(`${ch}: ${e.message}`);
+    const got = chunks.reduce((n, c) => n + c.steps.length, 0);
+    console.error(`${ch}: ${e.message.slice(0, 220)}`);
+    if (got) console.error(`${ch}: ${got} of ${tour.length} steps saved; run again with a new key to finish it`);
     process.exitCode = 1;
     continue;
   }
   fs.writeFileSync(json, JSON.stringify({ voice: VOICE, model: MODEL, chunks }));
+  fs.rmSync(partialFile, { force: true });
   console.log(`${ch}: done, ${tour.length} steps in ${chunks.length} audio files`);
 }
 await browser.close();
