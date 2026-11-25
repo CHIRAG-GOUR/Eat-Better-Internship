@@ -330,7 +330,7 @@ function MoneyMachine({ levers, active }: { levers: Levers; active: boolean }) {
           g.font = F(500, 24);
           g.fillStyle = "#AFC2E8";
           g.fillText("FY23 and FY24: reported (approx.)   ·   Next year: your practice plan", 40, 108);
-          const bars: [string, number, string][] = [["FY23", 5.5, "#7FA8FF"], ["FY24", 14.7, "#FF5C00"], ...(active ? ([["Next year", pl.rev, "#FED300"]] as [string, number, string][]) : [])];
+          const bars: [string, number, string][] = [["FY23", 5.33, "#7FA8FF"], ["FY24", 14.47, "#FF5C00"], ...(active ? ([["Next year", pl.rev, "#FED300"]] as [string, number, string][]) : [])];
           const max = Math.max(30, ...bars.map((b) => b[1]));
           bars.forEach(([l, v, c], i) => {
             const x = 90 + i * 300;

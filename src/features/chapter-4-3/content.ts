@@ -14,7 +14,7 @@ export const CHAPTER = {
 
 export const TIMELINE = [
   { id: "shark", when: "Shark Tank India", title: "The pitch", text: "Eat Better appeared on Shark Tank India, Season 4 (covered in Chapter 1.3)." },
-  { id: "round", when: "April 2025", title: "Pre-Series A round", text: "A Pre-Series A funding round, co-led by Prath Ventures and Spring Marketing Capital. The ₹17 crore round is covered in Chapter 2.4." },
+  { id: "round", when: "April 2025", title: "Pre-Series A round", text: "A ₹17 crore Pre-Series A round, co-led by Prath Ventures and Spring Marketing Capital (covered in Chapter 2.4). With ₹5.76 crore raised earlier, disclosed funding totals ₹22.76 crore." },
   { id: "plan", when: "After the round", title: "A growth plan", text: "Management outlined its operational growth pillars. Four of them are listed on this page." },
 ] as const;
 

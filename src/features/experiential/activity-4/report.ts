@@ -171,7 +171,7 @@ export async function buildBusinessReport(s: St, student: Student) {
     { kind: "h", text: "Feedback from Eat Better × SkilliZee" },
     { kind: "p", text: `${fb.headline} ${fb.summary}` },
     { kind: "table", head: ["Mission", "Stars", "Why", "Next time"], rows: fb.missions.map((x) => [x.name, `${x.stars} of 3`, x.why, x.next]), widths: [30, 18, 66, 66] },
-    { kind: "callout", tone: "info", text: "REAL figures (from the Module 4 chapters): the four box prices and weights, FY23 ~Rs 5.5 crore and FY24 ~Rs 14.7 crore sales, FY24 loss ~Rs 63 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. Jaipur facility. Every cost, fee, budget, capacity figure and game reaction is a PRACTICE number for learning." },
+    { kind: "callout", tone: "info", text: "REAL figures (from the Module 4 chapters): the four box prices and weights, FY23 Rs 5.33 crore and FY24 Rs 14.47 crore sales, FY24 loss Rs 62.96 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. Jaipur facility. Every cost, fee, budget, capacity figure and game reaction is a PRACTICE number for learning." },
 
     { kind: "h", text: "Mission 1 · Price detective" },
     { kind: "table", head: ["Step", "Box", "Price (real)", "Weight (real)", "Price per gram"], rows: RANK_TRUTH.map((id, i) => { const k = SKUS.find((x) => x.id === id)!; return [`${i + 1}`, k.name, rs(k.price), `${k.grams} g`, `Rs ${ppg(k.price, k.grams).toFixed(2)}`]; }), widths: [14, 74, 28, 28, 30] },
@@ -181,7 +181,7 @@ export async function buildBusinessReport(s: St, student: Student) {
     { kind: "p", text: `Lesson: one delivery fee is shared by the whole order, so bigger orders over Rs ${FREE_SHIP} keep more money.`, muted: true },
 
     { kind: "h", text: "Mission 2 · Money machine" },
-    { kind: "p", text: `FY24 (real): sales ~Rs 14.7 crore, loss ~Rs 63 lakh. Practice model: Rs ${BASE.gm * 100} of every Rs 100 of sales is left after making the snacks, ads and app fees take Rs ${BASE.mk * 100}, and rent and salaries (${cr(FIXED)}) grow ${FIXED_GROWTH}% next year.` },
+    { kind: "p", text: `FY24 (real): sales Rs 14.47 crore, loss Rs 62.96 lakh. Practice model: Rs ${BASE.gm * 100} of every Rs 100 of sales is left after making the snacks, ads and app fees take Rs ${BASE.mk * 100}, and rent and salaries (${cr(FIXED)}) grow ${FIXED_GROWTH}% next year.` },
     { kind: "table", head: ["My lever", "Setting"], rows: [["Ads (% of sales)", `${s.levers.mk}%`], ["Grow sales", `+${s.levers.growth}% (goal ${GROWTH_GOAL}%+)`], ["Smarter buying", `+${s.levers.gmGain} points`]], widths: [100, 74] },
     { kind: "kv", rows: [["Next year's sales", cr(pl.rev)], ["Money in (after making the snacks)", cr(pl.gross)], ["Money out: ads", cr(pl.marketing)], ["Money out: rent and salaries", cr(pl.fixed)], ["Result", `${pl.net >= 0 ? "Profit +" : "Loss -"}${cr(Math.abs(pl.net))}`]] },
     { kind: "p", text: "Lesson: a business can grow fast and still lose money when costs grow too. Profit comes from keeping more from each sale and spreading fixed costs over more sales.", muted: true },

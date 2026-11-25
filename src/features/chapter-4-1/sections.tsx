@@ -177,28 +177,30 @@ export function Drivers() {
 /* ── 3 · Financial performance ────────────────────────────────── */
 
 function RevenueBars() {
-  const h = (v: number) => Math.round((v / FIN.revenueCrore) * 150);
+  const h = (v: number) => Math.max(4, Math.round((v / FIN.fy25Crore) * 150));
   return (
     <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[3px_3px_0_0_#2f1c1a]">
       <div className="flex items-center justify-between gap-2">
         <span className="font-display text-[1.2rem] font-semibold text-cocoa">Operating revenue</span>
-        <span className="rounded-full bg-success/15 px-3 py-1 text-[0.95rem] font-extrabold text-success">~{FIN.growthPct}% YoY</span>
+        <span className="rounded-full bg-success/15 px-3 py-1 text-[0.95rem] font-extrabold text-success">FY25 +{FIN.fy25GrowthPct}%</span>
       </div>
-      <div className="mt-4 grid grid-cols-2 items-end gap-6" style={{ height: 220 }}>
+      <div className="mt-4 grid grid-cols-4 items-end gap-3" style={{ height: 220 }}>
         {[
-          { l: "FY23", v: FIN.priorCrore, c: "bg-cocoa/70", t: `~₹${FIN.priorCrore} crore`, n: "implied" },
-          { l: "FY24", v: FIN.revenueCrore, c: "bg-orange", t: `~₹${FIN.revenueCrore} crore`, n: "reported" },
+          { l: "FY22", v: FIN.fy22Crore, c: "bg-cocoa/40", t: "₹67 lakh", n: "" },
+          { l: "FY23", v: FIN.priorCrore, c: "bg-cocoa/70", t: `₹${FIN.priorCrore} cr`, n: "+692%" },
+          { l: "FY24", v: FIN.revenueCrore, c: "bg-orange/75", t: `₹${FIN.revenueCrore} cr`, n: `+${FIN.growthPct}%` },
+          { l: "FY25", v: FIN.fy25Crore, c: "bg-orange", t: "₹23.90 cr", n: `+${FIN.fy25GrowthPct}%` },
         ].map((b, i) => (
           <div key={b.l} className="flex h-full flex-col justify-end">
-            <div className="mb-1 text-center font-display text-[1.15rem] font-semibold text-cocoa">{b.t}</div>
+            <div className="mb-1 text-center font-display text-[0.98rem] font-semibold leading-tight text-cocoa">{b.t}</div>
             <motion.div initial={{ height: 0 }} whileInView={{ height: h(b.v) }} viewport={{ once: true }} transition={{ duration: 1, delay: 0.2 + i * 0.25, ease: EASE }} className={`rounded-t-xl ${b.c}`} />
             <div className="mt-1 text-center text-[0.95rem] font-bold text-cocoa">
-              {b.l} <span className="font-normal text-cocoa-2">({b.n})</span>
+              {b.l} {b.n && <span className="block text-[0.78rem] font-bold text-success">{b.n}</span>}
             </div>
           </div>
         ))}
       </div>
-      <p className="mt-3 text-[0.85rem] leading-snug text-cocoa-2">FY23 is worked out from the two reported figures: ₹14.7 crore ÷ (1 + 1.65) ≈ ₹5.5 crore. Treat it as approximate.</p>
+      <p className="mt-3 text-[0.85rem] leading-snug text-cocoa-2">About 35× in three years. FY25 growth is reported as 63%; working it out from ₹14.47 crore to ₹23.90 crore gives about 65.2% (a slightly different FY24 base).</p>
     </div>
   );
 }
@@ -209,14 +211,14 @@ function LossMeter() {
     <div className="rounded-[22px] border border-cocoa bg-white p-5 shadow-[3px_3px_0_0_#2f1c1a]">
       <span className="font-display text-[1.2rem] font-semibold text-cocoa">How big is the loss?</span>
       <p className="mt-1 text-[0.95rem] text-cocoa-2">
-        <GlossaryText>{`Net loss ~₹${FIN.netLossLakh} lakh against ~₹${FIN.revenueCrore} crore (1,470 lakh) of revenue.`}</GlossaryText>
+        <GlossaryText>{`FY24: net loss ₹${FIN.netLossLakh} lakh against ₹${FIN.revenueCrore} crore (1,447 lakh) of revenue. In FY23 the loss was ₹${FIN.fy23NetLossCrore} crore.`}</GlossaryText>
       </p>
       <div className="mt-4 flex h-9 overflow-hidden rounded-xl border border-cocoa/30">
         <motion.div initial={{ width: 0 }} whileInView={{ width: `${pct}%` }} viewport={{ once: true }} transition={{ duration: 1, delay: 0.3, ease: EASE }} className="flex min-w-[2.2rem] items-center justify-center bg-error text-[0.8rem] font-extrabold text-white" />
         <div className="flex-1 bg-orange/15" />
       </div>
       <div className="mt-2 flex justify-between text-[0.88rem] font-bold text-cocoa">
-        <span className="text-error">Loss ~{pct.toFixed(1)}% of revenue (worked out)</span>
+        <span className="text-error">Net margin {FIN.netMarginPct}% (FY24)</span>
         <span>Revenue 100%</span>
       </div>
       <p className="mt-3 text-[0.95rem] leading-snug text-cocoa">
@@ -249,17 +251,17 @@ export function Financials() {
   return (
     <section id="financials" className={sectionCls}>
       <Panel tone="light" reveal="right" width="max-w-7xl">
-        <SectionIntro index="3" kicker="Financial performance & scale trajectory" title="Growing fast, still in the red">
+        <SectionIntro index="3" kicker="Financial performance & scale trajectory" title="Growing fast, losses narrowing">
           <GlossaryText>{FIN.text}</GlossaryText>
         </SectionIntro>
         <div className="mt-6">
           <StatBand
             tone="cocoa"
             stats={[
-              { value: FIN.revenueCrore, prefix: "~₹", suffix: " crore", decimals: 1, label: "FY24 operating revenue (reported)", icon: TrendingUp },
-              { value: FIN.growthPct, prefix: "~", suffix: "%", label: "year-on-year growth over FY23", icon: Layers },
-              { value: FIN.netLossLakh, prefix: "~₹", suffix: " lakh", label: "net loss, FY24", icon: Receipt },
-              { value: FIN.ordersLakh, prefix: "~", suffix: " lakh", label: "fulfilled orders per month", icon: ShoppingBasket },
+              { value: FIN.fy25Crore, prefix: "₹", suffix: " crore", decimals: 2, label: "FY25 revenue (63% growth)", icon: TrendingUp },
+              { value: FIN.revenueCrore, prefix: "₹", suffix: " crore", decimals: 2, label: "FY24 revenue (+171.5%)", icon: Layers },
+              { value: FIN.netLossLakh, prefix: "₹", suffix: " lakh", decimals: 2, label: "FY24 net loss (down 46.6%)", icon: Receipt },
+              { value: FIN.ordersLakh, prefix: "", suffix: " lakh+", label: "orders every month", icon: ShoppingBasket },
             ]}
           />
         </div>
@@ -328,7 +330,7 @@ const RECAP: { title: string; icon: LucideIcon }[] = [
   { title: "Price per gram = price ÷ weight", icon: Receipt },
   { title: "BOM, clean label and multi-packs move the price", icon: Wheat },
   { title: "Gross margin and AOV", icon: ShoppingBasket },
-  { title: "~165% growth, ~₹63 lakh net loss", icon: TrendingUp },
+  { title: "₹67 lakh (FY22) to ₹23.90 crore (FY25); FY24 loss ₹62.96 lakh", icon: TrendingUp },
 ];
 
 export function WrapUp() {

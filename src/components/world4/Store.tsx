@@ -672,12 +672,15 @@ function Tower({ x, h, label, color, light, reduced, delay }: { x: number; h: nu
 }
 
 function FinanceWall({ reduced, compact }: { reduced: boolean; compact: boolean }) {
-  const h23 = 5.5 * PER_CR;
-  const h24 = 14.7 * PER_CR;
+  // scaled so the tallest tower (FY25) stays the height the FY24 tower used to be
+  const per = (PER_CR * 14.7) / 23.9;
+  const h23 = 5.33 * per;
+  const h24 = 14.47 * per;
+  const h25 = 23.9 * per;
   const arrow = useMemo(() => {
-    const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-3.0, h23 + 2.25, -42.6), new THREE.Vector3(-0.8, h24 + 3.6, -42.6), new THREE.Vector3(1.9, h24 + 1.75, -42.6));
+    const c = new THREE.QuadraticBezierCurve3(new THREE.Vector3(-4.6, h23 + 2.25, -42.6), new THREE.Vector3(1.2, h25 + 3.2, -42.6), new THREE.Vector3(4.4, h25 + 1.75, -42.6));
     return new THREE.TubeGeometry(c, 40, 0.07, 8, false);
-  }, [h23, h24]);
+  }, [h23, h25]);
   useEffect(() => () => arrow.dispose(), [arrow]);
   const wall = useTex(() =>
     canvasTexture(1600, 700, (g) => {
@@ -694,13 +697,13 @@ function FinanceWall({ reduced, compact }: { reduced: boolean; compact: boolean 
         g.lineTo(1520, y);
         g.stroke();
       }
-      drawText(g, ["REPORTED OPERATING REVENUE"], 800, 64, 1300, 64, "#FFFFFF", 900);
-      drawText(g, ["FY23 → FY24 · ~165% year-on-year growth"], 800, 124, 1300, 40, "#FFC14D", 700);
+      drawText(g, ["REVENUE FROM OPERATIONS"], 800, 64, 1300, 64, "#FFFFFF", 900);
+      drawText(g, ["FY23 → FY24 +171.5% · FY25 +63% · ~35× since FY22"], 800, 124, 1300, 40, "#FFC14D", 700);
     }),
   );
   return (
     <group>
-      <Label label="Finance wall: reported operating revenue grew ~165% from FY23 to FY24">
+      <Label label="Finance wall: revenue grew from ₹5.33 crore (FY23) to ₹14.47 crore (FY24) and ₹23.90 crore (FY25)">
         <group>
           <Box s={[23, 10, 0.3]} p={[0, 6.3, STORE.back + 0.2]} c="#101624" rough={0.4} metal={0.3} />
           <mesh position={[0, 6.3, STORE.back + 0.36]}>
@@ -711,19 +714,22 @@ function FinanceWall({ reduced, compact }: { reduced: boolean; compact: boolean 
           <Box s={[14.1, 0.04, 5.1]} p={[0, 0.33, -43.6]} c={C.orange} e={C.orange} ei={1.4} />
         </group>
       </Label>
-      <Label label="FY23 revenue: about ₹5.5 crore (implied by ~165% growth to ~₹14.7 crore)">
-        <Tower x={-3.4} h={h23} label={"FY23\n~₹5.5 cr"} color="#2B4C7E" light="#8FC1FF" reduced={reduced} delay={0} />
+      <Label label="FY23 revenue: ₹5.33 crore">
+        <Tower x={-5} h={h23} label={"FY23\n₹5.33 cr"} color="#2B4C7E" light="#8FC1FF" reduced={reduced} delay={0} />
       </Label>
-      <Label label="FY24 revenue: about ₹14.7 crore (reported)">
-        <Tower x={3.4} h={h24} label={"FY24\n~₹14.7 cr"} color="#7A2E0E" light="#FFB25B" reduced={reduced} delay={0.5} />
+      <Label label="FY24 revenue: ₹14.47 crore, up about 171.5%">
+        <Tower x={0} h={h24} label={"FY24\n₹14.47 cr"} color="#7A2E0E" light="#FFB25B" reduced={reduced} delay={0.5} />
+      </Label>
+      <Label label="FY25 revenue: ₹23.90 crore, reported growth 63%">
+        <Tower x={5} h={h25} label={"FY25\n₹23.90 cr"} color="#B23A12" light="#FFC14D" reduced={reduced} delay={1} />
       </Label>
       <mesh geometry={arrow} material={mat(C.orange, 0.4, 0, { emissive: C.orange, ei: 1.8 })} />
-      <TextBoard lines={[{ t: "~165% growth", size: 90 }]} bg={C.orange} fg="#FFFFFF" w={2.3} h={0.62} px={512} position={[-1.2, h24 + 2.75, -42.4]} glow={0.6} />
+      <TextBoard lines={[{ t: "~35× in 3 years", size: 80 }]} bg={C.orange} fg="#FFFFFF" w={2.5} h={0.62} px={512} position={[-1.6, h25 + 2.6, -42.4]} glow={0.6} />
       <TextBoard
         lines={[
           { t: "FY24 NET LOSS", size: 40, weight: 700 },
-          { t: "~₹63 lakh", size: 80 },
-          { t: "scale is outpacing fixed overheads", size: 30, weight: 600 },
+          { t: "₹62.96 lakh", size: 76 },
+          { t: "down 46.6% from ₹1.18 crore", size: 30, weight: 600 },
         ]}
         bg="#FFF5EE"
         fg={C.cocoa}
@@ -733,9 +739,9 @@ function FinanceWall({ reduced, compact }: { reduced: boolean; compact: boolean 
         rotation={[0, 0.35, 0]}
         frame={C.cocoa}
         glow={0.25}
-        label="FY24 net loss: about ₹63 lakh (reported)"
+        label="FY24 net loss: ₹62.96 lakh, about 46.6% smaller than FY23's ₹1.18 crore"
       />
-      {!compact && <Glow position={[3.4, h24 + 0.4, -43.6]} color="#FFB25B" size={5} opacity={0.3} />}
+      {!compact && <Glow position={[5, h25 + 0.4, -43.6]} color="#FFB25B" size={5} opacity={0.3} />}
     </group>
   );
 }

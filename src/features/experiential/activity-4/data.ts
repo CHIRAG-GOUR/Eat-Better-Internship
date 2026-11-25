@@ -1,7 +1,7 @@
 /**
  * Experiential Activity 4 — Run the Eat Better Business (kid-friendly game version).
- * REPORTED facts (from the Module 4 chapters): the four product prices and weights, FY23 ~₹5.5 crore, FY24 ~₹14.7 crore,
- * FY24 net loss ~₹63 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. facility.
+ * REPORTED facts (from the Module 4 chapters): the four product prices and weights, FY23 ₹5.33 crore, FY24 ₹14.47 crore,
+ * FY24 net loss ₹62.96 lakh, ~2 lakh orders a month, the K-Matrix, the growth pillars and the 50,000 sq. ft. facility.
  * Everything else (costs, delivery fee, budgets, capacity, how the money machine responds) is HYPOTHETICAL practice
  * data, labelled as such in the game, the PDF and the CSV.
  */
@@ -57,7 +57,7 @@ export function bagOutcome(bag: Record<string, number>) {
 /* ── mission 2: the money machine (hypothetical split of the reported FY24 totals) ── */
 export const BASE = {
   revenue: FIN.revenueCrore, // ₹ crore (reported)
-  netLoss: FIN.netLossLakh / 100, // ₹ crore (reported, ~0.63)
+  netLoss: FIN.netLossLakh / 100, // ₹ crore (FY24, 0.6296)
   gm: 0.4, // hypothetical: what is left from each sale after making it
   mk: 0.22, // hypothetical: ads and app fees as a share of sales
 };

@@ -37,11 +37,13 @@ export const COSTS = [
 
 
 export const PROFIT = {
-  fy23: 5.5,
-  fy24: 14.7,
-  growth: "around 165%",
-  loss: "about Rs 63 lakh",
-  text: "Reported FY24 revenue was about Rs 14.7 crore, up around 165% from about Rs 5.5 crore in FY23. The business reported a net loss of about Rs 63 lakh for FY24, which is common for a fast-growing brand that invests in growth.",
+  fy22: 0.67,
+  fy23: 5.33,
+  fy24: 14.47,
+  fy25: 23.9,
+  growth: "about 171.5% in FY24, 63% in FY25",
+  loss: "Rs 62.96 lakh",
+  text: "Revenue grew from Rs 67 lakh in FY22 to Rs 5.33 crore in FY23, Rs 14.47 crore in FY24 and Rs 23.90 crore in FY25 (reported growth 63%): about 35 times in three years. In FY24 the business spent Rs 15.30 crore against Rs 14.47 crore of revenue, a net loss of Rs 62.96 lakh. That loss was about 46.6% smaller than the Rs 1.18 crore lost in FY23.",
   unit: "Unit economics means looking at what one order earns after the cost of making and delivering it.",
 };
 

@@ -18,7 +18,7 @@ import { Hoverable } from "@/components/world/hover";
 const UNIT = 0.4; // metres of stack per Rs 1 crore
 const DISC = 0.2;
 
-/** Three stacks of plain discs: FY23 revenue, FY24 revenue, FY24 spending (revenue + the reported loss). */
+/** Stacks of plain discs: FY23, FY24 and FY25 revenue, and FY24 spending (revenue + the net loss). */
 function LedgerStacks() {
   const geo = useMemo(() => new THREE.CylinderGeometry(1.1, 1.1, DISC * 0.92, 28), []);
   useEffect(() => () => geo.dispose(), [geo]);
@@ -28,23 +28,26 @@ function LedgerStacks() {
       const n = Math.round((crore * UNIT) / DISC);
       return Array.from({ length: n }, (_, i): Inst => ({ p: [-11 + (r() - 0.5) * 0.08, DISC / 2 + i * DISC, z + (r() - 0.5) * 0.08], r: [0, r() * 3, 0] }));
     };
-    return { fy23: make(-48.2, 5.5), fy24: make(-51.8, 14.7), spend: make(-55.4, 15.33) };
+    return { fy25: make(-44.6, 23.9), fy23: make(-48.2, 5.33), fy24: make(-51.8, 14.47), spend: make(-55.4, 15.3) };
   }, []);
   const gold = mat("#D9A93A", 0.35, 0.65);
   const copper = mat("#C2643F", 0.4, 0.55);
   return (
     <group>
-      <Hoverable label="FY23 revenue: about Rs 5.5 crore (reported)">
+      <Hoverable label="FY25 revenue: Rs 23.90 crore, reported growth 63%">
+        <Instanced geometry={geo} material={gold} items={stacks.fy25} castShadow />
+      </Hoverable>
+      <Hoverable label="FY23 revenue: Rs 5.33 crore">
         <Instanced geometry={geo} material={gold} items={stacks.fy23} castShadow />
       </Hoverable>
-      <Hoverable label="FY24 revenue: about Rs 14.7 crore, up around 165% (reported)">
+      <Hoverable label="FY24 revenue: Rs 14.47 crore, up about 171.5%">
         <Instanced geometry={geo} material={gold} items={stacks.fy24} castShadow />
       </Hoverable>
-      <Hoverable label="FY24 spending: revenue plus the reported net loss of about Rs 63 lakh">
+      <Hoverable label="FY24 total expenses: Rs 15.30 crore, a net loss of Rs 62.96 lakh">
         <Instanced geometry={geo} material={copper} items={stacks.spend} castShadow />
       </Hoverable>
-      <mesh position={[-11, 0.06, -51.8]} material={mat("#E9E2D4", 0.8)} receiveShadow>
-        <boxGeometry args={[3.4, 0.12, 11.4]} />
+      <mesh position={[-11, 0.06, -50]} material={mat("#E9E2D4", 0.8)} receiveShadow>
+        <boxGeometry args={[3.4, 0.12, 15]} />
       </mesh>
     </group>
   );
@@ -63,7 +66,7 @@ function Scenes({ kit }: { kit: ValleyKit }) {
       <Signpost text={"COST\nLOGISTICS & DELIVERY"} position={[5.6, 0, -66.5]} rotation={-0.4} width={3.2} {...cost} label="Cost: logistics and delivery" />
       {/* the money picture by the canvas */}
       <LedgerStacks />
-      <Signpost text={"FY23 · FY24 REVENUE · FY24 SPEND\nGROWTH IS NOT PROFIT"} position={[-8.6, 0, -51.8]} rotation={Math.PI / 2} width={4.4} height={1.4} color="#FFF5EE" fg="#2F1C1A" label="Reported: revenue grew from about Rs 5.5 crore (FY23) to Rs 14.7 crore (FY24), with a net loss of about Rs 63 lakh" />
+      <Signpost text={"FY25 · FY23 · FY24 REVENUE · FY24 SPEND\nGROWTH IS NOT PROFIT"} position={[-8.6, 0, -51.8]} rotation={Math.PI / 2} width={4.4} height={1.4} color="#FFF5EE" fg="#2F1C1A" label="Revenue grew from Rs 5.33 crore (FY23) to Rs 14.47 crore (FY24) and Rs 23.90 crore (FY25); FY24 had a net loss of Rs 62.96 lakh" />
       {/* revenue */}
       <Signpost text={"REVENUE\nOWN WEBSITE"} position={[6.4, 0, -86.2]} rotation={-0.45} width={2.6} {...rev} label="Revenue stream: direct sales on the website" />
       <Signpost text={"REVENUE\nMARKETPLACES & QUICK COMMERCE"} position={[4.4, 0, -99.2]} rotation={-0.45} width={3.4} {...rev} label="Revenue stream: marketplaces and quick-commerce apps (platforms take a commission)" />

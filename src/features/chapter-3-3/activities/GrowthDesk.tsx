@@ -91,18 +91,19 @@ export default function GrowthDesk({ onDone }: { onDone: (summary: string) => vo
 
   const step0 = () => {
     const g = toNum(v.growth ?? "");
-    const gHint = g > 200 ? "That is the new revenue as a percent of the old. Growth is the INCREASE ÷ the old revenue × 100." : "Growth % = increase ÷ FY23 revenue × 100 (9.2 ÷ 5.5).";
+    const gHint = g > 200 ? "That is the new revenue as a percent of the old. Growth is the INCREASE ÷ the old revenue × 100." : "Growth % = increase ÷ FY23 revenue × 100 (9.14 ÷ 5.33).";
     const l = toNum(v.lossPct ?? "");
-    const lHint = l < 1 || l > 50 ? "Change lakh to crore first (100 lakh = 1 crore), then loss ÷ revenue × 100." : "Loss as a percent of revenue = 0.63 ÷ 14.7 × 100.";
+    const lHint = l < 1 || l > 50 ? "Change lakh to crore first (100 lakh = 1 crore), then loss ÷ revenue × 100." : "Loss as a percent of revenue = 0.6296 ÷ 14.47 × 100.";
     const cells: Cell[] = [
-      { key: "inc", truth: 9.2, tol: 0.06, hint: "Increase = FY24 revenue − FY23 revenue = 14.7 − 5.5 (in Rs crore)." },
-      { key: "growth", truth: 165, tol: 5.5, hint: gHint },
-      { key: "lossCr", truth: 0.63, tol: 0.006, hint: "Rs 63 lakh in crore: 100 lakh = 1 crore, so 63 ÷ 100." },
-      { key: "lossPct", truth: 4.3, tol: 0.4, hint: lHint },
+      { key: "inc", truth: 9.14, tol: 0.03, hint: "Increase = FY24 revenue − FY23 revenue = 14.47 − 5.33 (in Rs crore)." },
+      { key: "growth", truth: 171.5, tol: 1.5, hint: gHint },
+      { key: "lossCr", truth: 0.6296, tol: 0.004, hint: "Rs 62.96 lakh in crore: 100 lakh = 1 crore, so 62.96 ÷ 100." },
+      { key: "lossPct", truth: 4.35, tol: 0.15, hint: lHint },
+      { key: "g25", truth: 64.6, tol: 2, hint: "FY25 growth = (23.90 − 14.47) ÷ 14.47 × 100." },
     ];
     if (run(cells)) {
       setStep(1);
-      setFb({ tone: "good", text: "Exact arithmetic on the rounded figures gives about 167% growth. The chapter says “around 165%” because the real figures behind “about Rs 5.5 crore” and “about Rs 14.7 crore” are rounded. Close counts. Now a practice brand." });
+      setFb({ tone: "good", text: "Right: 9.14 ÷ 5.33 is about 171.5% growth in FY24, and the loss was about 4.3% of revenue. FY25 works out at about 65.2%; the reported figure is 63% (likely a slightly different FY24 base). Revenue kept growing while the loss shrank. Now a practice brand." });
     }
   };
   const step1 = () => {
@@ -132,7 +133,7 @@ export default function GrowthDesk({ onDone }: { onDone: (summary: string) => vo
     { ok: near(text, loss, 0.03) || near(text, Math.abs(d.margin), 0.4), label: "Cites the practice loss you worked out", hint: "Use your loss in Rs crore or as a percent." },
     { ok: /(marketing|team|kitchen|invest|spend|spent|costs?)/i.test(text), label: "Says what the money went into", hint: "Marketing, team, kitchen, costs…" },
     { ok: /(different|not the same|isn.?t the same|can still|still (made|make|has|have|posted|reports?|shows?))/i.test(text), label: "Says growth and profit are different", hint: "Can a brand grow fast and still lose money?" },
-    { ok: /(63 lakh|0\.63|165|14\.7)/i.test(text), label: "Connects to the chapter's real figures", hint: "Mention the Rs 63 lakh loss or the 165% growth." },
+    { ok: /(62\.96|63 lakh|0\.63|171|14\.47|23\.9|1\.18)/i.test(text), label: "Connects to the chapter's real figures", hint: "Mention the Rs 62.96 lakh loss, the 171.5% growth or the Rs 23.90 crore FY25 revenue." },
     { ok: /(practice|made.?up|sample)/i.test(text), label: "Says the practice numbers are made up", hint: "Be honest about which numbers are practice." },
     { ok: words >= 18 && words <= 70, label: "18 to 70 words", hint: `${words} words so far.` },
   ];
@@ -162,17 +163,18 @@ export default function GrowthDesk({ onDone }: { onDone: (summary: string) => vo
       stars={step === 3 ? starsFor(mistakes) : undefined}
       onReset={reset}
       feedback={fb}
-      note={{ real: "FY24 revenue about Rs 14.7 crore, up around 165% from about Rs 5.5 crore in FY23, with a net loss of about Rs 63 lakh. These are the reported, rounded figures from the chapter.", practice: "The practice brand, its growth, costs and loss are made up and change every attempt.", tip: "100 lakh = 1 crore. Keep every number in the same unit before dividing." }}
+      note={{ real: "Revenue Rs 5.33 crore (FY23), Rs 14.47 crore (FY24) and Rs 23.90 crore (FY25, reported growth 63%); FY24 net loss Rs 62.96 lakh. These are the company's figures from the chapter.", practice: "The practice brand, its growth, costs and loss are made up and change every attempt.", tip: "100 lakh = 1 crore. Keep every number in the same unit before dividing." }}
     >
       <div className="grid gap-4 lg:grid-cols-2">
         <div>
           <div className="text-[0.85rem] font-extrabold uppercase tracking-[0.1em] text-orange">Part 1 · The chapter&apos;s reported figures</div>
-          <p className="mt-1 text-[0.98rem] text-cocoa">FY23 revenue: about Rs 5.5 crore. FY24 revenue: about Rs 14.7 crore. FY24 net loss: about Rs 63 lakh.</p>
+          <p className="mt-1 text-[0.98rem] text-cocoa">FY23 revenue: Rs 5.33 crore. FY24 revenue: Rs 14.47 crore. FY24 net loss: Rs 62.96 lakh. FY25 revenue: Rs 23.90 crore.</p>
           <div className="mt-2 grid gap-2">
             {line("Revenue increase (Rs crore)", inp("inc", "Increase in Rs crore", "crore"))}
             {line("Growth on FY23 (%)", inp("growth", "Growth percent", "%"))}
             {line("Net loss in Rs crore", inp("lossCr", "Net loss in crore", "crore"))}
             {line("Net loss as % of FY24 revenue", inp("lossPct", "Loss percent of revenue", "%"))}
+            {line("FY25 growth on FY24 (%)", inp("g25", "FY25 growth percent", "%"))}
           </div>
           {step === 0 && (
             <button onClick={step0} className="eb-btn eb-btn-primary mt-3 !normal-case">

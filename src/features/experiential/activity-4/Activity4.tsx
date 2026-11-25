@@ -489,7 +489,7 @@ export default function Activity4() {
               </Title>
               <div className="mt-3">
                 <Mentor>
-                  Last year sales grew fast, but we still lost about ₹63 lakh. Grow sales by <strong>{GROWTH_GOAL}% or more</strong> and tip the scale to <strong>Money in</strong>.
+                  Last year sales grew fast, but we still lost ₹62.96 lakh. Grow sales by <strong>{GROWTH_GOAL}% or more</strong> and tip the scale to <strong>Money in</strong>.
                 </Mentor>
               </div>
               <div className="mt-3 grid gap-2">
@@ -509,7 +509,7 @@ export default function Activity4() {
               </div>
               {mStars === 0 && <p className="mt-2 text-[0.84rem] text-cocoa-2">{pl.net < 0 ? "Money out is still heavier. Try a lever you haven't moved yet." : `Profit! Now grow sales to ${GROWTH_GOAL}% or more.`}</p>}
               {mStars > 0 && mStars < 3 && <p className="mt-2 text-[0.84rem] text-cocoa-2">More stars: keep a profit while growing even faster.</p>}
-              <Practice>Last year&apos;s sales (~₹14.7 cr) and loss (~₹63 lakh) are reported figures. How the machine reacts is a practice model, and rent and salaries grow 10% next year.</Practice>
+              <Practice>Last year&apos;s sales (₹14.47 cr) and loss (₹62.96 lakh) are the company&apos;s FY24 figures. How the machine reacts is a practice model, and rent and salaries grow 10% next year.</Practice>
               <NextBar back={() => go(1)} next={() => go(3)} ok={mStars > 0} label="Mission 3" />
             </div>
           )}

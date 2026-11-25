@@ -138,17 +138,19 @@ export function Costs() {
 /* ── profitability ────────────────────────────────────────────── */
 
 export function Profitability() {
-  const w = (PROFIT.fy23 / PROFIT.fy24) * 100;
+  const w = (v: number) => Math.max(2.5, (v / PROFIT.fy25) * 100);
   return (
     <section id="profit" className={sectionCls}>
       <Panel tone="peach" reveal="up" width="max-w-7xl">
-        <SectionIntro index="4" kicker="Profitability" title="Growing fast, not yet in profit" />
+        <SectionIntro index="4" kicker="Profitability" title="Growing fast, losses narrowing" />
         <div className="mt-5 grid gap-5 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
           <div className={`${card} p-5`}>
-            <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-orange">Reported revenue, Rs crore (rounded)</div>
+            <div className="text-[0.8rem] font-extrabold uppercase tracking-[0.12em] text-orange">Revenue, FY22 to FY25</div>
             {[
-              { y: "FY23", t: "about Rs 5.5 crore", w, cls: "bg-cocoa/50" },
-              { y: "FY24", t: "about Rs 14.7 crore", w: 100, cls: "bg-orange" },
+              { y: "FY22", t: "Rs 67 lakh", w: w(PROFIT.fy22), cls: "bg-cocoa/30" },
+              { y: "FY23", t: "Rs 5.33 crore", w: w(PROFIT.fy23), cls: "bg-cocoa/50" },
+              { y: "FY24", t: "Rs 14.47 crore", w: w(PROFIT.fy24), cls: "bg-orange/70" },
+              { y: "FY25", t: "Rs 23.90 crore", w: 100, cls: "bg-orange" },
             ].map((r, i) => (
               <div key={r.y} className="mt-4">
                 <div className="flex justify-between text-[1rem] font-bold text-cocoa">
@@ -168,8 +170,8 @@ export function Profitability() {
             <div className="rounded-[22px] border border-cocoa bg-cocoa p-5 text-cream shadow-[3px_3px_0_0_#2f1c1a]">
               <TrendingDown className="size-7 text-haldi" />
               <div className="mt-2 font-display text-[clamp(1.8rem,4vw,2.6rem)] font-semibold leading-none">{PROFIT.loss}</div>
-              <div className="mt-2 text-[1.05rem] font-bold">net loss reported for FY24</div>
-              <p className="mt-1 text-[0.92rem] opacity-85">Common for a fast-growing brand that invests in growth.</p>
+              <div className="mt-2 text-[1.05rem] font-bold">net loss for FY24</div>
+              <p className="mt-1 text-[0.92rem] opacity-85">About 46.6% smaller than the Rs 1.18 crore lost in FY23: revenue Rs 14.47 crore, total expenses Rs 15.30 crore, net margin −4.3%.</p>
             </div>
             <div className="flex items-start gap-3 rounded-2xl border border-cocoa/20 bg-white p-4">
               <Coins className="mt-0.5 size-5 shrink-0 text-orange" />
@@ -304,7 +306,7 @@ export function Activities() {
 const RECAP: { title: string; text: string; icon: typeof Coins }[] = [
   { title: "Revenue streams", text: "Website, marketplaces and quick commerce, corporate gifting, and four categories.", icon: Coins },
   { title: "Cost structure", text: "Ingredients, packaging, logistics, marketing and commissions, team and kitchen.", icon: Receipt },
-  { title: "Profitability", text: "About Rs 14.7 crore revenue, around 165% growth, about Rs 63 lakh net loss in FY24.", icon: TrendingUp },
+  { title: "Profitability", text: "Revenue Rs 67 lakh (FY22) to Rs 23.90 crore (FY25); FY24 net loss Rs 62.96 lakh, down 46.6% from FY23.", icon: TrendingUp },
   { title: "Unit economics", text: "What one order earns after the cost of making and delivering it.", icon: Store },
 ];
 

@@ -39,15 +39,26 @@ export const DRIVERS = {
 };
 
 export const FIN = {
-  revenueCrore: 14.7,
-  growthPct: 165,
-  /** implied by ~14.7 cr and ~165% growth: 14.7 / 2.65, rounded */
-  priorCrore: 5.5,
-  netLossLakh: 63,
+  /** FY24 revenue from operations, ₹ crore */
+  revenueCrore: 14.47,
+  /** FY24 growth on FY23, % */
+  growthPct: 171.5,
+  /** FY23 revenue, ₹ crore */
+  priorCrore: 5.33,
+  fy22Crore: 0.67,
+  fy25Crore: 23.9,
+  fy25GrowthPct: 63,
+  netLossLakh: 62.96,
+  fy23NetLossCrore: 1.18,
+  expensesCrore: 15.3,
+  ebitdaLakh: -49.97,
+  assetsCrore: 8.1,
+  netMarginPct: -4.3,
+  lossCutPct: 46.6,
   ordersLakh: 2,
-  text: "Eat Better Co's reported financial metrics illustrate the rapid top-line growth characteristic of high-velocity D2C and quick-commerce brands.",
-  revenue: "Reported FY24 operating revenue reached ~₹14.7 crore, representing a ~165% year-on-year growth compared to FY23.",
-  loss: "Net loss for FY24 stood at ~₹63 lakh, demonstrating operational leverage as top-line scale outpaces fixed administrative overheads.",
+  text: "Eat Better Co grew revenue about 35 times in three years, from ₹67 lakh in FY22 to ₹23.90 crore in FY25, while its losses narrowed.",
+  revenue: "FY24 revenue from operations was ₹14.47 crore, about 171.5% more than FY23's ₹5.33 crore. FY25 revenue reached ₹23.90 crore, reported growth of 63%.",
+  loss: "FY24 net loss was ₹62.96 lakh on total expenses of ₹15.30 crore: about 46.6% smaller than FY23's ₹1.18 crore loss, a net margin of −4.3%. EBITDA was −₹49.97 lakh and total assets ₹8.10 crore.",
   orders: "Delivery volume expanded to approximately 2 lakh fulfilled orders per month across web, marketplace, and quick-commerce channels.",
 };
 
