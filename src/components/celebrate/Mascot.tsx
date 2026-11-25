@@ -11,6 +11,9 @@ import { motion, useReducedMotion, useTransform, type MotionValue } from "motion
  * encouraging), talk (gestures while speaking), wow (big eyes, raised brows), think (hand on chin, eyes up), point (arm
  * out towards the text) and wave (hello). Arms glide from one pose to the next instead of snapping.
  *
+ * Pivot points (originX/originY) are in the SVG's own 140×160 coordinates, so every animated group sets
+ * transformBox: "view-box" (motion otherwise measures them from each shape's own box, and eyes slide off the face).
+ *
  * `walking` plays a walk cycle (legs alternate, arms swing, body bobs); `flip` faces the other way; `mouth` (0 = closed,
  * 1 = wide open) drives lip-sync while Laddoo speaks; `look` (-1 left … 1 right) moves the eyes. Blinks are natural:
  * at random moments, now and then a double blink.
@@ -186,26 +189,26 @@ export function Mascot({
       {/* shadow: squashes a little at the top of each step */}
       <motion.ellipse cx="70" cy="152" rx="34" ry="5" fill="#2F1C1A" opacity="0.15" animate={walk ? { rx: [34, 30, 34] } : { rx: 34 }} transition={walk ? { duration: STRIDE / 2, repeat: Infinity } : settle} />
       {/* legs: they swing from the hips in turn */}
-      <motion.g animate={walk ? { rotate: [18, -18, 18] } : { rotate: 0 }} transition={walk ? legT : settle} style={{ originX: "58px", originY: "124px" }}>
+      <motion.g animate={walk ? { rotate: [18, -18, 18] } : { rotate: 0 }} transition={walk ? legT : settle} style={{ transformBox: "view-box", originX: "58px", originY: "124px" }}>
         <path d="M58 126 L54 146" stroke={INK} strokeWidth="7" strokeLinecap="round" />
         <ellipse cx="52" cy="148" rx="8" ry="4.5" fill="#FF5C00" />
       </motion.g>
-      <motion.g animate={walk ? { rotate: [-18, 18, -18] } : { rotate: 0 }} transition={walk ? legT : settle} style={{ originX: "82px", originY: "124px" }}>
+      <motion.g animate={walk ? { rotate: [-18, 18, -18] } : { rotate: 0 }} transition={walk ? legT : settle} style={{ transformBox: "view-box", originX: "82px", originY: "124px" }}>
         <path d="M82 126 L86 146" stroke={INK} strokeWidth="7" strokeLinecap="round" />
         <ellipse cx="88" cy="148" rx="8" ry="4.5" fill="#FF5C00" />
       </motion.g>
 
       {/* everything above the legs bobs together */}
-      <motion.g animate={body} transition={bodyT} style={{ originX: "70px", originY: "130px" }}>
+      <motion.g animate={body} transition={bodyT} style={{ transformBox: "view-box", originX: "70px", originY: "130px" }}>
         {/* arms */}
-        <motion.g animate={lArm} transition={lArmT} style={{ originX: "30px", originY: "88px" }}>
+        <motion.g animate={lArm} transition={lArmT} style={{ transformBox: "view-box", originX: "30px", originY: "88px" }}>
           <motion.path initial={false} animate={{ d: lp.d }} transition={morph} stroke={INK} strokeWidth="7" fill="none" strokeLinecap="round" />
           <motion.circle initial={false} animate={{ cx: lp.h[0], cy: lp.h[1] }} transition={morph} r="6.5" fill={SKIN} stroke={INK} strokeWidth="2" />
         </motion.g>
-        <motion.g animate={rArm} transition={rArmT} style={{ originX: "110px", originY: "88px" }}>
+        <motion.g animate={rArm} transition={rArmT} style={{ transformBox: "view-box", originX: "110px", originY: "88px" }}>
           <motion.path initial={false} animate={{ d: rp.d }} transition={morph} stroke={INK} strokeWidth="7" fill="none" strokeLinecap="round" />
           <motion.circle initial={false} animate={{ cx: rp.h[0], cy: rp.h[1] }} transition={morph} r="6.5" fill={SKIN} stroke={INK} strokeWidth="2" />
-          <motion.rect x="122.5" y="46" width="6" height="13" rx="3" fill={SKIN} stroke={INK} strokeWidth="2" initial={false} animate={{ opacity: rp === RIGHT.thumbs ? 1 : 0, scaleY: rp === RIGHT.thumbs ? 1 : 0.2 }} transition={morph} style={{ originY: "59px" }} />
+          <motion.rect x="122.5" y="46" width="6" height="13" rx="3" fill={SKIN} stroke={INK} strokeWidth="2" initial={false} animate={{ opacity: rp === RIGHT.thumbs ? 1 : 0, scaleY: rp === RIGHT.thumbs ? 1 : 0.2 }} transition={morph} style={{ transformBox: "view-box", originY: "59px" }} />
         </motion.g>
 
         {/* body: the laddoo */}
@@ -258,7 +261,7 @@ export function Mascot({
         ) : (
           <g>
             {[56, 86].map((x) => (
-              <motion.g key={x} initial={false} animate={{ scaleY: shut ? 0.08 : 1 }} transition={{ duration: 0.07 }} style={{ originX: `${x}px`, originY: "88px" }}>
+              <motion.g key={x} initial={false} animate={{ scaleY: shut ? 0.08 : 1 }} transition={{ duration: 0.07 }} style={{ transformBox: "view-box", originX: `${x}px`, originY: "88px" }}>
                 <motion.ellipse cx={x} cy="88" rx="7" initial={false} animate={{ ry: eyeRy }} transition={settle} fill="#fff" stroke={INK} strokeWidth="2" />
                 <motion.g initial={false} animate={{ x: lx, y: ly }} transition={{ type: "spring", stiffness: 160, damping: 16 }}>
                   <circle cx={x + 0.5} cy="89" r={mood === "wow" ? 3.6 : 4.2} fill="#2F1C1A" />
