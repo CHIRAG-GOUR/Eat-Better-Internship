@@ -140,6 +140,8 @@ for (const ch of chapters) {
       try {
         data = await speak(text);
       } catch (e) {
+        // out of credits: stop, don't switch to another (cheaper-sounding) model
+        if (/quota_exceeded/.test(e.message)) throw e;
         if (MODEL !== FALLBACK_MODEL) {
           console.warn(`${ch}: ${MODEL} failed (${e.message.slice(0, 160)}); using ${FALLBACK_MODEL}`);
           MODEL = FALLBACK_MODEL;

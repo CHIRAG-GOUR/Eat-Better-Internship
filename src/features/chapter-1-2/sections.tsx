@@ -171,7 +171,7 @@ export function Direction() {
               Put it here
             </button>
           )}
-          {!its.length && !selItem && <span className="m-auto text-[0.95rem] text-cocoa-2/70">{canDrag ? "Drop cards here" : "Tap a card, then this box"}</span>}
+          {!its.length && !selItem && <span data-tour-skip className="m-auto text-[0.95rem] text-cocoa-2/70">{canDrag ? "Drop cards here" : "Tap a card, then this box"}</span>}
         </div>
       </div>
     );
@@ -228,7 +228,7 @@ export function Direction() {
             ) : selItem ? (
               <span className="text-cocoa">Now tap the box it belongs in.</span>
             ) : left.length ? (
-              <span className="flex items-center gap-1.5 text-cocoa-2">
+              <span data-tour-skip className="flex items-center gap-1.5 text-cocoa-2">
                 <Hand className="size-4" /> {canDrag ? "Drag a card into a box — or tap it, then tap a box." : "Tap a card, then tap a box."}
               </span>
             ) : (

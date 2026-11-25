@@ -90,7 +90,8 @@ export function buildTour(chapter: string, card: HTMLElement | null): TourStep[]
     const exp = script.segments.filter((s) => s.section === sec.id).map((s) => s.text).join(" ");
     if (exp) {
       const text = `${CONNECT[k++ % CONNECT.length]} ${exp}`;
-      const target = lines[0]?.el ?? sec;
+      // explain beside the last line read, where Laddoo already stands (no walking back up)
+      const target = lines[lines.length - 1]?.el ?? sec;
       steps.push({ key: `${sec.id}#explain`, kind: "explain", el: target, text, words: plainWords(text), mood: k % 3 === 0 ? "cheer" : k % 3 === 1 ? "point" : "happy", section: sec.id });
     }
   }

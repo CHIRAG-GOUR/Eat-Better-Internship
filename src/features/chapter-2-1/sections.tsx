@@ -343,7 +343,7 @@ export function LabSection() {
             ]}
           />
         </div>
-        <div className="mt-8">
+        <div data-tour-skip className="mt-8">
           <IdentityLab
             onStation={(id) => {
               stations.current.add(id);
