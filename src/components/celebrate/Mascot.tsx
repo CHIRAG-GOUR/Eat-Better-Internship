@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { motion, useReducedMotion, useTransform, type MotionValue } from "motion/react";
 
 /**
@@ -97,6 +97,11 @@ export function Mascot({
   const reduced = useReducedMotion();
   const still = !!reduced;
   const shut = useBlink(still);
+  // gradient ids unique to this Laddoo: with one shared id, a hidden Laddoo elsewhere on the page (display: none)
+  // owns the gradient, browsers don't paint it, and every other Laddoo is left see-through
+  const uid = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const bodyId = `mb-body-${uid}`;
+  const cheekId = `mb-cheek-${uid}`;
   const walk = walking && !still;
 
   // poses (while walking the arms hang down and swing; a wave or party stays on top)
@@ -176,12 +181,12 @@ export function Mascot({
       aria-label="Laddoo, the Eat Better buddy"
     >
       <defs>
-        <radialGradient id="mb-body" cx="40%" cy="35%" r="70%">
+        <radialGradient id={bodyId} cx="40%" cy="35%" r="70%">
           <stop offset="0%" stopColor={SKIN} />
           <stop offset="55%" stopColor="#C9853E" />
           <stop offset="100%" stopColor="#9A5E28" />
         </radialGradient>
-        <radialGradient id="mb-cheek" cx="50%" cy="50%" r="50%">
+        <radialGradient id={cheekId} cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#FF7A7A" stopOpacity="0.75" />
           <stop offset="100%" stopColor="#FF7A7A" stopOpacity="0" />
         </radialGradient>
@@ -212,7 +217,7 @@ export function Mascot({
         </motion.g>
 
         {/* body: the laddoo */}
-        <circle cx="70" cy="86" r="46" fill="url(#mb-body)" stroke={INK} strokeWidth="2.5" />
+        <circle cx="70" cy="86" r="46" fill={`url(#${bodyId})`} stroke={INK} strokeWidth="2.5" />
         {[
           [44, 62, 3.2, "#F6DCA8"],
           [96, 70, 2.6, "#F6DCA8"],
@@ -279,8 +284,8 @@ export function Mascot({
           </g>
         )}
         {/* cheeks */}
-        <circle cx="46" cy="102" r="7" fill="url(#mb-cheek)" />
-        <circle cx="94" cy="102" r="7" fill="url(#mb-cheek)" />
+        <circle cx="46" cy="102" r="7" fill={`url(#${cheekId})`} />
+        <circle cx="94" cy="102" r="7" fill={`url(#${cheekId})`} />
         {/* mouth */}
         {speaking ? (
           <SpeakingMouth m={mouth!} smile={mood !== "think"} />
