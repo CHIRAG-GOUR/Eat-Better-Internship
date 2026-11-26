@@ -72,6 +72,9 @@ html {
 }
 
 body {
+  /* with html, keeps any stray overflow (a fixed control's decoration, a wide label) from widening the page: phones
+     would otherwise zoom the whole page out */
+  overflow-x: clip;
   background: var(--eb-cream);
   color: var(--eb-cocoa);
   font-family: var(--font-sans);

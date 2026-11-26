@@ -192,7 +192,7 @@ export function Mascot({
         </radialGradient>
       </defs>
       {/* shadow: squashes a little at the top of each step */}
-      <motion.ellipse cx="70" cy="152" rx="34" ry="5" fill="#2F1C1A" opacity="0.15" animate={walk ? { rx: [34, 30, 34] } : { rx: 34 }} transition={walk ? { duration: STRIDE / 2, repeat: Infinity } : settle} />
+      <motion.ellipse cx="70" cy="152" ry="5" fill="#2F1C1A" opacity="0.15" initial={{ rx: 34 }} animate={walk ? { rx: [34, 30, 34] } : { rx: 34 }} transition={walk ? { duration: STRIDE / 2, repeat: Infinity } : settle} />
       {/* legs: they swing from the hips in turn */}
       <motion.g animate={walk ? { rotate: [18, -18, 18] } : { rotate: 0 }} transition={walk ? legT : settle} style={{ transformBox: "view-box", originX: "58px", originY: "124px" }}>
         <path d="M58 126 L54 146" stroke={INK} strokeWidth="7" strokeLinecap="round" />
@@ -294,7 +294,7 @@ export function Mascot({
         ) : mood === "think" ? (
           <path d="M60 106 Q65 103 70 106 Q75 109 80 106" stroke="#2F1C1A" strokeWidth="3" fill="none" strokeLinecap="round" />
         ) : mood === "talk" || mood === "point" || mood === "wave" ? (
-          <motion.ellipse cx="70" cy="106" rx="7" fill="#7A1E12" stroke="#2F1C1A" strokeWidth="2" animate={still ? { ry: 4 } : { ry: [2, 6, 3, 7, 2] }} transition={{ duration: 0.9, repeat: Infinity }} />
+          <motion.ellipse cx="70" cy="106" rx="7" fill="#7A1E12" stroke="#2F1C1A" strokeWidth="2" initial={{ ry: 4 }} animate={still ? { ry: 4 } : { ry: [2, 6, 3, 7, 2] }} transition={{ duration: 0.9, repeat: Infinity }} />
         ) : mood === "cheeky" ? (
           <g>
             <path d="M58 102 Q70 112 82 102" stroke="#2F1C1A" strokeWidth="3" fill="none" strokeLinecap="round" />
